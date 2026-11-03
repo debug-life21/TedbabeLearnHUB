@@ -15,6 +15,7 @@ const categoryData = [
     { name: "Cybersecurity & IT", description: "Build digital literacy, networking knowledge, and practical security awareness.", sortOrder: 10 },
     { name: "Design & Multimedia", description: "Practice user experience, visual design, and digital media production.", sortOrder: 11 },
     { name: "Business & Entrepreneurship", description: "Develop entrepreneurship, business planning, and communication skills.", sortOrder: 12 },
+    { name: "Ethiopian Orthodox Tewahedo Church", description: "Explore the faith, history, worship, language, music, and traditions of the Ethiopian Orthodox Tewahedo Church.", sortOrder: 13 },
 ];
 
 const courses = [];
@@ -156,6 +157,21 @@ const digitalMarketingCourses = [
 ];
 for (const [title, description, objectives] of digitalMarketingCourses) {
     addCourse("Digital Marketing", title, description, "Beginner", objectives);
+}
+
+const tewahedoCourses = [
+    ["Introduction to the Ethiopian Orthodox Tewahedo Church", "An introductory overview of the church's identity, core beliefs, community life, and place within Ethiopian history and culture.", ["Describe the church's origins and identity", "Recognize foundational Christian beliefs in the Tewahedo tradition", "Identify trusted church and community learning resources"]],
+    ["The Bible in the Ethiopian Orthodox Tradition", "Explore how scripture is read, taught, and used in worship and spiritual life in the Ethiopian Orthodox Tewahedo tradition.", ["Identify the role of scripture in church life", "Explore selected biblical themes and stories", "Practice reading a passage with historical and spiritual context"]],
+    ["History of Christianity in Ethiopia", "Trace major periods and people in the history of Christianity in Ethiopia, from its early presence to contemporary church life.", ["Outline key periods in Ethiopian Christian history", "Recognize influential historical figures and institutions", "Connect church history with Ethiopia's wider cultural history"]],
+    ["Worship, Liturgy, and the Church Year", "Learn about the structure of worship, the liturgical year, and the meaning of major observances in the Ethiopian Orthodox Tewahedo Church.", ["Describe common elements of Orthodox worship", "Identify major seasons, fasts, and feasts", "Explain how liturgical practices shape community life"]],
+    ["Ge'ez Language and Church Heritage", "An introductory study of Ge'ez as a classical language of Ethiopian Christian worship, manuscripts, and scholarship.", ["Recognize the role of Ge'ez in church heritage", "Learn basic script and pronunciation concepts", "Identify examples of Ge'ez use in liturgical and historical sources"]],
+    ["Ethiopian Orthodox Church Music and Hymnody", "Discover the heritage of Ethiopian Orthodox sacred music, including the role of chant, instruments, and the tradition associated with Saint Yared.", ["Describe the place of music in Orthodox worship", "Recognize basic features of Ethiopian Orthodox chant", "Explore the cultural and spiritual context of sacred music"]],
+    ["Church Art, Architecture, and Sacred Objects", "Explore the visual traditions of Ethiopian Orthodox churches, including architecture, painting, crosses, and other sacred objects.", ["Identify common forms of Ethiopian Orthodox sacred art", "Describe visual themes and their worship context", "Approach sacred objects with cultural and religious respect"]],
+    ["Spiritual Life, Prayer, and Christian Ethics", "An introduction to prayer, spiritual disciplines, and ethical life in the Ethiopian Orthodox Tewahedo tradition.", ["Explore common forms of personal and communal prayer", "Relate spiritual practices to daily life", "Discuss ethical themes through selected teachings and examples"]],
+    ["Monastic Life, Saints, and Pilgrimage", "Learn about monastic communities, saints, and pilgrimage in the history and devotional life of the Ethiopian Orthodox Tewahedo Church.", ["Describe the role of monastic communities", "Recognize the place of saints in church tradition", "Explain the meaning of pilgrimage in community life"]],
+];
+for (const [title, description, objectives] of tewahedoCourses) {
+    addCourse("Ethiopian Orthodox Tewahedo Church", title, description, "Beginner", objectives);
 }
 
 export async function seedLearningCatalog() {
