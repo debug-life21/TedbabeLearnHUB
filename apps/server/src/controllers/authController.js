@@ -115,6 +115,8 @@ const studentProfileSchema = z.object({
     currentSkillLevel: z.enum(["Beginner", "Intermediate", "Advanced"]).optional().default("Beginner"),
     preferredSchedule: z.string().trim().max(200).optional().default(""),
     preferredCourseIds: z.array(z.string()).max(10).optional().default([]),
+    preferredCourseNotes: z.string().trim().max(1200).optional().default(""),
+    preferredLearningModes: z.array(z.enum(["live", "self_paced", "hybrid"])).max(3).optional().default([]),
     weeklyStudyHours: z.number().int().min(1).max(80).optional().default(5),
     timeZone: z.string().trim().max(80).optional().default("Africa/Addis_Ababa"),
 });
@@ -134,7 +136,11 @@ const signupSchema = z.object({
         teachingStatement: z.string().trim().min(20).max(1000),
         experienceYears: z.number().int().min(0).max(60),
         teachingCategories: z.array(z.string().trim().min(1).max(80)).min(1).max(10),
+        teachingModes: z.array(z.enum(["live", "self_paced", "hybrid"])).min(1).max(3).default(["live"]),
+        teachingLanguages: z.array(z.string().trim().min(1).max(80)).min(1).max(10).default(["English"]),
         availability: z.string().trim().min(2).max(500),
+        portfolioUrl: z.union([z.string().trim().url(), z.literal("")]).optional().default(""),
+        linkedInUrl: z.union([z.string().trim().url(), z.literal("")]).optional().default(""),
         cv: z.object({
             originalFilename: z.string().min(1).max(200),
             mimeType: z.string().min(1).max(120),
@@ -282,6 +288,7 @@ export async function signup(req, res) {
                 ...data.studentProfile,
                 preferredLanguage: "en",
                 preferredCourseIds,
+                courseSelectionUpdatedAt: new Date(),
                 placementStatus: "pending",
             } : undefined,
             teacherProfile: data.role === "teacher" ? {
@@ -289,6 +296,10 @@ export async function signup(req, res) {
                 expertise: data.teacherApplication.teachingCategories,
                 availabilityNotes: data.teacherApplication.availability,
                 experienceYears: data.teacherApplication.experienceYears,
+                teachingModes: data.teacherApplication.teachingModes,
+                portfolioUrl: data.teacherApplication.portfolioUrl,
+                linkedInUrl: data.teacherApplication.linkedInUrl,
+                teachingLanguages: data.teacherApplication.teachingLanguages,
             } : undefined,
         });
         if (data.role === "teacher") {
@@ -299,7 +310,11 @@ export async function signup(req, res) {
                 teachingStatement: data.teacherApplication.teachingStatement,
                 experienceYears: data.teacherApplication.experienceYears,
                 teachingCategories: data.teacherApplication.teachingCategories,
+                teachingModes: data.teacherApplication.teachingModes,
+                teachingLanguages: data.teacherApplication.teachingLanguages,
                 availability: data.teacherApplication.availability,
+                portfolioUrl: data.teacherApplication.portfolioUrl,
+                linkedInUrl: data.teacherApplication.linkedInUrl,
                 documents: {
                     cv: {
                         key: savedTeacherFiles[0].key,

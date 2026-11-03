@@ -16,8 +16,46 @@ import { CertificateModel } from "../models/Certificate.js";
 import { DiscussionModel } from "../models/Discussion.js";
 import { CourseModel } from "../models/Course.js";
 import { randomBytes } from "node:crypto";
+import {
+    cleanupSubmissionFiles,
+    persistSubmissionFiles,
+    pickAttachment,
+    streamSubmissionFile,
+} from "../utils/submissionFiles.js";
 export const studentRouter = Router();
 studentRouter.use(requireAuth, requireRole("student"));
+
+const uploadedFileSchema = z.object({
+    originalFilename: z.string().min(1).max(200),
+    mimeType: z.string().min(1).max(120),
+    base64Data: z.string().min(1),
+});
+
+const submissionLinkSchema = z.object({
+    label: z.string().trim().max(120).optional().default(""),
+    url: z.string().trim().url(),
+});
+
+const attachmentsSchema = z.array(uploadedFileSchema).max(10).optional().default([]);
+const linksSchema = z.array(submissionLinkSchema).max(10).optional().default([]);
+
+// Keep assessment results hidden from students until the teacher reviews them.
+function sanitizeAttemptForStudent(attempt) {
+    if (!attempt) return attempt;
+    if (attempt.status === "reviewed") return attempt;
+    return {
+        _id: attempt._id,
+        assessment: attempt.assessment,
+        classroom: attempt.classroom,
+        status: attempt.status,
+        responseText: attempt.responseText ?? "",
+        submissionLinks: attempt.submissionLinks ?? [],
+        attachments: attempt.attachments ?? [],
+        completedAt: attempt.completedAt,
+        createdAt: attempt.createdAt,
+        updatedAt: attempt.updatedAt,
+    };
+}
 // 1. Student Dashboard
 studentRouter.get("/dashboard", asyncHandler(async (req, res) => {
     const studentId = req.user.id;
@@ -100,13 +138,13 @@ studentRouter.get("/assignments", asyncHandler(async (req, res) => {
     }));
     res.json({ assignments: enriched });
 }));
-// 4. Submit assignment
+// 4. Submit assignment (text + file uploads + links)
 studentRouter.post("/assignments/:assignmentId/submit", asyncHandler(async (req, res) => {
     const studentId = req.user.id;
     const data = z.object({
-        textResponse: z.string().default(""),
-        fileUrl: z.string().default(""),
-        originalFilename: z.string().default(""),
+        textResponse: z.string().max(20000).optional().default(""),
+        links: linksSchema,
+        files: attachmentsSchema,
     }).parse(req.body);
     const assignment = await AssignmentModel.findById(req.params.assignmentId);
     if (!assignment) {
@@ -116,6 +154,9 @@ studentRouter.post("/assignments/:assignmentId/submit", asyncHandler(async (req,
     if (!isEnrolled) {
         throw new ApiError(403, "You can only submit assignments for classes you are enrolled in.");
     }
+    if (!data.textResponse.trim() && data.links.length === 0 && data.files.length === 0) {
+        throw new ApiError(400, "Add a written response, a link, or a file before submitting.");
+    }
     const existingSubmission = await AssignmentSubmissionModel.findOne({
         assignment: assignment._id,
         student: studentId,
@@ -123,14 +164,33 @@ studentRouter.post("/assignments/:assignmentId/submit", asyncHandler(async (req,
     if (existingSubmission && existingSubmission.status === "graded") {
         throw new ApiError(400, "This assignment has already been graded and cannot be resubmitted.");
     }
-    const submission = await AssignmentSubmissionModel.findOneAndUpdate({ assignment: assignment._id, student: studentId }, {
-        classroom: assignment.classroom,
-        textResponse: data.textResponse,
-        fileUrl: data.fileUrl,
-        originalFilename: data.originalFilename,
-        status: existingSubmission ? "resubmitted" : "submitted",
-        updatedAt: new Date(),
-    }, { upsert: true, new: true });
+    const attachments = data.files.length
+        ? await persistSubmissionFiles(data.files, { errorPrefix: "Assignment files" })
+        : (existingSubmission?.attachments ?? []);
+    let submission;
+    try {
+        submission = await AssignmentSubmissionModel.findOneAndUpdate(
+            { assignment: assignment._id, student: studentId },
+            {
+                classroom: assignment.classroom,
+                textResponse: data.textResponse,
+                submissionLinks: data.links,
+                attachments,
+                status: existingSubmission ? "resubmitted" : "submitted",
+                score: null,
+                feedback: "",
+                gradedBy: null,
+                gradedAt: null,
+            },
+            { upsert: true, new: true, setDefaultsOnInsert: true },
+        );
+    } catch (error) {
+        if (data.files.length) await cleanupSubmissionFiles(attachments);
+        throw error;
+    }
+    if (data.files.length && existingSubmission?.attachments?.length) {
+        await cleanupSubmissionFiles(existingSubmission.attachments);
+    }
     await NotificationModel.create({
         user: assignment.teacher,
         title: "New Assignment Submission",
@@ -138,7 +198,21 @@ studentRouter.post("/assignments/:assignmentId/submit", asyncHandler(async (req,
         kind: "submission",
         link: "/teacher/assignments",
     });
-    res.status(201).json({ message: "Assignment submitted successfully.", submission });
+    res.status(201).json({
+        message: "Assignment submitted successfully. Your teacher will review and return your result.",
+        submission,
+    });
+}));
+// 4b. Stream a file attached to the student's own submission
+studentRouter.get("/submissions/:submissionId/files/:index", asyncHandler(async (req, res) => {
+    const submission = await AssignmentSubmissionModel.findOne({
+        _id: req.params.submissionId,
+        student: req.user.id,
+    }).lean();
+    if (!submission) {
+        throw new ApiError(404, "Submission not found.");
+    }
+    await streamSubmissionFile(req, res, pickAttachment(submission.attachments, req.params.index));
 }));
 // 5. Assessments list
 studentRouter.get("/assessments", asyncHandler(async (req, res) => {
@@ -156,7 +230,7 @@ studentRouter.get("/assessments", asyncHandler(async (req, res) => {
     const attemptsMap = new Map(attempts.map((att) => [att.assessment.toString(), att]));
     const enriched = assessments.map((assessment) => ({
         ...assessment,
-        latestAttempt: attemptsMap.get(assessment._id.toString()) ?? null,
+        latestAttempt: sanitizeAttemptForStudent(attemptsMap.get(assessment._id.toString())) ?? null,
     }));
     res.json({ assessments: enriched });
 }));
@@ -178,16 +252,20 @@ studentRouter.get("/assessments/:assessmentId", asyncHandler(async (req, res) =>
         assessment: assessment._id,
         student: studentId,
     }).lean();
-    res.json({ assessment, previousAttempt });
+    res.json({ assessment, previousAttempt: sanitizeAttemptForStudent(previousAttempt) });
 }));
-// 7. Attempt assessment & calculate score server-side
+// 7. Submit assessment for teacher review (files + links + optional quiz answers)
+// Results are NOT released here — the teacher issues the final score.
 studentRouter.post("/assessments/:assessmentId/attempt", asyncHandler(async (req, res) => {
     const studentId = req.user.id;
     const data = z.object({
         answers: z.array(z.object({
             questionId: z.string(),
             selectedOption: z.number().int(),
-        })),
+        })).max(200).optional().default([]),
+        responseText: z.string().max(20000).optional().default(""),
+        links: linksSchema,
+        files: attachmentsSchema,
     }).parse(req.body);
     const assessment = await AssessmentModel.findById(req.params.assessmentId);
     if (!assessment) {
@@ -197,47 +275,85 @@ studentRouter.post("/assessments/:assessmentId/attempt", asyncHandler(async (req
     if (!isEnrolled) {
         throw new ApiError(403, "You do not have access to this assessment.");
     }
-    let earnedScore = 0;
-    let maxScore = 0;
-    const evaluatedAnswers = assessment.questions.map((question) => {
-        const qId = question._id.toString();
-        const points = question.points || 1;
-        maxScore += points;
-        const studentAns = data.answers.find((a) => a.questionId === qId);
-        const selected = studentAns !== undefined ? studentAns.selectedOption : -1;
-        const isCorrect = selected === question.correctOptionIndex;
-        if (isCorrect) {
-            earnedScore += points;
-        }
-        return {
-            questionId: question._id,
-            selectedOption: selected,
-            isCorrect,
-        };
-    });
-    const percentage = maxScore > 0 ? Math.round((earnedScore / maxScore) * 100) : 0;
-    const passed = percentage >= assessment.passingScorePercentage;
-    const attempt = await AssessmentAttemptModel.create({
+    const hasQuestions = assessment.questions.length > 0;
+    if (hasQuestions && data.answers.length === 0) {
+        throw new ApiError(400, "Answer the questions before submitting this assessment.");
+    }
+    if (!hasQuestions && !data.responseText.trim() && data.links.length === 0 && data.files.length === 0) {
+        throw new ApiError(400, "Add a written response, a link, or a file before submitting.");
+    }
+    const existingAttempt = await AssessmentAttemptModel.findOne({
         assessment: assessment._id,
-        classroom: assessment.classroom,
         student: studentId,
-        answers: evaluatedAnswers,
-        score: earnedScore,
-        maxScore,
-        percentage,
-        passed,
-        completedAt: new Date(),
+    });
+    if (existingAttempt && existingAttempt.status === "reviewed") {
+        throw new ApiError(400, "This assessment has already been reviewed and cannot be resubmitted.");
+    }
+    // Record the maximum possible score so teachers can grade consistently.
+    const maxScore = assessment.questions.reduce((total, question) => total + (question.points || 1), 0);
+    const evaluatedAnswers = hasQuestions
+        ? assessment.questions.map((question) => {
+            const studentAns = data.answers.find((a) => a.questionId === question._id.toString());
+            return {
+                questionId: question._id,
+                selectedOption: studentAns !== undefined ? studentAns.selectedOption : -1,
+            };
+        })
+        : [];
+    const attachments = data.files.length
+        ? await persistSubmissionFiles(data.files, { errorPrefix: "Assessment files" })
+        : (existingAttempt?.attachments ?? []);
+    let attempt;
+    try {
+        attempt = await AssessmentAttemptModel.findOneAndUpdate(
+            { assessment: assessment._id, student: studentId },
+            {
+                classroom: assessment.classroom,
+                answers: evaluatedAnswers,
+                responseText: data.responseText,
+                submissionLinks: data.links,
+                attachments,
+                maxScore,
+                status: "submitted",
+                score: null,
+                percentage: null,
+                passed: null,
+                feedback: "",
+                reviewedBy: null,
+                reviewedAt: null,
+                completedAt: new Date(),
+            },
+            { upsert: true, new: true, setDefaultsOnInsert: true },
+        );
+    } catch (error) {
+        if (data.files.length) await cleanupSubmissionFiles(attachments);
+        throw error;
+    }
+    if (data.files.length && existingAttempt?.attachments?.length) {
+        await cleanupSubmissionFiles(existingAttempt.attachments);
+    }
+    await NotificationModel.create({
+        user: assessment.teacher,
+        title: "New Assessment Submission",
+        message: `A student submitted "${assessment.title}" for review.`,
+        kind: "submission",
+        link: "/teacher/assessments",
     });
     res.status(201).json({
-        message: "Assessment completed.",
-        attempt: {
-            score: earnedScore,
-            maxScore,
-            percentage,
-            passed,
-            passingScorePercentage: assessment.passingScorePercentage,
-        },
+        message: "Assessment submitted. Your teacher will review and release your result.",
+        attempt: { status: "submitted", maxScore },
     });
+}));
+// 7b. Stream a file attached to the student's own assessment attempt
+studentRouter.get("/attempts/:attemptId/files/:index", asyncHandler(async (req, res) => {
+    const attempt = await AssessmentAttemptModel.findOne({
+        _id: req.params.attemptId,
+        student: req.user.id,
+    }).lean();
+    if (!attempt) {
+        throw new ApiError(404, "Assessment submission not found.");
+    }
+    await streamSubmissionFile(req, res, pickAttachment(attempt.attachments, req.params.index));
 }));
 // 8. View Attendance history
 studentRouter.get("/attendance", asyncHandler(async (req, res) => {
@@ -267,8 +383,10 @@ studentRouter.get("/progress", asyncHandler(async (req, res) => {
     const totalAssignments = assignments.length;
     const completedAssignments = submissions.length;
     const assignmentPercentage = totalAssignments > 0 ? Math.min(100, Math.round((completedAssignments / totalAssignments) * 100)) : 100;
-    const passedAssessments = attempts.filter((a) => a.passed).length;
-    const totalAttempts = attempts.length;
+    // Only teacher-reviewed assessments count towards progress and results.
+    const reviewedAttempts = attempts.filter((a) => a.status === "reviewed");
+    const passedAssessments = reviewedAttempts.filter((a) => a.passed).length;
+    const totalAttempts = reviewedAttempts.length;
     // Weighted Overall Progress formula: Attendance 40% + Assignments 40% + Quizzes 20%
     const overallProgress = Math.round((attendancePercentage * 0.4) + (assignmentPercentage * 0.4) + ((totalAttempts > 0 ? (passedAssessments / totalAttempts) * 100 : 100) * 0.2));
     res.json({
@@ -300,6 +418,8 @@ studentRouter.patch("/profile", asyncHandler(async (req, res) => {
         currentSkillLevel: z.string().optional(),
         preferredSchedule: z.string().optional(),
         preferredCourseIds: z.array(z.string()).max(20).optional(),
+        preferredCourseNotes: z.string().trim().max(1200).optional(),
+        preferredLearningModes: z.array(z.enum(["live", "self_paced", "hybrid"])).max(3).optional(),
         weeklyStudyHours: z.coerce.number().min(1).max(80).optional(),
         timeZone: z.string().trim().max(80).optional(),
         preferredLanguage: z.enum(["am", "en"]).optional(),
@@ -339,8 +459,14 @@ studentRouter.patch("/profile", asyncHandler(async (req, res) => {
         user.studentProfile.currentSkillLevel = data.currentSkillLevel;
     if (data.preferredSchedule !== undefined)
         user.studentProfile.preferredSchedule = data.preferredSchedule;
-    if (data.preferredCourseIds !== undefined)
+    if (data.preferredCourseIds !== undefined) {
         user.studentProfile.preferredCourseIds = preferredCourseIds;
+        user.studentProfile.courseSelectionUpdatedAt = new Date();
+    }
+    if (data.preferredCourseNotes !== undefined)
+        user.studentProfile.preferredCourseNotes = data.preferredCourseNotes;
+    if (data.preferredLearningModes !== undefined)
+        user.studentProfile.preferredLearningModes = data.preferredLearningModes;
     if (data.weeklyStudyHours !== undefined)
         user.studentProfile.weeklyStudyHours = data.weeklyStudyHours;
     if (data.timeZone !== undefined)
@@ -493,8 +619,9 @@ studentRouter.post("/classes/:classId/claim-certificate", asyncHandler(async (re
     const submittedCount = submissions.length;
     const assignmentPercentage = totalAssignments > 0 ? Math.round((submittedCount / totalAssignments) * 100) : 100;
 
-    const passedAssessments = attempts.filter((a) => a.passed).length;
-    const totalAttempts = attempts.length;
+    const reviewedAttempts = attempts.filter((a) => a.status === "reviewed");
+    const passedAssessments = reviewedAttempts.filter((a) => a.passed).length;
+    const totalAttempts = reviewedAttempts.length;
     const quizPercentage = totalAttempts > 0 ? Math.round((passedAssessments / totalAttempts) * 100) : 100;
 
     const overallProgress = Math.round((attendancePercentage * 0.4) + (assignmentPercentage * 0.4) + (quizPercentage * 0.2));

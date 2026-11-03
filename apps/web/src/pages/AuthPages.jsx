@@ -239,8 +239,12 @@ export function SignupPage({ initialRole = "student" }) {
         experience: "",
         experienceYears: 0,
         teachingCategories: "",
+        teachingModes: ["live"],
+        teachingLanguages: "English",
         availability: "",
         teachingStatement: "",
+        portfolioUrl: "",
+        linkedInUrl: "",
         cv: null,
         certificates: [],
     });
@@ -336,7 +340,12 @@ export function SignupPage({ initialRole = "student" }) {
                             experienceYears: Number(teacherForm.experienceYears),
                             teachingCategories: teacherForm.teachingCategories
                                 .split(",").map((category) => category.trim()).filter(Boolean),
+                            teachingModes: teacherForm.teachingModes.length ? teacherForm.teachingModes : ["live"],
+                            teachingLanguages: teacherForm.teachingLanguages
+                                .split(",").map((language) => language.trim()).filter(Boolean),
                             availability: teacherForm.availability,
+                            portfolioUrl: teacherForm.portfolioUrl,
+                            linkedInUrl: teacherForm.linkedInUrl,
                             cv: teacherForm.cv,
                             certificates: teacherForm.certificates,
                         },
@@ -521,10 +530,46 @@ export function SignupPage({ initialRole = "student" }) {
                                     Subjects you can teach (comma-separated)
                                     <input required value={teacherForm.teachingCategories} onChange={(event) => setTeacherForm({ ...teacherForm, teachingCategories: event.target.value })} className={fieldClass} placeholder="Mathematics, English, Web Development" />
                                 </label>
+                                <div className="block text-xs font-bold text-slate-700">
+                                    Teaching modes (select at least one)
+                                    <div className="mt-1.5 flex flex-wrap gap-2">
+                                        {[
+                                            { value: "live", label: "Live cohort classes" },
+                                            { value: "self_paced", label: "Self-paced" },
+                                            { value: "hybrid", label: "Hybrid" },
+                                        ].map((mode) => {
+                                            const active = teacherForm.teachingModes.includes(mode.value);
+                                            return (
+                                                <button key={mode.value} type="button" aria-pressed={active} onClick={() => setTeacherForm((form) => ({
+                                                    ...form,
+                                                    teachingModes: active
+                                                        ? form.teachingModes.filter((item) => item !== mode.value)
+                                                        : [...form.teachingModes, mode.value],
+                                                }))} className={`rounded-xl border px-3 py-1.5 text-xs font-semibold transition ${active ? "border-[#0066ff] bg-sky-50 text-blue-800" : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"}`}>
+                                                    {mode.label}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                                <label className="block text-xs font-bold text-slate-700">
+                                    Teaching languages (comma-separated)
+                                    <input required value={teacherForm.teachingLanguages} onChange={(event) => setTeacherForm({ ...teacherForm, teachingLanguages: event.target.value })} className={fieldClass} placeholder="English, Amharic" />
+                                </label>
                                 <label className="block text-xs font-bold text-slate-700">
                                     Teaching availability
                                     <textarea required minLength={2} maxLength={500} value={teacherForm.availability} onChange={(event) => setTeacherForm({ ...teacherForm, availability: event.target.value })} rows={2} className={fieldClass} placeholder="Days, times, and time zone" />
                                 </label>
+                                <div className="grid gap-4 sm:grid-cols-2">
+                                    <label className="block text-xs font-bold text-slate-700">
+                                        Portfolio / website (optional)
+                                        <input type="url" value={teacherForm.portfolioUrl} onChange={(event) => setTeacherForm({ ...teacherForm, portfolioUrl: event.target.value })} className={fieldClass} placeholder="https://your-site.com" />
+                                    </label>
+                                    <label className="block text-xs font-bold text-slate-700">
+                                        LinkedIn profile (optional)
+                                        <input type="url" value={teacherForm.linkedInUrl} onChange={(event) => setTeacherForm({ ...teacherForm, linkedInUrl: event.target.value })} className={fieldClass} placeholder="https://linkedin.com/in/you" />
+                                    </label>
+                                </div>
                                 <label className="block text-xs font-bold text-slate-700">
                                     Why do you want to teach with TedbabeLearnHUB?
                                     <textarea required minLength={20} maxLength={1000} value={teacherForm.teachingStatement} onChange={(event) => setTeacherForm({ ...teacherForm, teachingStatement: event.target.value })} rows={3} className={fieldClass} placeholder="Describe how you support learners and what you would bring to TedbabeLearnHUB." />

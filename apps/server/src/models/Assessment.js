@@ -9,6 +9,7 @@ const questionSchema = new Schema({
 const assessmentSchema = new Schema({
     title: { type: String, required: true, trim: true },
     description: { type: String, default: "" },
+    instructions: { type: String, default: "" },
     classroom: { type: Schema.Types.ObjectId, ref: "Classroom", required: true, index: true },
     teacher: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
     timeLimitMinutes: { type: Number, default: 30 },

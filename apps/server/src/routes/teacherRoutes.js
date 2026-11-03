@@ -9,10 +9,12 @@ import { NotificationModel, pruneNotifications, NOTIFICATION_CAPS } from "../mod
 import { AssignmentModel } from "../models/Assignment.js";
 import { AssignmentSubmissionModel } from "../models/AssignmentSubmission.js";
 import { AssessmentModel } from "../models/Assessment.js";
+import { AssessmentAttemptModel } from "../models/AssessmentAttempt.js";
 import { AttendanceRecordModel } from "../models/AttendanceRecord.js";
 import { UserModel } from "../models/User.js";
 import { DiscussionModel } from "../models/Discussion.js";
 import { AnnouncementModel } from "../models/Announcement.js";
+import { pickAttachment, streamSubmissionFile } from "../utils/submissionFiles.js";
 export const teacherRouter = Router();
 teacherRouter.use(requireAuth, requireRole("teacher"));
 // 1. Teacher Dashboard
@@ -36,8 +38,15 @@ teacherRouter.get("/dashboard", asyncHandler(async (req, res) => {
     // Prune excess notifications beyond the cap in the background
     void pruneNotifications(teacherId, NOTIFICATION_CAPS.teacher);
     const assignmentIds = assignments.map((a) => a._id);
-    const pendingSubmissions = await AssignmentSubmissionModel.countDocuments({
-        assignment: { $in: assignmentIds },
+    const [pendingSubmissions, assessmentIds] = await Promise.all([
+        AssignmentSubmissionModel.countDocuments({
+            assignment: { $in: assignmentIds },
+            status: { $ne: "graded" },
+        }),
+        AssessmentModel.find({ teacher: teacherId }).select("_id").lean(),
+    ]);
+    const pendingAssessmentReviews = await AssessmentAttemptModel.countDocuments({
+        assessment: { $in: assessmentIds.map((a) => a._id) },
         status: "submitted",
     });
     res.json({
@@ -46,6 +55,7 @@ teacherRouter.get("/dashboard", asyncHandler(async (req, res) => {
             upcomingLessons: upcomingLessons.length,
             totalAssignedStudents: classes.reduce((total, classroom) => total + (classroom.students?.length ?? 0), 0),
             pendingSubmissionsToGrade: pendingSubmissions,
+            pendingAssessmentReviews,
         },
         classes,
         upcomingLessons,
@@ -207,6 +217,83 @@ teacherRouter.patch("/submissions/:submissionId/grade", asyncHandler(async (req,
     });
     res.json({ message: "Submission graded successfully.", submission });
 }));
+// 7b. Stream a file attached to a submission the teacher owns
+teacherRouter.get("/submissions/:submissionId/files/:index", asyncHandler(async (req, res) => {
+    const submission = await AssignmentSubmissionModel.findById(req.params.submissionId)
+        .populate("assignment", "teacher")
+        .lean();
+    if (!submission || submission.assignment?.teacher?.toString() !== req.user.id) {
+        throw new ApiError(404, "Submission not found or unauthorized.");
+    }
+    await streamSubmissionFile(req, res, pickAttachment(submission.attachments, req.params.index));
+}));
+// 7c. View submissions (attempts) for an assessment
+teacherRouter.get("/assessments/:assessmentId/attempts", asyncHandler(async (req, res) => {
+    const assessment = await AssessmentModel.findOne({
+        _id: req.params.assessmentId,
+        teacher: req.user.id,
+    }).populate("classroom", "title students").lean();
+    if (!assessment) {
+        throw new ApiError(404, "Assessment not found or unauthorized.");
+    }
+    const attempts = await AssessmentAttemptModel.find({ assessment: assessment._id })
+        .populate("student", "fullName name email")
+        .sort({ createdAt: -1 })
+        .lean();
+    res.json({ assessment, attempts });
+}));
+// 7d. Stream a file attached to an assessment attempt
+teacherRouter.get("/attempts/:attemptId/files/:index", asyncHandler(async (req, res) => {
+    const attempt = await AssessmentAttemptModel.findById(req.params.attemptId)
+        .populate("assessment", "teacher")
+        .lean();
+    if (!attempt || attempt.assessment?.teacher?.toString() !== req.user.id) {
+        throw new ApiError(404, "Assessment submission not found or unauthorized.");
+    }
+    await streamSubmissionFile(req, res, pickAttachment(attempt.attachments, req.params.index));
+}));
+// 7e. Review an assessment attempt and release the result
+teacherRouter.patch("/attempts/:attemptId/review", asyncHandler(async (req, res) => {
+    const teacherId = req.user.id;
+    const data = z.object({
+        score: z.number().min(0),
+        feedback: z.string().max(4000).default(""),
+        passed: z.boolean().optional(),
+    }).parse(req.body);
+    const attempt = await AssessmentAttemptModel.findById(req.params.attemptId)
+        .populate("assessment")
+        .populate("student", "fullName name email");
+    if (!attempt) {
+        throw new ApiError(404, "Assessment submission not found.");
+    }
+    const assessment = await AssessmentModel.findOne({ _id: attempt.assessment, teacher: teacherId });
+    if (!assessment) {
+        throw new ApiError(403, "You can only review submissions for your own assessments.");
+    }
+    const maxScore = attempt.maxScore || assessment.questions.reduce((total, question) => total + (question.points || 1), 0) || 100;
+    if (data.score > maxScore) {
+        throw new ApiError(400, `Score cannot exceed the maximum score of ${maxScore}.`);
+    }
+    const percentage = maxScore > 0 ? Math.round((data.score / maxScore) * 100) : 0;
+    const passed = data.passed ?? percentage >= assessment.passingScorePercentage;
+    attempt.score = data.score;
+    attempt.maxScore = maxScore;
+    attempt.percentage = percentage;
+    attempt.passed = passed;
+    attempt.feedback = data.feedback;
+    attempt.status = "reviewed";
+    attempt.reviewedBy = teacherId;
+    attempt.reviewedAt = new Date();
+    await attempt.save();
+    await NotificationModel.create({
+        user: attempt.student._id,
+        title: `Assessment Result Released: ${assessment.title}`,
+        message: `Your submission for "${assessment.title}" has been reviewed: ${data.score}/${maxScore} (${percentage}%).`,
+        kind: "grade",
+        link: "/student/assessments",
+    });
+    res.json({ message: "Assessment result released to the student.", attempt });
+}));
 // 8. Record attendance for a class session
 teacherRouter.post("/sessions/:sessionId/attendance", asyncHandler(async (req, res) => {
     const teacherId = req.user.id;
@@ -305,7 +392,27 @@ teacherRouter.get("/assessments", asyncHandler(async (req, res) => {
         .populate("classroom", "title")
         .sort({ createdAt: -1 })
         .lean();
-    res.json({ assessments });
+    const assessmentIds = assessments.map((a) => a._id);
+    const attemptStats = await AssessmentAttemptModel.aggregate([
+        { $match: { assessment: { $in: assessmentIds } } },
+        {
+            $group: {
+                _id: "$assessment",
+                total: { $sum: 1 },
+                reviewed: { $sum: { $cond: [{ $eq: ["$status", "reviewed"] }, 1, 0] } },
+            },
+        },
+    ]);
+    const statsMap = new Map(attemptStats.map((s) => [s._id.toString(), s]));
+    const enriched = assessments.map((a) => {
+        const stats = statsMap.get(a._id.toString());
+        return {
+            ...a,
+            attemptCount: stats?.total ?? 0,
+            reviewedCount: stats?.reviewed ?? 0,
+        };
+    });
+    res.json({ assessments: enriched });
 }));
 // 12. View students assigned to teacher
 teacherRouter.get("/students", asyncHandler(async (req, res) => {

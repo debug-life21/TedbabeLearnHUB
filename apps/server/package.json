@@ -11,7 +11,7 @@
     "seed:catalog": "node src/seedCatalog.js",
     "seed:admin": "node src/seedAdmin.js",
     "migrate:uploads-to-r2": "node src/migrateUploadsToR2.js",
-    "test": "node --test test/*.test.js",
+    "test": "MONGO_URI=mongodb://127.0.0.1:27017/learnhub_test node --test test/*.test.js",
     "lint": "node build.js --check"
   },
   "dependencies": {

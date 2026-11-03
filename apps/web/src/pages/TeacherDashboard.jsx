@@ -44,11 +44,18 @@ export function TeacherDashboard({ user }) {
         assignment: null,
         list: [],
     });
-    const [gradingState, setGradingState] = useState({
-        subId: "",
-        score: 0,
-        feedback: "",
+    const [gradingDrafts, setGradingDrafts] = useState({});
+    const [overview, setOverview] = useState(null);
+    // Assessment attempts review state
+    const [attemptsModal, setAttemptsModal] = useState({
+        open: false,
+        assessment: null,
+        list: [],
     });
+    const [reviewDrafts, setReviewDrafts] = useState({});
+    // Authenticated file preview state
+    const [filePreview, setFilePreview] = useState({ open: false, title: "", url: "", mimeType: "" });
+    const [fileBusy, setFileBusy] = useState(false);
     // Create Assignment Modal
     const [createAssignModal, setCreateAssignModal] = useState(false);
     const [assignForm, setAssignForm] = useState({
@@ -105,6 +112,7 @@ export function TeacherDashboard({ user }) {
             setResources(resRes.resources || []);
             setNotifications(dash.notifications || []);
             setAnnouncements(annRes.announcements || []);
+            setOverview(dash.overview || null);
             if (dash.upcomingLessons?.[0] && !selectedSessionId) {
                 setSelectedSessionId(dash.upcomingLessons[0]._id);
             }
@@ -185,17 +193,25 @@ export function TeacherDashboard({ user }) {
         }
     };
     // Grade Submission
-    const handleGradeSubmission = async () => {
+    const updateGradingDraft = (subId, patch) => {
+        setGradingDrafts((prev) => ({ ...prev, [subId]: { ...prev[subId], ...patch } }));
+    };
+    const handleGradeSubmission = async (sub) => {
+        const draft = gradingDrafts[sub._id] || {};
         try {
-            await apiRequest(`/api/teacher/submissions/${gradingState.subId}/grade`, {
+            await apiRequest(`/api/teacher/submissions/${sub._id}/grade`, {
                 method: "PATCH",
                 body: JSON.stringify({
-                    score: Number(gradingState.score),
-                    feedback: gradingState.feedback,
+                    score: Number(draft.score ?? 0),
+                    feedback: draft.feedback ?? "",
                 }),
             });
             setFeedback("Grade saved.");
-            setGradingState({ subId: "", score: 0, feedback: "" });
+            setGradingDrafts((prev) => {
+                const next = { ...prev };
+                delete next[sub._id];
+                return next;
+            });
             if (submissionsModal.assignment) {
                 openSubmissions(submissionsModal.assignment);
             }
@@ -204,6 +220,77 @@ export function TeacherDashboard({ user }) {
         catch (err) {
             setFeedback(err.message);
         }
+    };
+    // View assessment attempts
+    const openAttempts = async (assessment) => {
+        try {
+            const res = await apiRequest(`/api/teacher/assessments/${assessment._id}/attempts`);
+            setAttemptsModal({
+                open: true,
+                assessment,
+                list: res.attempts || [],
+            });
+        }
+        catch (err) {
+            setFeedback(err.message);
+        }
+    };
+    // Review an assessment attempt and release the result
+    const updateReviewDraft = (attemptId, patch) => {
+        setReviewDrafts((prev) => ({ ...prev, [attemptId]: { ...prev[attemptId], ...patch } }));
+    };
+    const handleReviewAttempt = async (attempt) => {
+        const draft = reviewDrafts[attempt._id] || {};
+        try {
+            await apiRequest(`/api/teacher/attempts/${attempt._id}/review`, {
+                method: "PATCH",
+                body: JSON.stringify({
+                    score: Number(draft.score ?? 0),
+                    feedback: draft.feedback ?? "",
+                    passed: draft.passed ?? true,
+                }),
+            });
+            setFeedback("Result released to the student.");
+            setReviewDrafts((prev) => {
+                const next = { ...prev };
+                delete next[attempt._id];
+                return next;
+            });
+            if (attemptsModal.assessment) {
+                openAttempts(attemptsModal.assessment);
+            }
+            void loadTeacherData();
+        }
+        catch (err) {
+            setFeedback(err.message);
+        }
+    };
+    // Load a protected submission/attempt file via an authenticated blob
+    const openSubmissionFile = async (fileUrl, file) => {
+        setFileBusy(true);
+        try {
+            const blob = await apiRequest(fileUrl, { responseType: "blob" });
+            const typed = blob instanceof Blob && (!blob.type || blob.type === "application/octet-stream")
+                ? new Blob([blob], { type: file?.mimeType || "application/octet-stream" })
+                : blob;
+            const objectUrl = URL.createObjectURL(typed);
+            setFilePreview((prev) => {
+                if (prev.url) URL.revokeObjectURL(prev.url);
+                return { open: true, title: file?.filename || "Submission file", url: objectUrl, mimeType: file?.mimeType || typed.type };
+            });
+        }
+        catch (err) {
+            setFeedback(err.message);
+        }
+        finally {
+            setFileBusy(false);
+        }
+    };
+    const closeFilePreview = () => {
+        setFilePreview((prev) => {
+            if (prev.url) URL.revokeObjectURL(prev.url);
+            return { open: false, title: "", url: "", mimeType: "" };
+        });
     };
     // Create Quiz
     const handleCreateQuiz = async (e) => {
@@ -389,11 +476,12 @@ export function TeacherDashboard({ user }) {
 
       {/* 1. OVERVIEW */}
       {activeTab === "overview" ? (<div className="space-y-8">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
             <MetricCard label="Assigned cohorts" value={classes.length} icon="🏫"/>
             <MetricCard label="Upcoming sessions" value={upcomingLessons.length} icon="📹"/>
             <MetricCard label="Learners" value={classes.reduce((acc, c) => acc + (c.students?.length || 0), 0)} icon="🎓"/>
-            <MetricCard label="Assignments posted" value={assignments.length} icon="📚"/>
+            <MetricCard label="Pending grading" value={overview?.pendingSubmissionsToGrade ?? 0} icon="📝"/>
+            <MetricCard label="Assessment reviews" value={overview?.pendingAssessmentReviews ?? 0} icon="✅"/>
           </div>
 
           <div className="grid gap-8 lg:grid-cols-2">
@@ -583,6 +671,12 @@ export function TeacherDashboard({ user }) {
                   <span>Questions: {qz.questions?.length || 0}</span>
                   <span>Passing score: {qz.passingScorePercentage}%</span>
                 </div>
+                <div className="flex items-center justify-between text-xs text-slate-500">
+                  <span className="font-bold text-cyan-700">{qz.attemptCount || 0} submitted ({qz.reviewedCount || 0} released)</span>
+                </div>
+                <button onClick={() => openAttempts(qz)} className="w-full rounded-xl bg-cyan-50 py-2 text-xs font-bold text-cyan-800 hover:bg-cyan-100">
+                  Review submissions
+                </button>
               </div>))}
           </div>
         </div>) : null}
@@ -680,22 +774,96 @@ export function TeacherDashboard({ user }) {
                 <div className="flex items-center justify-between">
                   <span className="font-bold text-slate-900">{sub.student?.fullName}</span>
                   <Badge variant={sub.status === "graded" ? "emerald" : "amber"}>
-                    {sub.status === "graded" ? `${sub.score} pts` : "Submitted"}
+                    {sub.status === "graded" ? `${sub.score} pts` : "Awaiting review"}
                   </Badge>
                 </div>
-                <p className="text-xs text-slate-700 bg-slate-50 p-2 rounded-lg">{sub.textResponse || "File attached"}</p>
+                <p className="text-xs text-slate-700 bg-slate-50 p-2 rounded-lg whitespace-pre-wrap">{sub.textResponse || "No written response."}</p>
+
+                {sub.submissionLinks?.length ? (<div className="flex flex-wrap gap-2">
+                    {sub.submissionLinks.map((link, index) => (<a key={index} href={link.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 rounded-lg bg-blue-50 px-2 py-1 text-[11px] font-semibold text-blue-700 hover:bg-blue-100">
+                        🔗 {link.label || link.url}
+                      </a>))}
+                  </div>) : null}
+
+                {sub.attachments?.length ? (<div className="flex flex-wrap gap-2">
+                    {sub.attachments.map((file, index) => (<button key={file.key || index} type="button" disabled={fileBusy} onClick={() => openSubmissionFile(`/api/teacher/submissions/${sub._id}/files/${index}`, file)} className="inline-flex items-center gap-1 rounded-lg bg-slate-100 px-2 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-200 disabled:opacity-60">
+                        📎 {file.filename}
+                      </button>))}
+                  </div>) : null}
+
                 {sub.feedback ? <p className="text-xs text-blue-700">Feedback: {sub.feedback}</p> : null}
 
                 {/* Inline Grading Form */}
                 <div className="pt-2 border-t border-slate-100 flex gap-2">
-                  <input type="number" max={submissionsModal.assignment?.maxScore || 100} placeholder="Score" className="w-20 rounded-lg border border-slate-200 p-1 text-xs" onChange={(e) => setGradingState({ ...gradingState, subId: sub._id, score: Number(e.target.value) })}/>
-                  <input type="text" placeholder="Feedback" className="flex-1 rounded-lg border border-slate-200 p-1 text-xs" onChange={(e) => setGradingState({ ...gradingState, subId: sub._id, feedback: e.target.value })}/>
-                  <button onClick={handleGradeSubmission} className="rounded-lg bg-blue-600 px-3 py-1 text-xs font-bold text-white hover:bg-blue-700">
+                  <input type="number" max={submissionsModal.assignment?.maxScore || 100} placeholder="Score" value={gradingDrafts[sub._id]?.score ?? ""} className="w-20 rounded-lg border border-slate-200 p-1 text-xs" onChange={(e) => updateGradingDraft(sub._id, { score: Number(e.target.value) })}/>
+                  <input type="text" placeholder="Feedback" value={gradingDrafts[sub._id]?.feedback ?? ""} className="flex-1 rounded-lg border border-slate-200 p-1 text-xs" onChange={(e) => updateGradingDraft(sub._id, { feedback: e.target.value })}/>
+                  <button onClick={() => handleGradeSubmission(sub)} className="rounded-lg bg-blue-600 px-3 py-1 text-xs font-bold text-white hover:bg-blue-700">
                     {t("saveGrade")}
                   </button>
                 </div>
               </div>)))}
         </div>
+      </Modal>
+
+      {/* MODAL: Review assessment attempts */}
+      <Modal title={`Assessment submissions: ${attemptsModal.assessment?.title || ""}`} isOpen={attemptsModal.open} onClose={() => setAttemptsModal({ open: false, assessment: null, list: [] })}>
+        <div className="space-y-4 max-h-[70vh] overflow-y-auto">
+          {attemptsModal.list.length === 0 ? (<EmptyState title="No submissions yet."/>) : (attemptsModal.list.map((attempt) => (<div key={attempt._id} className="rounded-xl border border-slate-200 p-4 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-slate-900">{attempt.student?.fullName || attempt.student?.name}</span>
+                  <Badge variant={attempt.status === "reviewed" ? "emerald" : "amber"}>
+                    {attempt.status === "reviewed" ? `${attempt.score}/${attempt.maxScore}` : "Awaiting review"}
+                  </Badge>
+                </div>
+
+                {attempt.responseText ? <p className="text-xs text-slate-700 bg-slate-50 p-2 rounded-lg whitespace-pre-wrap">{attempt.responseText}</p> : null}
+
+                {attempt.submissionLinks?.length ? (<div className="flex flex-wrap gap-2">
+                    {attempt.submissionLinks.map((link, index) => (<a key={index} href={link.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 rounded-lg bg-blue-50 px-2 py-1 text-[11px] font-semibold text-blue-700 hover:bg-blue-100">
+                        🔗 {link.label || link.url}
+                      </a>))}
+                  </div>) : null}
+
+                {attempt.attachments?.length ? (<div className="flex flex-wrap gap-2">
+                    {attempt.attachments.map((file, index) => (<button key={file.key || index} type="button" disabled={fileBusy} onClick={() => openSubmissionFile(`/api/teacher/attempts/${attempt._id}/files/${index}`, file)} className="inline-flex items-center gap-1 rounded-lg bg-slate-100 px-2 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-200 disabled:opacity-60">
+                        📎 {file.filename}
+                      </button>))}
+                  </div>) : null}
+
+                {attempt.feedback ? <p className="text-xs text-blue-700">Feedback: {attempt.feedback}</p> : null}
+
+                {/* Inline review form */}
+                <div className="pt-2 border-t border-slate-100 space-y-2">
+                  <div className="flex gap-2">
+                    <input type="number" min="0" max={attempt.maxScore || attemptsModal.assessment?.questions?.reduce((total, q) => total + (q.points || 1), 0) || 100} placeholder="Score" value={reviewDrafts[attempt._id]?.score ?? ""} className="w-20 rounded-lg border border-slate-200 p-1 text-xs" onChange={(e) => updateReviewDraft(attempt._id, { score: e.target.value })}/>
+                    <select value={reviewDrafts[attempt._id]?.passed === false ? "false" : "true"} onChange={(e) => updateReviewDraft(attempt._id, { passed: e.target.value === "true" })} className="rounded-lg border border-slate-200 p-1 text-xs bg-white">
+                      <option value="true">Passed</option>
+                      <option value="false">Not passed</option>
+                    </select>
+                    <button onClick={() => handleReviewAttempt(attempt)} className="rounded-lg bg-cyan-600 px-3 py-1 text-xs font-bold text-white hover:bg-cyan-700">
+                      Release result
+                    </button>
+                  </div>
+                  <input type="text" placeholder="Feedback for the student" value={reviewDrafts[attempt._id]?.feedback ?? ""} className="w-full rounded-lg border border-slate-200 p-1 text-xs" onChange={(e) => updateReviewDraft(attempt._id, { feedback: e.target.value })}/>
+                </div>
+              </div>)))}
+        </div>
+      </Modal>
+
+      {/* MODAL: Authenticated file preview */}
+      <Modal title={filePreview.title || "Submission file"} isOpen={filePreview.open} onClose={closeFilePreview}>
+        {filePreview.mimeType?.startsWith("image/") ? (
+          <img src={filePreview.url} alt={filePreview.title} className="mx-auto max-h-[70vh] rounded-xl"/>
+        ) : filePreview.mimeType?.startsWith("video/") ? (
+          <video src={filePreview.url} controls className="mx-auto max-h-[70vh] w-full rounded-xl"/>
+        ) : filePreview.mimeType?.startsWith("audio/") ? (
+          <audio src={filePreview.url} controls className="mx-auto w-full"/>
+        ) : (
+          <iframe src={filePreview.url} title={filePreview.title} className="h-[70vh] w-full rounded-xl border border-slate-200"/>
+        )}
+        <a href={filePreview.url} download={filePreview.title} className="mt-3 block rounded-xl bg-slate-900 py-2 text-center text-xs font-bold text-white hover:bg-slate-800">
+          Download
+        </a>
       </Modal>
 
       {activeTab === "profile" ? (

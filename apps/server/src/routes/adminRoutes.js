@@ -25,6 +25,8 @@ import { CertificateModel } from "../models/Certificate.js";
 import { DiscussionModel } from "../models/Discussion.js";
 import { LearningResourceModel } from "../models/LearningResource.js";
 import { slugify } from "../utils.js";
+import { buildRecurringSessions, recurrenceSchema } from "../utils/recurrence.js";
+import { cleanupSubmissionFiles, pickAttachment, streamSubmissionFile } from "../utils/submissionFiles.js";
 import { deleteStoredFile, getStoredFileStream } from "../lib/storage.js";
 import { sendAnnouncementEmail, sendClassPlacementEmail, sendSessionScheduledEmail } from "../utils/email.js";
 export const adminRouter = Router();
@@ -939,8 +941,9 @@ adminRouter.post("/sessions", asyncHandler(async (req, res) => {
         startsAt: z.string().datetime(),
         endsAt: z.string().datetime(),
         meetingUrl: z.string().url().optional(),
+        recurrence: recurrenceSchema,
     }).parse(req.body);
-    const classroom = await ClassroomModel.findById(req.body.classId);
+    const classroom = await ClassroomModel.findById(data.classId);
     if (!classroom) {
         throw new ApiError(404, "Class not found.");
     }
@@ -952,37 +955,47 @@ adminRouter.post("/sessions", asyncHandler(async (req, res) => {
     if (start >= end) {
         throw new ApiError(400, "Session end time must be after start time.");
     }
-    const existingConflict = await ClassSessionModel.findOne({
-        teacher: classroom.teacher,
-        status: "scheduled",
-        $or: [
-            { startsAt: { $lt: end, $gte: start } },
-            { endsAt: { $gt: start, $lte: end } },
-            { startsAt: { $lte: start }, endsAt: { $gte: end } },
-        ],
-    });
-    if (existingConflict) {
-        throw new ApiError(409, "The assigned teacher already has a conflicting session.");
+    // Expand the request into one or more weekly occurrences.
+    const occurrences = buildRecurringSessions({ startsAt: start, endsAt: end, recurrence: data.recurrence });
+    for (const occurrence of occurrences) {
+        const conflict = await ClassSessionModel.findOne({
+            teacher: classroom.teacher,
+            status: "scheduled",
+            startsAt: { $lt: occurrence.endsAt },
+            endsAt: { $gt: occurrence.startsAt },
+        });
+        if (conflict) {
+            throw new ApiError(409, `The assigned teacher already has a conflicting session on ${occurrence.startsAt.toISOString()}.`);
+        }
     }
-    const session = await ClassSessionModel.create({
+    const created = await ClassSessionModel.insertMany(occurrences.map((occurrence) => ({
         classroom: classroom._id,
         teacher: classroom.teacher,
         title: data.title,
         description: data.description,
-        startsAt: start,
-        endsAt: end,
+        startsAt: occurrence.startsAt,
+        endsAt: occurrence.endsAt,
         meetingUrl: data.meetingUrl ?? "",
-    });
+        seriesId: occurrence.seriesId,
+        recurrencePattern: occurrence.recurrencePattern,
+        recurrenceIntervalWeeks: occurrence.recurrenceIntervalWeeks,
+        recurrenceCount: occurrence.recurrenceCount,
+        recurrenceIndex: occurrence.recurrenceIndex,
+    })));
+    const first = created[0];
+    const isSeries = created.length > 1;
     const recipientIds = [classroom.teacher, ...classroom.students];
     await NotificationModel.insertMany(recipientIds.map((recipientId) => ({
         user: recipientId,
-        title: "New class session scheduled",
-        message: `${data.title} has been scheduled for ${start.toISOString()}.`,
+        title: isSeries ? "New weekly class sessions scheduled" : "New class session scheduled",
+        message: isSeries
+            ? `${data.title} has been scheduled weekly (${created.length} sessions), starting ${start.toISOString()}.`
+            : `${data.title} has been scheduled for ${start.toISOString()}.`,
         kind: "session",
         link: "/dashboard",
     })));
 
-    // Inbox email notification to teacher and enrolled students
+    // Inbox email notification to teacher and enrolled students (first occurrence only)
     UserModel.find({ _id: { $in: recipientIds }, accountStatus: "active" })
         .select("name email role")
         .lean()
@@ -992,7 +1005,7 @@ adminRouter.post("/sessions", asyncHandler(async (req, res) => {
                     email: recipient.email,
                     name: recipient.name,
                     role: recipient.role,
-                    sessionTitle: data.title,
+                    sessionTitle: isSeries ? `${data.title} (weekly, ${created.length} sessions)` : data.title,
                     classroomTitle: classroom.title,
                     startsAt: start,
                     endsAt: end,
@@ -1002,10 +1015,12 @@ adminRouter.post("/sessions", asyncHandler(async (req, res) => {
         })
         .catch((err) => console.warn("[Session Recipients Lookup Error]:", err?.message));
 
-    await writeAudit(req.user.id, "session_created", "ClassSession", session._id.toString(), {
+    await writeAudit(req.user.id, "session_created", "ClassSession", first._id.toString(), {
         classroomId: classroom._id.toString(),
+        recurrencePattern: data.recurrence?.pattern ?? "none",
+        occurrences: created.length,
     });
-    res.status(201).json({ session });
+    res.status(201).json({ session: first, sessions: created, occurrences: created.length });
 }));
 adminRouter.patch("/sessions/:sessionId", asyncHandler(async (req, res) => {
     if (!mongoose.isValidObjectId(req.params.sessionId)) throw new ApiError(400, "Invalid session ID.");
@@ -1065,12 +1080,25 @@ adminRouter.delete("/sessions/:sessionId", asyncHandler(async (req, res) => {
     if (!mongoose.isValidObjectId(req.params.sessionId)) throw new ApiError(400, "Invalid session ID.");
     const session = await ClassSessionModel.findById(req.params.sessionId);
     if (!session) throw new ApiError(404, "Session not found.");
+    // Support removing the entire weekly series in one action.
+    const deleteSeries = req.query.series === "true" && session.seriesId;
+    const filter = deleteSeries ? { seriesId: session.seriesId } : { _id: session._id };
+    const targets = await ClassSessionModel.find(filter).select("_id").lean();
+    const sessionIds = targets.map((item) => item._id);
     await Promise.all([
-        AttendanceRecordModel.deleteMany({ session: session._id }),
-        ClassSessionModel.deleteOne({ _id: session._id }),
+        AttendanceRecordModel.deleteMany({ session: { $in: sessionIds } }),
+        ClassSessionModel.deleteMany({ _id: { $in: sessionIds } }),
     ]);
-    await writeAudit(req.user.id, "session_deleted", "ClassSession", session._id.toString());
-    res.json({ message: "Session and its attendance records deleted." });
+    await writeAudit(req.user.id, "session_deleted", "ClassSession", session._id.toString(), {
+        seriesId: session.seriesId ?? "",
+        deletedCount: sessionIds.length,
+    });
+    res.json({
+        message: deleteSeries
+            ? `Weekly series and its ${sessionIds.length} sessions were deleted.`
+            : "Session and its attendance records deleted.",
+        deletedCount: sessionIds.length,
+    });
 }));
 adminRouter.get("/faqs", asyncHandler(async (_req, res) => {
     const faqs = await FAQModel.find().sort({ sortOrder: 1 }).lean();
@@ -1351,4 +1379,77 @@ adminRouter.post("/settings", asyncHandler(async (req, res) => {
     const setting = await PlatformSettingModel.findOneAndUpdate({ key: data.key }, { value: data.value, description: data.description }, { upsert: true, new: true });
     await writeAudit(req.user.id, "setting_updated", "PlatformSetting", setting._id.toString(), { key: data.key });
     res.json({ setting });
+}));
+
+// ─── Submission & assessment-attempt management (keeps uploaded files from bloating storage) ───
+adminRouter.get("/submissions", asyncHandler(async (req, res) => {
+    const filter = {};
+    if (req.query.classroomId && mongoose.isValidObjectId(req.query.classroomId)) {
+        filter.classroom = req.query.classroomId;
+    }
+    if (req.query.status) {
+        filter.status = req.query.status;
+    }
+    const [submissions, attempts] = await Promise.all([
+        AssignmentSubmissionModel.find(filter)
+            .populate("assignment", "title maxScore dueDate")
+            .populate("student", "fullName name email")
+            .populate("classroom", "title")
+            .sort({ createdAt: -1 })
+            .limit(300)
+            .lean(),
+        AssessmentAttemptModel.find(req.query.classroomId && mongoose.isValidObjectId(req.query.classroomId)
+            ? { classroom: req.query.classroomId }
+            : {})
+            .populate("assessment", "title")
+            .populate("student", "fullName name email")
+            .populate("classroom", "title")
+            .sort({ createdAt: -1 })
+            .limit(300)
+            .lean(),
+    ]);
+    const allAttachments = [
+        ...submissions.flatMap((item) => item.attachments ?? []),
+        ...attempts.flatMap((item) => item.attachments ?? []),
+    ];
+    res.json({
+        submissions,
+        attempts,
+        storage: {
+            fileCount: allAttachments.length,
+            totalBytes: allAttachments.reduce((total, file) => total + (file.size || 0), 0),
+        },
+    });
+}));
+adminRouter.get("/submissions/:submissionId/files/:index", asyncHandler(async (req, res) => {
+    const submission = await AssignmentSubmissionModel.findById(req.params.submissionId).lean();
+    if (!submission) throw new ApiError(404, "Submission not found.");
+    await streamSubmissionFile(req, res, pickAttachment(submission.attachments, req.params.index));
+}));
+adminRouter.delete("/submissions/:submissionId", asyncHandler(async (req, res) => {
+    if (!mongoose.isValidObjectId(req.params.submissionId)) throw new ApiError(400, "Invalid submission ID.");
+    const submission = await AssignmentSubmissionModel.findById(req.params.submissionId);
+    if (!submission) throw new ApiError(404, "Submission not found.");
+    await cleanupSubmissionFiles(submission.attachments);
+    await AssignmentSubmissionModel.deleteOne({ _id: submission._id });
+    await writeAudit(req.user.id, "submission_deleted", "AssignmentSubmission", submission._id.toString(), {
+        attachmentCount: submission.attachments?.length ?? 0,
+    });
+    res.json({ message: "Submission and its uploaded files were deleted." });
+}));
+adminRouter.get("/attempts/:attemptId/files/:index", asyncHandler(async (req, res) => {
+    const attempt = await AssessmentAttemptModel.findById(req.params.attemptId).lean();
+    if (!attempt) throw new ApiError(404, "Assessment submission not found.");
+    await streamSubmissionFile(req, res, pickAttachment(attempt.attachments, req.params.index));
+}));
+adminRouter.delete("/attempts/:attemptId", asyncHandler(async (req, res) => {
+    if (!mongoose.isValidObjectId(req.params.attemptId)) throw new ApiError(400, "Invalid assessment submission ID.");
+    const attempt = await AssessmentAttemptModel.findById(req.params.attemptId);
+    if (!attempt) throw new ApiError(404, "Assessment submission not found.");
+    await cleanupSubmissionFiles(attempt.attachments);
+    await AssessmentAttemptModel.deleteOne({ _id: attempt._id });
+    await writeAudit(req.user.id, "attempt_deleted", "AssessmentAttempt", attempt._id.toString(), {
+        attachmentCount: attempt.attachments?.length ?? 0,
+    });
+    res.json({ message: "Assessment submission and its uploaded files were deleted." });
 }));

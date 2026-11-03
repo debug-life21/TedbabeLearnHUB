@@ -1,11 +1,22 @@
 import mongoose, { Schema } from "mongoose";
+const submissionLinkSchema = new Schema({
+    label: { type: String, default: "" },
+    url: { type: String, required: true, trim: true },
+}, { _id: false });
+const submissionAttachmentSchema = new Schema({
+    key: { type: String, required: true },
+    storageProvider: { type: String, default: "local_disk" },
+    filename: { type: String, required: true },
+    mimeType: { type: String, required: true },
+    size: { type: Number, required: true },
+}, { _id: false });
 const assignmentSubmissionSchema = new Schema({
     assignment: { type: Schema.Types.ObjectId, ref: "Assignment", required: true, index: true },
     classroom: { type: Schema.Types.ObjectId, ref: "Classroom", required: true, index: true },
     student: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
     textResponse: { type: String, default: "" },
-    fileUrl: { type: String, default: "" },
-    originalFilename: { type: String, default: "" },
+    submissionLinks: { type: [submissionLinkSchema], default: [] },
+    attachments: { type: [submissionAttachmentSchema], default: [] },
     status: {
         type: String,
         enum: ["submitted", "graded", "resubmitted"],

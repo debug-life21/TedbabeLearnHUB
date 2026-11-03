@@ -13,6 +13,50 @@ import { formatSessionTime } from "../lib/sessionTime";
 import { MetricCard, DashboardCard, EmptyState, Badge, Modal } from "../components/UIComponents";
 import { SchedulePreferenceSelector } from "../components/SchedulePreferenceSelector";
 import { useAuth } from "../context/AuthContext";
+
+const SUBMISSION_FILE_TYPES = ".pdf,.ppt,.pptx,.doc,.docx,.xls,.xlsx,.txt,.jpg,.jpeg,.png,.webp,.mp4,.webm,.mp3,.wav";
+const MAX_FILE_BYTES = 30 * 1024 * 1024;
+const MAX_TOTAL_BYTES = 60 * 1024 * 1024;
+const LEARNING_MODE_OPTIONS = [
+    { value: "live", label: "Live cohort classes" },
+    { value: "self_paced", label: "Self-paced study" },
+    { value: "hybrid", label: "Hybrid (live + self-paced)" },
+];
+
+function readFileAsBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+            const result = String(reader.result || "");
+            resolve(result.includes(",") ? result.slice(result.indexOf(",") + 1) : result);
+        };
+        reader.onerror = () => reject(new Error(`Could not read “${file.name}”.`));
+        reader.readAsDataURL(file);
+    });
+}
+
+// Convert the selected files into the base64 payload the API expects.
+async function buildFilePayload(fileList) {
+    const files = Array.from(fileList || []);
+    let total = 0;
+    const payload = [];
+    for (const file of files) {
+        if (file.size > MAX_FILE_BYTES) {
+            throw new Error(`“${file.name}” is larger than 30MB. Please upload a smaller file.`);
+        }
+        total += file.size;
+        if (total > MAX_TOTAL_BYTES) {
+            throw new Error("Your uploads must total less than 60MB.");
+        }
+        payload.push({
+            originalFilename: file.name,
+            mimeType: file.type || "application/octet-stream",
+            base64Data: await readFileAsBase64(file),
+        });
+    }
+    return payload;
+}
+
 export function StudentDashboard({ user }) {
     const { t } = useTranslation();
     const { refreshUser } = useAuth();
@@ -37,14 +81,21 @@ export function StudentDashboard({ user }) {
         open: false,
         assignment: null,
         textResponse: "",
+        links: [{ label: "", url: "" }],
+        files: [],
     });
-    // Take Quiz Modal
+    const [submitBusy, setSubmitBusy] = useState(false);
+    // Take Assessment Modal
     const [quizModal, setQuizModal] = useState({
         open: false,
         assessment: null,
         answers: {},
+        responseText: "",
+        links: [{ label: "", url: "" }],
+        files: [],
         result: null,
     });
+    const [quizBusy, setQuizBusy] = useState(false);
     // Profile preferences form
     const [profileForm, setProfileForm] = useState({
         learningGoals: "",
@@ -52,6 +103,9 @@ export function StudentDashboard({ user }) {
         currentSkillLevel: "Beginner",
         preferredSchedule: "",
         preferredCourseIds: [],
+        preferredCourseNotes: "",
+        preferredLearningModes: [],
+        courseSelectionUpdatedAt: null,
         weeklyStudyHours: 5,
         timeZone: "Africa/Addis_Ababa",
     });
@@ -91,6 +145,9 @@ export function StudentDashboard({ user }) {
                     currentSkillLevel: dash.student.studentProfile.currentSkillLevel || "Beginner",
                     preferredSchedule: dash.student.studentProfile.preferredSchedule || "",
                     preferredCourseIds: (dash.student.studentProfile.preferredCourseIds || []).map((courseId) => String(courseId?._id || courseId)),
+                    preferredCourseNotes: dash.student.studentProfile.preferredCourseNotes || "",
+                    preferredLearningModes: dash.student.studentProfile.preferredLearningModes || [],
+                    courseSelectionUpdatedAt: dash.student.studentProfile.courseSelectionUpdatedAt || null,
                     weeklyStudyHours: dash.student.studentProfile.weeklyStudyHours || 5,
                     timeZone: dash.student.studentProfile.timeZone || "Africa/Addis_Ababa",
                 });
@@ -117,22 +174,35 @@ export function StudentDashboard({ user }) {
         e.preventDefault();
         if (!submitModal.assignment)
             return;
+        setSubmitBusy(true);
+        setFeedback("");
         try {
+            const files = await buildFilePayload(submitModal.files);
+            const links = submitModal.links.filter((link) => link.url.trim());
+            if (!submitModal.textResponse.trim() && files.length === 0 && links.length === 0) {
+                setFeedback("Add a written response, a link, or a file before submitting.");
+                return;
+            }
             await apiRequest(`/api/student/assignments/${submitModal.assignment._id}/submit`, {
                 method: "POST",
                 body: JSON.stringify({
                     textResponse: submitModal.textResponse,
+                    links,
+                    files,
                 }),
             });
-            setSubmitModal({ open: false, assignment: null, textResponse: "" });
-            setFeedback("Assignment submitted.");
+            setSubmitModal({ open: false, assignment: null, textResponse: "", links: [{ label: "", url: "" }], files: [] });
+            setFeedback("Assignment submitted. Your teacher will review and return your result.");
             void loadStudentData();
         }
         catch (err) {
             setFeedback(err.message);
         }
+        finally {
+            setSubmitBusy(false);
+        }
     };
-    // Open Quiz Modal
+    // Open Assessment Modal
     const startQuiz = async (assessment) => {
         try {
             const res = await apiRequest(`/api/student/assessments/${assessment._id}`);
@@ -140,6 +210,11 @@ export function StudentDashboard({ user }) {
                 open: true,
                 assessment: res.assessment,
                 answers: {},
+                responseText: res.previousAttempt?.responseText || "",
+                links: res.previousAttempt?.submissionLinks?.length
+                    ? res.previousAttempt.submissionLinks.map((link) => ({ label: link.label || "", url: link.url }))
+                    : [{ label: "", url: "" }],
+                files: [],
                 result: null,
             });
         }
@@ -147,28 +222,37 @@ export function StudentDashboard({ user }) {
             setFeedback(err.message);
         }
     };
-    // Submit Quiz Action
+    // Submit Assessment Action — the teacher releases the final result.
     const handleSubmitQuiz = async () => {
         if (!quizModal.assessment)
             return;
-        const answersPayload = Object.entries(quizModal.answers).map(([questionId, selectedOption]) => ({
-            questionId,
-            selectedOption,
-        }));
+        setQuizBusy(true);
+        setFeedback("");
         try {
+            const answersPayload = Object.entries(quizModal.answers).map(([questionId, selectedOption]) => ({
+                questionId,
+                selectedOption,
+            }));
+            const files = await buildFilePayload(quizModal.files);
+            const links = quizModal.links.filter((link) => link.url.trim());
             const res = await apiRequest(`/api/student/assessments/${quizModal.assessment._id}/attempt`, {
                 method: "POST",
-                body: JSON.stringify({ answers: answersPayload }),
+                body: JSON.stringify({
+                    answers: answersPayload,
+                    responseText: quizModal.responseText,
+                    links,
+                    files,
+                }),
             });
-            setQuizModal((prev) => ({
-                ...prev,
-                result: res.attempt,
-            }));
-            setFeedback("Assessment completed.");
+            setQuizModal((prev) => ({ ...prev, result: res.attempt || { status: "submitted" } }));
+            setFeedback("Assessment submitted. Your teacher will review and release your result.");
             void loadStudentData();
         }
         catch (err) {
             setFeedback(err.message);
+        }
+        finally {
+            setQuizBusy(false);
         }
     };
     // Save Preferences Action
@@ -183,11 +267,13 @@ export function StudentDashboard({ user }) {
                     currentSkillLevel: profileForm.currentSkillLevel,
                     preferredSchedule: profileForm.preferredSchedule,
                     preferredCourseIds: profileForm.preferredCourseIds,
+                    preferredCourseNotes: profileForm.preferredCourseNotes,
+                    preferredLearningModes: profileForm.preferredLearningModes,
                     weeklyStudyHours: Number(profileForm.weeklyStudyHours),
                     timeZone: profileForm.timeZone,
                 }),
             });
-            setFeedback("Learning preferences updated.");
+            setFeedback("Course selection and learning preferences updated.");
             void loadStudentData();
         }
         catch (err) {
@@ -461,6 +547,29 @@ export function StudentDashboard({ user }) {
                 </div>
               </div>
 
+              {profileForm.preferredCourseIds.length > 0 ? (
+                <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-900">Your selection summary</h4>
+                    {profileForm.courseSelectionUpdatedAt ? (
+                      <span className="text-[11px] font-semibold text-emerald-700">
+                        Last updated {new Date(profileForm.courseSelectionUpdatedAt).toLocaleString()}
+                      </span>
+                    ) : null}
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {profileForm.preferredCourseIds.map((courseId) => {
+                        const course = courses.find((item) => String(item._id) === String(courseId));
+                        return (
+                          <span key={courseId} className="rounded-full border border-emerald-200 bg-white px-3 py-1 text-[11px] font-bold text-emerald-800">
+                            {course?.title || "Selected course"}
+                          </span>
+                        );
+                    })}
+                  </div>
+                </div>
+              ) : null}
+
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <label className="text-xs font-bold text-slate-800">
@@ -516,6 +625,44 @@ export function StudentDashboard({ user }) {
                 </div>
 
                 <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-2">How would you like to learn?</label>
+                  <div className="grid gap-2 sm:grid-cols-3">
+                    {LEARNING_MODE_OPTIONS.map((mode) => {
+                        const isSelected = profileForm.preferredLearningModes.includes(mode.value);
+                        return (
+                            <button
+                                key={mode.value}
+                                type="button"
+                                onClick={() => setProfileForm({
+                                    ...profileForm,
+                                    preferredLearningModes: isSelected
+                                        ? profileForm.preferredLearningModes.filter((value) => value !== mode.value)
+                                        : [...profileForm.preferredLearningModes, mode.value],
+                                })}
+                                className={`rounded-xl border px-3 py-2.5 text-xs font-semibold transition ${isSelected
+                                    ? "border-blue-600 bg-blue-50 text-blue-900 ring-1 ring-blue-600"
+                                    : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"}`}
+                            >
+                                {isSelected ? "✓ " : ""}{mode.label}
+                            </button>
+                        );
+                    })}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700">Notes for the academic team</label>
+                  <textarea
+                    rows={3}
+                    maxLength={1200}
+                    value={profileForm.preferredCourseNotes}
+                    onChange={(e) => setProfileForm({ ...profileForm, preferredCourseNotes: e.target.value })}
+                    className="mt-1 w-full rounded-xl border border-slate-200 p-2 text-sm outline-none"
+                    placeholder="Share your goals, preferred start date, or anything that helps us build the right cohort for you."
+                  />
+                </div>
+
+                <div>
                   <label className="block text-xs font-bold text-slate-700">{t("learningGoals")}</label>
                   <textarea
                     rows={2}
@@ -550,10 +697,12 @@ export function StudentDashboard({ user }) {
             {assignments.length === 0 ? (<EmptyState title="No assignments yet."/>) : (assignments.map((asgn) => {
                 const sub = asgn.submission;
                 return (<div key={asgn._id} className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200 space-y-4">
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between gap-2">
                       <h4 className="font-bold text-slate-900">{asgn.title}</h4>
                       <Badge variant={sub ? (sub.status === "graded" ? "emerald" : "blue") : "amber"}>
-                        {sub ? (sub.status === "graded" ? `Score: ${sub.score}/${asgn.maxScore}` : "Submitted") : "Not Submitted"}
+                        {sub
+                            ? (sub.status === "graded" ? `Score: ${sub.score}/${asgn.maxScore}` : "Awaiting teacher review")
+                            : "Not Submitted"}
                       </Badge>
                     </div>
                     <p className="text-xs text-slate-600 leading-relaxed">{asgn.instructions}</p>
@@ -562,11 +711,40 @@ export function StudentDashboard({ user }) {
                       <span>Max score: {asgn.maxScore}</span>
                     </div>
 
+                    {sub?.textResponse ? (<div className="rounded-xl bg-slate-50 p-3 text-xs text-slate-700">
+                        <p className="font-bold text-slate-900 mb-1">Your response</p>
+                        <p className="whitespace-pre-wrap">{sub.textResponse}</p>
+                      </div>) : null}
+
+                    {sub?.attachments?.length ? (<div className="flex flex-wrap gap-2">
+                        {sub.attachments.map((file, fileIndex) => (
+                          <span key={file.key || fileIndex} className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-semibold text-slate-700">
+                            📎 {file.filename}
+                          </span>
+                        ))}
+                      </div>) : null}
+
+                    {sub?.submissionLinks?.length ? (<div className="space-y-1">
+                        {sub.submissionLinks.map((link, linkIndex) => (
+                          <a key={linkIndex} href={link.url} target="_blank" rel="noreferrer" className="block truncate text-xs font-semibold text-[#0066ff] hover:underline">
+                            🔗 {link.label || link.url}
+                          </a>
+                        ))}
+                      </div>) : null}
+
                     {sub?.feedback ? (<div className="rounded-xl bg-blue-50 p-3 text-xs text-blue-900">
                         <strong>Instructor feedback:</strong> {sub.feedback}
                       </div>) : null}
 
-                    {(!sub || sub.status !== "graded") ? (<button onClick={() => setSubmitModal({ open: true, assignment: asgn, textResponse: sub?.textResponse || "" })} className="w-full rounded-xl bg-blue-600 py-2.5 text-xs font-bold text-white hover:bg-blue-700 transition-colors">
+                    {(!sub || sub.status !== "graded") ? (<button onClick={() => setSubmitModal({
+                        open: true,
+                        assignment: asgn,
+                        textResponse: sub?.textResponse || "",
+                        links: sub?.submissionLinks?.length
+                            ? sub.submissionLinks.map((link) => ({ label: link.label || "", url: link.url }))
+                            : [{ label: "", url: "" }],
+                        files: [],
+                    })} className="w-full rounded-xl bg-blue-600 py-2.5 text-xs font-bold text-white hover:bg-blue-700 transition-colors">
                         {sub ? "Resubmit" : t("submitWork")}
                       </button>) : null}
                   </div>);
@@ -905,32 +1083,81 @@ export function StudentDashboard({ user }) {
       ) : null}
 
       {/* MODAL: Submit Assignment */}
-      <Modal title={`Submit assignment: ${submitModal.assignment?.title || ""}`} isOpen={submitModal.open} onClose={() => setSubmitModal({ open: false, assignment: null, textResponse: "" })}>
+      <Modal title={`Submit assignment: ${submitModal.assignment?.title || ""}`} isOpen={submitModal.open} onClose={() => setSubmitModal({ open: false, assignment: null, textResponse: "", links: [{ label: "", url: "" }], files: [] })}>
         <form onSubmit={handleSubmitAssignment} className="space-y-4">
           <p className="text-xs text-slate-600 leading-relaxed">{submitModal.assignment?.instructions}</p>
+
           <div>
             <label className="block text-xs font-bold text-slate-700 mb-1">Your response</label>
-            <textarea required rows={4} value={submitModal.textResponse} onChange={(e) => setSubmitModal({ ...submitModal, textResponse: e.target.value })} className="w-full rounded-xl border border-slate-200 p-3 text-sm outline-none" placeholder="Write your response or share a link to your work…"/>
+            <textarea rows={4} value={submitModal.textResponse} onChange={(e) => setSubmitModal({ ...submitModal, textResponse: e.target.value })} className="w-full rounded-xl border border-slate-200 p-3 text-sm outline-none" placeholder="Write your response…"/>
           </div>
-          <button type="submit" className="w-full rounded-xl bg-blue-600 py-2.5 text-xs font-bold text-white hover:bg-blue-700">
-            {t("submitWork")}
+
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-xs font-bold text-slate-700">Links</label>
+              <button type="button" onClick={() => setSubmitModal((prev) => ({ ...prev, links: [...prev.links, { label: "", url: "" }] }))} className="text-[11px] font-bold text-blue-600 hover:text-blue-700">+ Add link</button>
+            </div>
+            <div className="space-y-2">
+              {submitModal.links.map((link, index) => (
+                <div key={index} className="flex gap-2">
+                  <input value={link.label} onChange={(e) => setSubmitModal((prev) => ({ ...prev, links: prev.links.map((item, i) => i === index ? { ...item, label: e.target.value } : item) }))} className="w-1/3 rounded-xl border border-slate-200 p-2 text-xs outline-none" placeholder="Label"/>
+                  <input value={link.url} onChange={(e) => setSubmitModal((prev) => ({ ...prev, links: prev.links.map((item, i) => i === index ? { ...item, url: e.target.value } : item) }))} className="flex-1 rounded-xl border border-slate-200 p-2 text-xs outline-none" placeholder="https://…"/>
+                  {submitModal.links.length > 1 ? (
+                    <button type="button" onClick={() => setSubmitModal((prev) => ({ ...prev, links: prev.links.filter((_, i) => i !== index) }))} className="rounded-xl border border-slate-200 px-3 text-xs font-bold text-slate-400 hover:text-rose-600">×</button>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-700 mb-1">Files</label>
+            <input key={submitModal.open ? "open" : "closed"} type="file" multiple accept={SUBMISSION_FILE_TYPES} onChange={(e) => setSubmitModal((prev) => ({ ...prev, files: e.target.files }))} className="w-full rounded-xl border border-dashed border-slate-300 p-2.5 text-xs text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-blue-50 file:px-3 file:py-1.5 file:text-xs file:font-bold file:text-blue-700"/>
+            {submitModal.files?.length ? (
+              <ul className="mt-2 space-y-1">
+                {Array.from(submitModal.files).map((file, index) => (
+                  <li key={index} className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-1.5 text-[11px] text-slate-600">
+                    <span className="truncate">📎 {file.name}</span>
+                    <span className="ml-2 shrink-0 text-slate-400">{(file.size / (1024 * 1024)).toFixed(1)} MB</span>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+            <p className="mt-1 text-[11px] text-slate-400">PDF, PPT, DOC, images, or video. Up to 30MB per file, 60MB total.</p>
+          </div>
+
+          <div className="rounded-xl bg-amber-50 border border-amber-200 p-3 text-[11px] text-amber-900">
+            Add a response, a link, or a file—at least one is required. Your teacher reviews every submission and releases the result.
+          </div>
+
+          <button type="submit" disabled={submitBusy} className="w-full rounded-xl bg-blue-600 py-2.5 text-xs font-bold text-white hover:bg-blue-700 disabled:opacity-60">
+            {submitBusy ? "Submitting…" : t("submitWork")}
           </button>
         </form>
       </Modal>
 
       {/* MODAL: Take Quiz */}
-      <Modal title={`Assessment: ${quizModal.assessment?.title || ""}`} isOpen={quizModal.open} onClose={() => setQuizModal({ open: false, assessment: null, answers: {}, result: null })}>
+      <Modal title={`Assessment: ${quizModal.assessment?.title || ""}`} isOpen={quizModal.open} onClose={() => setQuizModal({ open: false, assessment: null, answers: {}, responseText: "", links: [{ label: "", url: "" }], files: [], result: null })}>
         {quizModal.result ? (<div className="space-y-4 text-center py-4">
-            <div className={`mx-auto flex h-16 w-16 items-center justify-center rounded-full text-3xl ${quizModal.result.passed ? "bg-sky-100 text-blue-700" : "bg-rose-100 text-rose-600"}`}>
-              {quizModal.result.passed ? "✓" : "!"}
-            </div>
-            <h3 className="text-xl font-bold text-slate-900">
-              Score: {quizModal.result.score} / {quizModal.result.maxScore} ({quizModal.result.percentage}%)
-            </h3>
-            <p className="text-sm font-semibold text-slate-600">
-              {quizModal.result.passed ? "Well done—you passed!" : "You did not reach the passing score this time. Review your work and try again."}
-            </p>
-            <button onClick={() => setQuizModal({ open: false, assessment: null, answers: {}, result: null })} className="rounded-xl bg-slate-900 px-6 py-2.5 text-xs font-bold text-white">
+            {quizModal.result.status === "reviewed" ? (<>
+              <div className={`mx-auto flex h-16 w-16 items-center justify-center rounded-full text-3xl ${quizModal.result.passed ? "bg-sky-100 text-blue-700" : "bg-rose-100 text-rose-600"}`}>
+                {quizModal.result.passed ? "✓" : "!"}
+              </div>
+              <h3 className="text-xl font-bold text-slate-900">
+                Score: {quizModal.result.score} / {quizModal.result.maxScore} ({quizModal.result.percentage}%)
+              </h3>
+              <p className="text-sm font-semibold text-slate-600">
+                {quizModal.result.passed ? "Well done—you passed!" : "You did not reach the passing score this time. Review your work and try again."}
+              </p>
+              {quizModal.result.feedback ? (<p className="rounded-xl bg-slate-50 p-3 text-xs text-slate-600">{quizModal.result.feedback}</p>) : null}
+            </>) : (<>
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-sky-100 text-3xl text-blue-700">⏳</div>
+              <h3 className="text-xl font-bold text-slate-900">Submitted for review</h3>
+              <p className="text-sm font-semibold text-slate-600">
+                Your teacher will review your work and release your result.
+              </p>
+            </>)}
+            <button onClick={() => setQuizModal({ open: false, assessment: null, answers: {}, responseText: "", links: [{ label: "", url: "" }], files: [], result: null })} className="rounded-xl bg-slate-900 px-6 py-2.5 text-xs font-bold text-white">
               Done
             </button>
           </div>) : (<div className="space-y-6">
@@ -940,6 +1167,8 @@ export function StudentDashboard({ user }) {
             </div>
 
             <div className="space-y-6 max-h-[60vh] overflow-y-auto pr-1">
+              {quizModal.assessment?.instructions ? (<p className="text-xs text-slate-600 leading-relaxed">{quizModal.assessment.instructions}</p>) : null}
+
               {quizModal.assessment?.questions?.map((q, idx) => (<div key={q._id} className="space-y-3 rounded-2xl border border-slate-200 p-4">
                   <p className="font-bold text-sm text-slate-900">
                     {idx + 1}. {q.prompt}
@@ -961,10 +1190,53 @@ export function StudentDashboard({ user }) {
                 })}
                   </div>
                 </div>))}
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Written response</label>
+                <textarea rows={3} value={quizModal.responseText} onChange={(e) => setQuizModal((prev) => ({ ...prev, responseText: e.target.value }))} className="w-full rounded-xl border border-slate-200 p-3 text-sm outline-none" placeholder="Add any written work or explanation…"/>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-bold text-slate-700">Links</label>
+                  <button type="button" onClick={() => setQuizModal((prev) => ({ ...prev, links: [...prev.links, { label: "", url: "" }] }))} className="text-[11px] font-bold text-blue-600 hover:text-blue-700">+ Add link</button>
+                </div>
+                <div className="space-y-2">
+                  {quizModal.links.map((link, index) => (
+                    <div key={index} className="flex gap-2">
+                      <input value={link.label} onChange={(e) => setQuizModal((prev) => ({ ...prev, links: prev.links.map((item, i) => i === index ? { ...item, label: e.target.value } : item) }))} className="w-1/3 rounded-xl border border-slate-200 p-2 text-xs outline-none" placeholder="Label"/>
+                      <input value={link.url} onChange={(e) => setQuizModal((prev) => ({ ...prev, links: prev.links.map((item, i) => i === index ? { ...item, url: e.target.value } : item) }))} className="flex-1 rounded-xl border border-slate-200 p-2 text-xs outline-none" placeholder="https://…"/>
+                      {quizModal.links.length > 1 ? (
+                        <button type="button" onClick={() => setQuizModal((prev) => ({ ...prev, links: prev.links.filter((_, i) => i !== index) }))} className="rounded-xl border border-slate-200 px-3 text-xs font-bold text-slate-400 hover:text-rose-600">×</button>
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Files</label>
+                <input key={quizModal.open ? "open" : "closed"} type="file" multiple accept={SUBMISSION_FILE_TYPES} onChange={(e) => setQuizModal((prev) => ({ ...prev, files: e.target.files }))} className="w-full rounded-xl border border-dashed border-slate-300 p-2.5 text-xs text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-blue-50 file:px-3 file:py-1.5 file:text-xs file:font-bold file:text-blue-700"/>
+                {quizModal.files?.length ? (
+                  <ul className="mt-2 space-y-1">
+                    {Array.from(quizModal.files).map((file, index) => (
+                      <li key={index} className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-1.5 text-[11px] text-slate-600">
+                        <span className="truncate">📎 {file.name}</span>
+                        <span className="ml-2 shrink-0 text-slate-400">{(file.size / (1024 * 1024)).toFixed(1)} MB</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+                <p className="mt-1 text-[11px] text-slate-400">PDF, PPT, DOC, images, or video. Up to 30MB per file, 60MB total.</p>
+              </div>
+
+              <div className="rounded-xl bg-amber-50 border border-amber-200 p-3 text-[11px] text-amber-900">
+                Your teacher reviews every assessment and releases the final result.
+              </div>
             </div>
 
-            <button onClick={handleSubmitQuiz} className="w-full rounded-xl bg-cyan-600 py-3 text-xs font-bold text-white hover:bg-cyan-700 shadow-sm">
-              {t("submitAnswers")}
+            <button onClick={handleSubmitQuiz} disabled={quizBusy} className="w-full rounded-xl bg-cyan-600 py-3 text-xs font-bold text-white hover:bg-cyan-700 shadow-sm disabled:opacity-60">
+              {quizBusy ? "Submitting…" : t("submitAnswers")}
             </button>
           </div>)}
       </Modal>

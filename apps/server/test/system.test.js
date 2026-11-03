@@ -6,6 +6,7 @@ import mongoose from "mongoose";
 import { UserModel as User } from "../src/models/User.js";
 import { CourseModel as Course } from "../src/models/Course.js";
 import { CertificateModel as Certificate } from "../src/models/Certificate.js";
+import { seedLearningCatalog } from "../src/catalog.js";
 
 // Helper for in-process HTTP requests to the Express app
 async function request(path, options = {}) {
@@ -37,9 +38,14 @@ async function request(path, options = {}) {
 
 test.before(async () => {
     await connectDatabase();
+    // Seed the isolated test database so tests always have published courses to work with.
+    await seedLearningCatalog();
 });
 
 test.after(async () => {
+    // Clean up every account and record this suite creates so nothing is ever left behind.
+    await User.deleteMany({ email: /@example\.com$/ });
+    await Certificate.deleteMany({ certificateNumber: /^TLH-2026-E2E-/ });
     await mongoose.connection.close();
 });
 

@@ -5,8 +5,12 @@ const teacherApplicationSchema = new Schema({
     experience: { type: String, required: true, trim: true },
     teachingStatement: { type: String, default: "" },
     teachingCategories: { type: [String], default: [] },
+    teachingModes: { type: [String], default: [] },
+    teachingLanguages: { type: [String], default: [] },
     experienceYears: { type: Number, default: 0 },
     availability: { type: String, default: "" },
+    portfolioUrl: { type: String, default: "" },
+    linkedInUrl: { type: String, default: "" },
     documents: {
         cv: {
             key: { type: String, default: "" },
