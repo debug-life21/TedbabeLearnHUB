@@ -31,9 +31,9 @@ const assessmentSchema = new Schema(
       enum: [
         "quiz",
         "midExam",
-        "final",
+        "final Exam ",
         "Assignment",
-        "assessment",
+        "Attendance",
         "comprehensive",
       ],
       default: "quiz",
