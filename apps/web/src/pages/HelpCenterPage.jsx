@@ -1,7 +1,9 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { apiRequest } from "../lib/api";
 
 export function HelpCenterPage() {
+  const { t } = useTranslation();
   const [faqSearch, setFaqSearch] = useState("");
   const [activeSection, setActiveSection] = useState("students");
   const [form, setForm] = useState({
@@ -16,48 +18,48 @@ export function HelpCenterPage() {
   const helpArticles = {
     students: [
       {
-        q: "How does cohort assignment work after I register?",
-        a: "Once you sign up and choose your learning preferences, a Hub Administrator reviews your skill level and schedule. You will be placed into an active class cohort led by an approved instructor. You will see your assigned cohort and upcoming classes in your Student Dashboard.",
+        q: t("helpStudentQuestion1"),
+        a: t("helpStudentAnswer1"),
       },
       {
-        q: "How do I join scheduled live classes with Google Meet?",
-        a: "In your Student Dashboard, upcoming lessons display with their start time and an active 'Join Meeting' button. Simply click this button at class time to enter your instructor's Google Meet room.",
+        q: t("helpStudentQuestion2"),
+        a: t("helpStudentAnswer2"),
       },
       {
-        q: "When can I see my grades and progress report?",
-        a: "Your teacher reviews assignments and assessments, then publishes your progress report. Grades, self-assessment, and progress details are visible only after publication. You can claim a certificate after your teacher publishes an overall score of at least 70%.",
+        q: t("helpStudentQuestion3"),
+        a: t("helpStudentAnswer3"),
       },
       {
-        q: "Can I download class resources and slides for offline study?",
-        a: "Yes. In the 'Learning Resources' tab of your dashboard, you can view PDF worksheets, presentations, and audio files in-browser or download them securely.",
+        q: t("helpStudentQuestion4"),
+        a: t("helpStudentAnswer4"),
       },
     ],
     teachers: [
       {
-        q: "How do I become an approved TedbabeLearnHUB educator?",
-        a: "Submit a teaching application at /apply/teacher with your academic qualifications and teaching expertise. After verification, an administrator will review and activate your teacher portal.",
+        q: t("helpTeacherQuestion1"),
+        a: t("helpTeacherAnswer1"),
       },
       {
-        q: "How do I record student attendance and schedule classes?",
-        a: "From your Teacher Dashboard, select your assigned cohort. You can launch Google Meet sessions, record attendance (Present, Late, Absent, Excused) for each student, and assign homework.",
+        q: t("helpTeacherQuestion2"),
+        a: t("helpTeacherAnswer2"),
       },
       {
-        q: "Can I create custom multiple-choice assessments?",
-        a: "Yes. Teachers can create timed quizzes with custom questions and answer options. TedbabeLearnHUB automatically grades student attempts server-side and provides instant score reporting.",
+        q: t("helpTeacherQuestion3"),
+        a: t("helpTeacherAnswer3"),
       },
     ],
     technical: [
       {
-        q: "What if I didn't receive my 6-digit email verification code?",
-        a: "Check your spam or junk folder. You can request a new verification code after 60 seconds from the verification screen by clicking 'Resend code'.",
+        q: t("helpTechnicalQuestion1"),
+        a: t("helpTechnicalAnswer1"),
       },
       {
-        q: "How do I reset my password if I forgot it?",
-        a: "Visit the Forgot Password page (/forgot-password), enter your account email, and click 'Send Reset Instructions'. You will receive a time-limited reset link and recovery code.",
+        q: t("helpTechnicalQuestion2"),
+        a: t("helpTechnicalAnswer2"),
       },
       {
-        q: "Can I switch the platform language between Amharic and English?",
-        a: "Yes! Use the language switcher in the header navigation or the profile preferences in your account settings at any time.",
+        q: t("helpTechnicalQuestion3"),
+        a: t("helpTechnicalAnswer3"),
       },
     ],
   };
@@ -71,12 +73,10 @@ export function HelpCenterPage() {
         method: "POST",
         body: JSON.stringify(form),
       });
-      setFeedback(
-        "Your inquiry has been submitted. Our support team will get back to you shortly.",
-      );
+      setFeedback(t("helpContactSuccess"));
       setForm({ fullName: "", email: "", subject: "", message: "" });
     } catch (err) {
-      setFeedback(err.message || "Failed to submit inquiry. Please try again.");
+      setFeedback(err.message || t("helpContactFailure"));
     } finally {
       setSubmitting(false);
     }
@@ -99,14 +99,13 @@ export function HelpCenterPage() {
       <div className="editorial-hero border-b border-slate-200/80 px-4 py-16 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-4xl text-center">
           <span className="editorial-kicker text-blue-600 font-extrabold tracking-widest">
-            TEDBABELEARNHUB (TLH) SUPPORT & KNOWLEDGE BASE
+            {t("helpCenterKicker")}
           </span>
           <h1 className="editorial-display mt-3 text-4xl font-extrabold text-slate-900 sm:text-5xl">
-            Help & Support Center
+            {t("helpCenterTitle")}
           </h1>
           <p className="mx-auto mt-3 max-w-2xl text-sm text-slate-600 sm:text-base">
-            Guides, answers, and direct assistance for students, educators, and
-            administrators.
+            {t("helpCenterDescription")}
           </p>
 
           {/* Quick Search */}
@@ -115,7 +114,7 @@ export function HelpCenterPage() {
               type="text"
               value={faqSearch}
               onChange={(e) => setFaqSearch(e.target.value)}
-              placeholder="Search help topics (e.g. Google Meet, placement, grading)…"
+              placeholder={t("helpSearchPlaceholder")}
               className="w-full rounded-2xl border border-slate-300 bg-white px-5 py-3.5 text-sm text-slate-900 shadow-sm outline-none transition focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
             />
           </div>
@@ -127,9 +126,9 @@ export function HelpCenterPage() {
         {!faqSearch && (
           <div className="flex justify-center gap-3 border-b border-slate-200 pb-4">
             {[
-              { id: "students", label: "For Students", icon: "🎓" },
-              { id: "teachers", label: "For Teachers", icon: "👩‍🏫" },
-              { id: "technical", label: "Account & Technical", icon: "⚙️" },
+              { id: "students", label: t("helpStudentsTab"), icon: "🎓" },
+              { id: "teachers", label: t("helpTeachersTab"), icon: "👩‍🏫" },
+              { id: "technical", label: t("helpTechnicalTab"), icon: "⚙️" },
             ].map((sec) => (
               <button
                 key={sec.id}
@@ -169,14 +168,13 @@ export function HelpCenterPage() {
         <div className="mt-16 rounded-3xl bg-white p-8 sm:p-12 shadow-sm ring-1 ring-slate-200">
           <div className="max-w-2xl mx-auto text-center mb-8">
             <span className="text-xs font-black uppercase tracking-wider text-blue-600">
-              DIRECT ASSISTANCE
+              {t("helpContactKicker")}
             </span>
             <h2 className="editorial-display mt-2 text-2xl font-bold text-slate-900">
-              Still have questions? Contact Support
+              {t("helpContactTitle")}
             </h2>
             <p className="mt-1 text-xs text-slate-500">
-              Our academic administrators and support specialists respond to
-              inquiries promptly.
+              {t("helpContactDescription")}
             </p>
           </div>
 
@@ -192,7 +190,7 @@ export function HelpCenterPage() {
           >
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
-                Your Full Name
+                {t("fullName")}
                 <input
                   required
                   type="text"
@@ -205,7 +203,7 @@ export function HelpCenterPage() {
                 />
               </label>
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
-                Email Address
+                {t("email")}
                 <input
                   required
                   type="email"
@@ -218,26 +216,26 @@ export function HelpCenterPage() {
             </div>
 
             <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
-              Subject
+              {t("subject")}
               <input
                 required
                 type="text"
                 value={form.subject}
                 onChange={(e) => setForm({ ...form, subject: e.target.value })}
                 className="mt-1.5 w-full rounded-2xl border border-slate-200 px-4 py-3 text-xs font-medium outline-none transition focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
-                placeholder="E.g. Placement question for Grade 10 Math"
+                placeholder={t("helpContactSubjectPlaceholder")}
               />
             </label>
 
             <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
-              Detailed Message
+              {t("message")}
               <textarea
                 required
                 rows={4}
                 value={form.message}
                 onChange={(e) => setForm({ ...form, message: e.target.value })}
                 className="mt-1.5 w-full rounded-2xl border border-slate-200 px-4 py-3 text-xs font-medium outline-none transition focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
-                placeholder="Describe your issue or inquiry in detail…"
+                placeholder={t("helpContactMessagePlaceholder")}
               />
             </label>
 
@@ -246,7 +244,7 @@ export function HelpCenterPage() {
               disabled={submitting}
               className="w-full rounded-2xl bg-gradient-to-r from-[#0066ff] to-[#0099ff] py-3.5 text-xs font-black uppercase tracking-wider text-white shadow-md shadow-blue-500/25 hover:from-[#0052cc] hover:to-[#0088e6] disabled:opacity-50 transition-all hover:scale-[1.01]"
             >
-              {submitting ? "Sending Inquiry…" : "Submit Support Inquiry"}
+              {submitting ? t("helpContactSending") : t("helpContactSubmit")}
             </button>
           </form>
         </div>
