@@ -22,9 +22,9 @@ i18n.use(initReactI18next).init({
         teacherApply: "Teach with us",
         dashboard: "Dashboard",
         signOut: "Sign out",
-        heroTitle: "Build practical skills with instructor-led learning.",
+        heroTitle: "THE WORLD IS CHENGING RAPIDLY. ARE YOU READY TO LEARN?",
         heroDescription:
-          "Choose a program that fits your goals and schedule. Learn with an instructor and cohort, complete practical work, and receive feedback on results released by your teacher.",
+          "TedbabelearnHUB helps you learn different courses on one platform , study with professional instructors, and developnew skills.",
         heroPrimary: "Explore learning programs",
         heroSecondary: "See how it works",
         categoriesTitle: "Find a program that fits your goals",
@@ -360,9 +360,9 @@ i18n.use(initReactI18next).init({
         teacherApply: "ከእኛ ጋር ያስተምሩ",
         dashboard: "ዳሽቦርድ",
         signOut: "ይውጡ",
-        heroTitle: "በአስተማሪ መመሪያ ተግባራዊ ክህሎቶችን ይገንቡ።",
+        heroTitle: "ዓለም በፍጥነት እየተለወጠች ነው። ለመማር ዝግጁ ነዎት?",
         heroDescription:
-          "ከግቦችዎና ከጊዜ ሰሌዳዎ ጋር የሚስማማ ፕሮግራም ይምረጡ። ከአስተማሪና ከኮሆርት ጋር ይማሩ፣ ተግባራዊ ስራዎችን ያቅርቡ፣ አስተማሪዎ በለቀቀው ውጤት ላይ ግብረ-መልስ ያግኙ።",
+          "Tedbabe learnHUB ከአንድ መድረክ በተለያዩ ትምህርቶች ፣ ከባለሙያ አስተማሪዎች ጋር መማር፣ እና አዳዲስ ክህሎቶችን መገንባት ያግዛዎታል።",
         heroPrimary: "የትምህርት ፕሮግራሞችን ይመልከቱ",
         heroSecondary: "እንዴት እንደሚሰራ ይወቁ",
         categoriesTitle: "ከግቦችዎ ጋር የሚስማማ ፕሮግራም ያግኙ",
@@ -381,7 +381,7 @@ i18n.use(initReactI18next).init({
           "ፕሮግራሞችን ያወዳድሩ፣ ከኮሆርትዎ ጋር ይተዋወቁ እና በአስተማሪ መመሪያ ይማሩ።",
         howItWorks: "ከምዝገባ እስከ እድገት የሚያደርስ ግልጽ መንገድ",
         howItWorksSubtitle:
-          "የኮሆርት ምደባ፣ ቀጥታ ትምህርቶች፣ ስራዎች፣ በአስተማሪ የሚገመገሙ ምዘናዎች እና የታተሙ የእድገት ሪፖርቶች እንዴት እንደሚገናኙ ይወቁ።",
+          "የTedbabeLearnHUB ምደባ፣ ቀጥታ ትምህርቶች፣ ስራዎች፣ በአስተማሪ የሚገመገሙ ምዘናዎች እና የታተሙ የእድገት ሪፖርቶች እንዴት እንደሚገናኙ ይወቁ።",
         howWorksKicker: "በመመሪያ የሚደገፍ ትምህርት",
         howWorksPageTitle: "በTedbabeLearnHUB ትምህርት እንዴት ይሰራል?",
         howWorksPageDesc:

@@ -55,11 +55,11 @@
   }
 
   html[lang="am"] {
-    font-family: "Noto Sans Ethiopic", "Inter", sans-serif;
-    letter-spacing: 0;
+    font-family: "Noto Sans Ethiopic", "Abyssinica SIL", sans-serif;
+    letter-spacing: 1;
   }
 
-  html[lang="am"] .editorial-display {
+  html[lang="en"] .editorial-display {
     font-family: "Noto Sans Ethiopic", "Inter", sans-serif;
     letter-spacing: 0;
     line-height: 1.4;

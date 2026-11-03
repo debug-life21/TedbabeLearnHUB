@@ -1,13 +1,14 @@
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 export function AboutPage() {
-    const { t } = useTranslation();
-    return (<div className="editorial-page mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 space-y-16">
+  const { t } = useTranslation();
+  return (
+    <div className="editorial-page mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 space-y-16">
       {/* Hero Narrative */}
       <div className="max-w-3xl">
         <div className="inline-flex items-center gap-1.5 rounded-full border border-blue-500/20 bg-blue-50 px-3.5 py-1 text-xs font-bold text-blue-700 mb-4 shadow-2xs">
           <span>📖</span>
-          <span>WHY LEARNHUB</span>
+          <span>WHY TEDBABE LEARNHUB</span>
         </div>
         <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-slate-900 leading-tight">
           {t("aboutHeroTitle")}
@@ -23,7 +24,9 @@ export function AboutPage() {
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-2xl text-blue-600 shadow-xs">
             🎯
           </div>
-          <h3 className="mt-6 text-xl font-bold text-slate-900">{t("missionTitle")}</h3>
+          <h3 className="mt-6 text-xl font-bold text-slate-900">
+            {t("missionTitle")}
+          </h3>
           <p className="mt-3 text-sm text-slate-600 leading-relaxed">
             {t("missionDesc")}
           </p>
@@ -33,7 +36,9 @@ export function AboutPage() {
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-50 text-2xl text-cyan-600 shadow-xs">
             🔭
           </div>
-          <h3 className="mt-6 text-xl font-bold text-slate-900">{t("visionTitle")}</h3>
+          <h3 className="mt-6 text-xl font-bold text-slate-900">
+            {t("visionTitle")}
+          </h3>
           <p className="mt-3 text-sm text-slate-600 leading-relaxed">
             {t("visionDesc")}
           </p>
@@ -43,7 +48,9 @@ export function AboutPage() {
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 text-2xl text-indigo-600 shadow-xs">
             💎
           </div>
-          <h3 className="mt-6 text-xl font-bold text-slate-900">{t("valuesTitle")}</h3>
+          <h3 className="mt-6 text-xl font-bold text-slate-900">
+            {t("valuesTitle")}
+          </h3>
           <p className="mt-3 text-sm text-slate-600 leading-relaxed">
             {t("valuesDesc")}
           </p>
@@ -65,17 +72,27 @@ export function AboutPage() {
             {t("architectureDesc")}
           </p>
           <div className="mt-8 flex flex-wrap gap-4">
-            <Link to="/register/student" className="rounded-2xl bg-gradient-to-r from-[#0066ff] to-[#0099ff] px-6 py-3 text-xs font-black text-white shadow-md shadow-blue-500/25 hover:from-[#0052cc] hover:to-[#0088e6] transition-all hover:-translate-y-0.5">
+            <Link
+              to="/register/student"
+              className="rounded-2xl bg-gradient-to-r from-[#0066ff] to-[#0099ff] px-6 py-3 text-xs font-black text-white shadow-md shadow-blue-500/25 hover:from-[#0052cc] hover:to-[#0088e6] transition-all hover:-translate-y-0.5"
+            >
               {t("becomeStudent")}
             </Link>
-            <Link to="/apply/teacher" className="rounded-2xl border border-white/20 bg-white/10 px-6 py-3 text-xs font-bold text-white hover:bg-white/20 transition-colors">
+            <Link
+              to="/apply/teacher"
+              className="rounded-2xl border border-white/20 bg-white/10 px-6 py-3 text-xs font-bold text-white hover:bg-white/20 transition-colors"
+            >
               {t("applyToTeach")}
             </Link>
-            <Link to="/contact" className="rounded-2xl px-6 py-3 text-xs font-bold text-sky-300 hover:text-white transition-colors">
+            <Link
+              to="/contact"
+              className="rounded-2xl px-6 py-3 text-xs font-bold text-sky-300 hover:text-white transition-colors"
+            >
               Have a question? Talk to us →
             </Link>
           </div>
         </div>
       </div>
-    </div>);
+    </div>
+  );
 }
