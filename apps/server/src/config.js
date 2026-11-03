@@ -2,10 +2,13 @@ import dotenv from "dotenv";
 import { z } from "zod";
 dotenv.config();
 if (process.env["JWT-SECRET"] && !process.env.JWT_SECRET) {
-    process.env.JWT_SECRET = process.env["JWT-SECRET"];
+  process.env.JWT_SECRET = process.env["JWT-SECRET"];
 }
-const envSchema = z.object({
-    NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
+const envSchema = z
+  .object({
+    NODE_ENV: z
+      .enum(["development", "test", "production"])
+      .default("development"),
     PORT: z.coerce.number().default(4000),
     MONGO_URI: z.string().optional(),
     MONGODB_URI: z.string().default("mongodb://127.0.0.1:27017/learnhub"),
@@ -27,7 +30,10 @@ const envSchema = z.object({
     ADMIN_PASSWORD: z.string().default(""),
     SEED_DEMO_DATA: z.enum(["true", "false"]).default("false"),
     // JWT_SECRET must be strong in production; dev fallback is intentionally weak to signal misconfiguration
-    JWT_SECRET: z.string().min(16).default("learnhub_dev_secret_please_change_in_production"),
+    JWT_SECRET: z
+      .string()
+      .min(16)
+      .default("learnhub_dev_secret_please_change_in_production"),
     JWT_EXPIRES_IN: z.string().default("7d"),
     // Email API providers (HTTPS-based, bypass SMTP port blocks on Render free tier)
     RESEND_API_KEY: z.string().default(""),
@@ -72,36 +78,63 @@ const envSchema = z.object({
     TELEBIRR_NOTIFY_URL: z.string().default(""),
     TELEBIRR_RETURN_URL: z.string().default(""),
     TELEBIRR_FEE_PERCENT: z.coerce.number().default(0),
-}).superRefine((values, context) => {
+  })
+  .superRefine((values, context) => {
     if (values.STORAGE_PROVIDER === "r2") {
-        for (const name of ["R2_ACCOUNT_ID", "R2_BUCKET", "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY"]) {
-            if (!values[name].trim()) {
-                context.addIssue({
-                    code: "custom",
-                    path: [name],
-                    message: `${name} is required when STORAGE_PROVIDER=r2.`,
-                });
-            }
+      for (const name of [
+        "R2_ACCOUNT_ID",
+        "R2_BUCKET",
+        "R2_ACCESS_KEY_ID",
+        "R2_SECRET_ACCESS_KEY",
+      ]) {
+        if (!values[name].trim()) {
+          context.addIssue({
+            code: "custom",
+            path: [name],
+            message: `${name} is required when STORAGE_PROVIDER=r2.`,
+          });
         }
+      }
     }
-    if (values.NODE_ENV === "production" && values.JWT_SECRET === "learnhub_dev_secret_please_change_in_production") {
-        console.warn("[SECURITY] WARNING: JWT_SECRET is using the default dev value in production. Set a strong JWT_SECRET environment variable immediately.");
+    if (
+      values.NODE_ENV === "production" &&
+      (values.JWT_SECRET ===
+        "learnhub_dev_secret_please_change_in_production" ||
+        values.JWT_SECRET.length < 32)
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["JWT_SECRET"],
+        message:
+          "JWT_SECRET must be a non-default secret of at least 32 characters in production.",
+      });
     }
     if (values.PAYMENTS_ENABLED === "true") {
-        if (!values.SERVER_PUBLIC_URL.trim()) {
-            console.warn("[PAYMENTS] WARNING: PAYMENTS_ENABLED=true but SERVER_PUBLIC_URL is empty. Gateway callback and notify URLs cannot be built, so webhooks will never arrive.");
-        }
-        else if (!/^https:\/\//i.test(values.SERVER_PUBLIC_URL.trim())) {
-            console.warn("[PAYMENTS] WARNING: SERVER_PUBLIC_URL is not HTTPS. Both Chapa and Telebirr require HTTPS callback URLs.");
-        }
-        if (!values.CHAPA_SECRET_KEY.trim() && !values.TELEBIRR_BASE_URL.trim()) {
-            console.warn("[PAYMENTS] WARNING: PAYMENTS_ENABLED=true but no provider is configured (CHAPA_SECRET_KEY and TELEBIRR_BASE_URL are both empty). Checkout will be unavailable.");
-        }
-        if (values.PAYMENT_ENVIRONMENT === "live" && values.TELEBIRR_BASE_URL.trim() && !values.TELEBIRR_PRIVATE_KEY.trim()) {
-            console.warn("[PAYMENTS] WARNING: Telebirr is configured in live mode without TELEBIRR_PRIVATE_KEY. Request signing will fail.");
-        }
+      if (!values.SERVER_PUBLIC_URL.trim()) {
+        console.warn(
+          "[PAYMENTS] WARNING: PAYMENTS_ENABLED=true but SERVER_PUBLIC_URL is empty. Gateway callback and notify URLs cannot be built, so webhooks will never arrive.",
+        );
+      } else if (!/^https:\/\//i.test(values.SERVER_PUBLIC_URL.trim())) {
+        console.warn(
+          "[PAYMENTS] WARNING: SERVER_PUBLIC_URL is not HTTPS. Both Chapa and Telebirr require HTTPS callback URLs.",
+        );
+      }
+      if (!values.CHAPA_SECRET_KEY.trim() && !values.TELEBIRR_BASE_URL.trim()) {
+        console.warn(
+          "[PAYMENTS] WARNING: PAYMENTS_ENABLED=true but no provider is configured (CHAPA_SECRET_KEY and TELEBIRR_BASE_URL are both empty). Checkout will be unavailable.",
+        );
+      }
+      if (
+        values.PAYMENT_ENVIRONMENT === "live" &&
+        values.TELEBIRR_BASE_URL.trim() &&
+        !values.TELEBIRR_PRIVATE_KEY.trim()
+      ) {
+        console.warn(
+          "[PAYMENTS] WARNING: Telebirr is configured in live mode without TELEBIRR_PRIVATE_KEY. Request signing will fail.",
+        );
+      }
     }
-});
+  });
 export const env = envSchema.parse(process.env);
 env.MONGODB_URI = env.MONGO_URI || env.MONGODB_URI;
 export const isProduction = env.NODE_ENV === "production";
