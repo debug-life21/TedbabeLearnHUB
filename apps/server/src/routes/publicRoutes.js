@@ -5,6 +5,7 @@ import { asyncHandler, ApiError } from "../lib/http.js";
 import { ClassroomModel } from "../models/Classroom.js";
 import { ContactInquiryModel } from "../models/ContactInquiry.js";
 import { CourseModel } from "../models/Course.js";
+import { PlanModel } from "../models/Plan.js";
 import { FAQModel } from "../models/FAQ.js";
 import { LearningCategoryModel } from "../models/LearningCategory.js";
 import { TeacherApplicationModel } from "../models/TeacherApplication.js";
@@ -56,6 +57,15 @@ publicRouter.get("/home", asyncHandler(async (_req, res) => {
 publicRouter.get("/categories", asyncHandler(async (_req, res) => {
     const categories = await LearningCategoryModel.find({ isActive: true }).sort({ sortOrder: 1 }).lean();
     res.json({ categories });
+}));
+
+publicRouter.get("/plans", asyncHandler(async (_req, res) => {
+    const plans = await PlanModel.find({ isActive: true })
+        .select("code name kind description priceSantim currency interval gracePeriodDays courseIds benefits sessionCount")
+        .populate("courseIds", "title slug")
+        .sort({ sortOrder: 1, createdAt: -1 })
+        .lean();
+    res.json({ plans });
 }));
 
 publicRouter.get("/courses", asyncHandler(async (req, res) => {

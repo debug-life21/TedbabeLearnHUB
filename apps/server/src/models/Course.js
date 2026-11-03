@@ -25,6 +25,11 @@ const courseSchema = new Schema({
     thumbnailUrl: { type: String, default: "" },
     modules: { type: [moduleSchema], default: [] },
     prerequisites: { type: [String], default: [] },
+    // Monetization (Module 2). Courses default to free so existing catalogue
+    // behaviour and the free-registration workflow are preserved.
+    isFree: { type: Boolean, default: true, index: true },
+    priceSantim: { type: Number, default: 0, min: 0 },
+    currency: { type: String, default: "ETB", uppercase: true },
     status: {
         type: String,
         enum: ["draft", "published", "archived", "inactive"],

@@ -8,6 +8,10 @@ import morgan from "morgan";
 import { env } from "./config.js";
 import { errorHandler } from "./lib/http.js";
 import { adminRouter } from "./routes/adminRoutes.js";
+import { analyticsRouter } from "./routes/analyticsRoutes.js";
+import { monetizationRouter } from "./routes/monetizationRoutes.js";
+import { paymentAdminRouter } from "./routes/paymentAdminRoutes.js";
+import { paymentRouter } from "./routes/paymentRoutes.js";
 import { authRouter } from "./routes/authRoutes.js";
 import { commonRouter } from "./routes/commonRoutes.js";
 import { publicRouter } from "./routes/publicRoutes.js";
@@ -49,20 +53,23 @@ app.use(cors({
         if (allowedOrigins.has(cleaned)) {
             return callback(null, true);
         }
-        // Allow Vercel preview and production domains
-        if (/^https:\/\/[a-z0-9-]+(\.[a-z0-9-]+)*\.vercel\.app$/i.test(cleaned)) {
-            return callback(null, true);
-        }
         // Allow local development ports
         if (/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(cleaned)) {
             return callback(null, true);
         }
-        console.warn(`[CORS] Allowing cross-origin request from: ${origin}`);
-        callback(null, true);
+        callback(null, false);
     },
     credentials: true,
 }));
-app.use(express.json({ limit: "25mb" }));
+// The raw buffer is kept so gateway webhook signatures can be verified against
+// the exact bytes the provider signed. Express parses the JSON as usual; the
+// buffer is simply retained on the request.
+app.use(express.json({
+    limit: "25mb",
+    verify: (req, _res, buf) => {
+        req.rawBody = buf;
+    },
+}));
 app.use(cookieParser());
 app.use(morgan("dev"));
 const isDev = env.NODE_ENV === "development";
@@ -88,7 +95,15 @@ app.get("/api/health", (_req, res) => {
     });
 });
 app.use("/api/common", commonRouter);
+// Registered before the main admin router so analytics paths resolve here.
+app.use("/api/admin/analytics", analyticsRouter);
+// Registered before the main admin router for the same reason.
+app.use("/api/admin/monetization", monetizationRouter);
+// Admin payment dashboard and refund management (Module 4).
+app.use("/api/admin/payments", paymentAdminRouter);
 app.use("/api/admin", adminRouter);
+// Student checkout, transaction history, receipts and gateway webhooks.
+app.use("/api/payments", paymentRouter);
 app.use("/api/teacher", teacherRouter);
 app.use("/api/student", studentRouter);
 app.use("/api/resources", resourceRouter);

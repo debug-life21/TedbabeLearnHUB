@@ -78,6 +78,11 @@ const userSchema = new Schema({
         default: "active",
         index: true,
     },
+    // Activity signals for engagement, retention and "activity monitoring"
+    // analytics. lastActiveAt is updated at most once every 15 minutes by the
+    // role guard, never on every request.
+    lastLoginAt: { type: Date, default: null, index: true },
+    lastActiveAt: { type: Date, default: null, index: true },
     isDeleted: { type: Boolean, default: false, index: true },
     deletedAt: { type: Date, default: null },
     studentProfile: { type: studentProfileSchema, default: undefined },

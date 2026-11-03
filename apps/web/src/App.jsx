@@ -32,6 +32,7 @@ const ResetPasswordPage = lazy(() => import("./pages/AuthPages").then((page) => 
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard").then((page) => ({ default: page.AdminDashboard })));
 const TeacherDashboard = lazy(() => import("./pages/TeacherDashboard").then((page) => ({ default: page.TeacherDashboard })));
 const StudentDashboard = lazy(() => import("./pages/StudentDashboard").then((page) => ({ default: page.StudentDashboard })));
+const PaymentResultPage = lazy(() => import("./pages/PaymentResultPage").then((page) => ({ default: page.PaymentResultPage })));
 
 function ProtectedRoute({ children, roles }) {
     const { user, loading } = useAuth();
@@ -128,6 +129,7 @@ export default function App() {
           <Route path="/dashboard/student" element={<ProtectedRoute roles={["student"]}><DashboardDispatcher /></ProtectedRoute>}/>
           <Route path="/dashboard/teacher" element={<ProtectedRoute roles={["teacher"]}><DashboardDispatcher /></ProtectedRoute>}/>
           <Route path="/dashboard/admin" element={<ProtectedRoute roles={["admin"]}><DashboardDispatcher /></ProtectedRoute>}/>
+          <Route path="/payment/result" element={<ProtectedRoute roles={["student"]}><PaymentResultPage /></ProtectedRoute>}/>
 
           {/* Dedicated Course Learning Workspace */}
           <Route path="/workspace/:classroomId" element={<ProtectedRoute><LearningWorkspace /></ProtectedRoute>}/>

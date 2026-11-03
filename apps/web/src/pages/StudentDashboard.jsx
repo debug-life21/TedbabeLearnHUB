@@ -12,6 +12,7 @@ import { DashboardSidebar } from "../components/DashboardSidebar";
 import { formatSessionTime } from "../lib/sessionTime";
 import { MetricCard, DashboardCard, EmptyState, Badge, Modal } from "../components/UIComponents";
 import { SchedulePreferenceSelector } from "../components/SchedulePreferenceSelector";
+import { StudentPaymentsPanel } from "../components/StudentPaymentsPanel";
 import { useAuth } from "../context/AuthContext";
 
 const SUBMISSION_FILE_TYPES = ".pdf,.ppt,.pptx,.doc,.docx,.xls,.xlsx,.txt,.jpg,.jpeg,.png,.webp,.mp4,.webm,.mp3,.wav";
@@ -335,6 +336,7 @@ export function StudentDashboard({ user }) {
     const dashboardTabs = [
         { id: "overview", label: "Overview", icon: "📊" },
         { id: "courses", label: "Choose courses", icon: "🎯" },
+        { id: "payments", label: "Payments & plans", icon: "💳" },
         { id: "classes", label: `My cohorts (${classes.length})`, icon: "🏫" },
         { id: "schedule", label: `Live classes (${upcomingLessons.length})`, icon: "📹" },
         { id: "assignments", label: `Assignments (${assignments.length})`, icon: "📚" },
@@ -556,6 +558,7 @@ export function StudentDashboard({ user }) {
                         Last updated {new Date(profileForm.courseSelectionUpdatedAt).toLocaleString()}
                       </span>
                     ) : null}
+
                   </div>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {profileForm.preferredCourseIds.map((courseId) => {
@@ -685,7 +688,9 @@ export function StudentDashboard({ user }) {
         </div>
       ) : null}
 
-      {activeTab === "schedule" ? (
+        {activeTab === "payments" ? <StudentPaymentsPanel courses={courses} /> : null}
+
+        {activeTab === "schedule" ? (
         <DashboardCard title="Live class schedule" subtitle="Times are shown in your device's local time. You can also compare with the cohort time zone.">
           <SessionSchedule sessions={upcomingLessons} />
         </DashboardCard>

@@ -173,6 +173,12 @@ function userResponse(user) {
 function setSessionCookie(res, user) {
     const token = signToken({ sub: user._id.toString(), role: user.role });
     setAuthCookie(res, token);
+    // Activity signal for analytics. Fire-and-forget so sign-in latency is
+    // unaffected, and never allowed to reject.
+    void UserModel.updateOne(
+        { _id: user._id },
+        { $set: { lastLoginAt: new Date(), lastActiveAt: new Date() } },
+    ).catch(() => { });
     return token;
 }
 

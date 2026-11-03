@@ -6,6 +6,12 @@ import mongoose from "mongoose";
 import { UserModel as User } from "../src/models/User.js";
 import { CourseModel as Course } from "../src/models/Course.js";
 import { CertificateModel as Certificate } from "../src/models/Certificate.js";
+import { ClassroomModel } from "../src/models/Classroom.js";
+import { EnrollmentModel } from "../src/models/Enrollment.js";
+import { OrderModel } from "../src/models/Order.js";
+import { TransactionModel } from "../src/models/Transaction.js";
+import { SubscriptionModel } from "../src/models/Subscription.js";
+import { applyVerificationResult, cancelStudentSubscription, fulfilOrder } from "../src/services/paymentService.js";
 import { seedLearningCatalog } from "../src/catalog.js";
 
 // Helper for in-process HTTP requests to the Express app
@@ -28,7 +34,7 @@ async function request(path, options = {}) {
                     body: reqBody,
                 });
                 const data = await response.json().catch(() => ({}));
-                server.close(() => resolve({ status: response.status, data }));
+                server.close(() => resolve({ status: response.status, data, headers: response.headers }));
             } catch (err) {
                 server.close(() => reject(err));
             }
@@ -85,10 +91,150 @@ test("Public Course Catalog: individual course detail", async () => {
     assert.ok(Array.isArray(res.data.course.modules));
 });
 
+test("Public monetization plans expose active offers only", async () => {
+    const res = await request("/api/public/plans");
+    assert.equal(res.status, 200);
+    assert.ok(Array.isArray(res.data.plans));
+    assert.ok(res.data.plans.every((plan) => plan.isActive !== false));
+    assert.ok(res.data.plans.every((plan) => !("createdBy" in plan)));
+});
+
+test("CORS rejects unlisted credentialed origins", async () => {
+    const allowed = await request("/api/health", { headers: { Origin: "http://localhost:5173" } });
+    const rejected = await request("/api/health", { headers: { Origin: "https://untrusted.example" } });
+    const unconfiguredPreview = await request("/api/health", { headers: { Origin: "https://attacker-preview.vercel.app" } });
+    assert.equal(allowed.headers.get("access-control-allow-origin"), "http://localhost:5173");
+    assert.equal(rejected.headers.get("access-control-allow-origin"), null);
+    assert.equal(unconfiguredPreview.headers.get("access-control-allow-origin"), null);
+});
+
 test("Public Instructors Directory", async () => {
     const res = await request("/api/public/instructors");
     assert.equal(res.status, 200);
     assert.ok(Array.isArray(res.data.instructors));
+});
+
+test("Payment fulfillment is idempotent and does not assign a classroom", async () => {
+    const course = await Course.findOne({ status: "published" }).lean();
+    assert.ok(course);
+    const student = await User.create({
+        fullName: "Payment Test Student",
+        email: `fulfillment.${Date.now()}@example.com`,
+        role: "student",
+    });
+    const reference = `TEST-FULFILL-${Date.now()}`;
+    try {
+        const order = await OrderModel.create({
+            reference,
+            student: student._id,
+            items: [{
+                itemType: "course",
+                itemId: course._id,
+                title: course.title,
+                unitPriceSantim: 500,
+                quantity: 1,
+                subtotalSantim: 500,
+            }],
+            subtotalSantim: 500,
+            totalSantim: 500,
+            status: "processing",
+        });
+        const first = await fulfilOrder({ orderId: order._id, transaction: { provider: "chapa" } });
+        const second = await fulfilOrder({ orderId: order._id, transaction: { provider: "chapa" } });
+        assert.equal(first.fulfilled, true);
+        assert.equal(second.alreadyFulfilled, true);
+        assert.ok(await OrderModel.exists({ _id: order._id, fulfilledAt: { $ne: null } }));
+        assert.equal(await EnrollmentModel.countDocuments({ student: student._id, course: course._id, status: "active" }), 1);
+        assert.equal(await ClassroomModel.countDocuments({ students: student._id }), 0);
+    } finally {
+        await EnrollmentModel.deleteMany({ student: student._id });
+        await OrderModel.deleteMany({ reference });
+        await User.deleteOne({ _id: student._id });
+    }
+});
+
+test("Provider success without amount/currency cannot settle an order", async () => {
+    const student = await User.create({
+        fullName: "Verification Test Student",
+        email: `verify.payment.${Date.now()}@example.com`,
+        role: "student",
+    });
+    const reference = `TEST-VERIFY-${Date.now()}`;
+    try {
+        const order = await OrderModel.create({
+            reference,
+            student: student._id,
+            items: [],
+            subtotalSantim: 500,
+            totalSantim: 500,
+            status: "processing",
+        });
+        const transaction = await TransactionModel.create({
+            order: order._id,
+            student: student._id,
+            provider: "chapa",
+            reference,
+            idempotencyKey: `test-${reference}`,
+            amountSantim: 500,
+            status: "pending",
+        });
+        const incomplete = await applyVerificationResult({
+            transactionId: transaction._id,
+            source: "verify_api",
+            result: { status: "success", amountSantim: null, currency: null },
+        });
+        assert.equal(incomplete.awaitingVerification, true);
+        assert.equal(incomplete.transaction.status, "pending");
+        assert.ok(await OrderModel.exists({ _id: order._id, fulfilledAt: null }));
+
+        const mismatch = await applyVerificationResult({
+            transactionId: transaction._id,
+            source: "verify_api",
+            result: { status: "success", amountSantim: 400, currency: "ETB" },
+        });
+        assert.equal(mismatch.mismatch, true);
+        assert.equal(mismatch.transaction.status, "failed");
+        assert.ok(await OrderModel.exists({ _id: order._id, fulfilledAt: null }));
+    } finally {
+        await TransactionModel.deleteMany({ reference });
+        await OrderModel.deleteMany({ reference });
+        await User.deleteOne({ _id: student._id });
+    }
+});
+
+test("Subscription cancellation is owner-scoped and does not create an automatic renewal", async () => {
+    const student = await User.create({
+        fullName: "Subscription Test Student",
+        email: `subscription.${Date.now()}@example.com`,
+        role: "student",
+    });
+    const otherStudent = await User.create({
+        fullName: "Other Subscription Student",
+        email: `subscription.other.${Date.now()}@example.com`,
+        role: "student",
+    });
+    let subscription;
+    try {
+        subscription = await SubscriptionModel.create({
+            student: student._id,
+            plan: new mongoose.Types.ObjectId(),
+            interval: "month",
+            status: "active",
+            currentPeriodStart: new Date(),
+            currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        });
+        await assert.rejects(
+            () => cancelStudentSubscription({ subscriptionId: subscription._id, studentId: otherStudent._id }),
+            { statusCode: 404 },
+        );
+        const cancelled = await cancelStudentSubscription({ subscriptionId: subscription._id, studentId: student._id });
+        assert.equal(cancelled.cancelAtPeriodEnd, true);
+        assert.equal(cancelled.status, "active");
+        assert.equal(await OrderModel.countDocuments({ student: student._id }), 0);
+    } finally {
+        if (subscription) await SubscriptionModel.deleteOne({ _id: subscription._id });
+        await User.deleteMany({ _id: { $in: [student._id, otherStudent._id] } });
+    }
 });
 
 // ─── Auth: Registration Flow ──────────────────────────────────────────────────

@@ -69,6 +69,15 @@ TedbabeLearnHUB (TLH) is a modern, responsive, and secure full-stack education m
 - Educational file upload with MIME type and extension validation.
 - Role-based download authorization ensuring private materials are accessible only to enrolled participants.
 
+### 10. Analytics, Monetization & Payments
+- Administrator analytics are calculated from MongoDB student, course, classroom, attendance, assessment, and activity records.
+- Admins can price courses, create one-time and recurring plans, manage promotions, review subscriptions, and view payment/revenue reports.
+- Student checkout supports configured providers only. Orders and transaction status are verified server-side; a successful payment records the purchased entitlement and course registration request but never assigns a classroom.
+- Students can review order history and print receipts. Subscription renewals require a new student-paid order; automatic charges are not enabled.
+- Financial values are stored as integer santim. Reports separate collected gross, gateway fees, refunds, and net revenue.
+- Chapa and Telebirr require merchant credentials. Telebirr configuration depends on Ethio Telecom merchant onboarding; provider availability, fees, refunds, settlement, and webhook requirements must be confirmed for the merchant account before live use.
+- Payment integrations have not been verified against this deployment's provider sandbox or live merchant accounts. Keep `PAYMENTS_ENABLED=false` until provider setup, webhook delivery, and end-to-end verification have been tested.
+
 ---
 
 ## 🚀 Quick Start Guide
@@ -172,6 +181,7 @@ npm test
 | `/faq` | Frequently asked questions |
 | `/contact` | Contact & support |
 | `/verify-certificate` | Public certificate credential lookup |
+| `/payment/result` | Student payment return and server verification |
 | `/sign-in` | Sign in page |
 | `/register/student` | Student registration |
 | `/apply/teacher` | Teacher application |
@@ -202,6 +212,7 @@ npm test
 |---|---|---|
 | `GET` | `/api/public/courses` | Search & paginated course catalog |
 | `GET` | `/api/public/courses/:slugOrId` | Course detail with syllabus |
+| `GET` | `/api/public/plans` | Active sellable plans and package benefits |
 | `GET` | `/api/public/instructors` | Approved educator directory |
 | `GET` | `/api/public/certificates/:certNumber` | Certificate verification |
 | `GET` | `/api/public/home` | Home stats & featured courses |
@@ -222,6 +233,31 @@ npm test
 | `PATCH` | `/api/auth/profile` | Update profile (authenticated) |
 | `GET` | `/api/auth/me` | Current session user |
 | `POST` | `/api/auth/logout` | Clear session cookie |
+
+### Student Payments
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/api/payments/config` | Enabled payment methods and provider capabilities; no secrets |
+| `POST` | `/api/payments/orders` | Create an order from server-priced course/plan IDs |
+| `POST` | `/api/payments/checkout` | Initialize a provider checkout |
+| `GET` | `/api/payments/orders` | Student-scoped order history with transaction statuses |
+| `POST` | `/api/payments/orders/:orderId/verify` | Server-to-server provider verification |
+| `GET` | `/api/payments/transactions/:transactionId/receipt` | Student-owned receipt data |
+| `GET` | `/api/payments/subscriptions` | Student subscription history |
+| `POST` | `/api/payments/subscriptions/:subscriptionId/cancel` | Schedule cancellation at the end of the paid period |
+| `POST` | `/api/payments/webhook/:providerId` | Provider webhook; signature validation is required |
+
+### Administrator Analytics & Finance
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/api/admin/analytics/dashboard` | Platform-wide learning analytics |
+| `GET` | `/api/admin/monetization/plans` | Manage plans, prices, and benefits |
+| `GET` | `/api/admin/payments/dashboard` | Revenue, fees, refunds, and provider performance |
+| `GET` | `/api/admin/payments/transactions` | Filtered transaction ledger |
+| `GET` | `/api/admin/payments/transactions/export.csv` | Filtered CSV transaction report (up to 5,000 rows) |
+| `POST` | `/api/admin/payments/reconcile` | Re-verify pending gateway transactions |
+
+Admin analytics, monetization, and payment routes require the `hub_admin` role. Student order, receipt, and subscription routes are scoped to the authenticated student.
 
 ---
 
@@ -255,7 +291,7 @@ LearnHUB/
 │   │   │   ├── app.js                  # Express + Helmet + CORS + Rate Limiting
 │   │   │   └── index.js                # Server entry point
 │   │   ├── test/
-│   │   │   └── system.test.js          # 14 automated integration tests (node:test)
+│   │   │   └── system.test.js          # Catalog, auth, payment and RBAC integration tests
 │   │   └── package.json
 │   ├── web/                            # React 19 + Vite Frontend
 │   │   ├── src/
@@ -274,7 +310,7 @@ LearnHUB/
 │   │   │   │   ├── VerifyCertificatePage.jsx
 │   │   │   │   ├── LearningWorkspace.jsx
 │   │   │   │   ├── AuthPages.jsx       # ForgotPasswordPage, ResetPasswordPage added
-│   │   │   │   ├── StudentDashboard.jsx # Certificates tab + Account Security tab
+│   │   │   │   ├── StudentDashboard.jsx # Learning dashboard, payments, receipts and subscriptions
 │   │   │   │   └── TeacherDashboard.jsx # Workspace button + Account Security tab
 │   │   │   ├── context/AuthContext.jsx
 │   │   │   ├── i18n.js
@@ -295,24 +331,7 @@ LearnHUB/
 
 Run: `npm test`
 
-```
-✔ Public Course Catalog: pagination
-✔ Public Course Catalog: search filter
-✔ Public Course Catalog: individual course detail
-✔ Public Instructors Directory
-✔ Auth Registration: rejects invalid email
-✔ Auth Registration: creates account with hashed verification code
-✔ Auth Registration: rejects duplicate email with 409
-✔ Auth Registration: rejects wrong verification code
-✔ Auth Password Reset: forgot-password issues reset code
-✔ RBAC: admin endpoint requires authentication
-✔ RBAC: teacher endpoint requires authentication
-✔ RBAC: student endpoint requires authentication
-✔ Certificate Verification: valid certificate lookup
-✔ Certificate Verification: returns 404 for unknown credential
-
-tests 14 | pass 14 | fail 0
-```
+Last verified locally: **25 tests passed, 0 failed**. The suite covers catalog, authentication, RBAC, certificates, payment fulfillment/idempotency, provider amount/currency validation, subscription cancellation ownership, CORS origin rejection, and external resource URL validation.
 
 ---
 
@@ -337,12 +356,30 @@ ADMIN_EMAIL=admin@learnhub.et
 ADMIN_PASSWORD=your-secure-admin-password
 SEED_DEMO_DATA=false
 STORAGE_PROVIDER=local
+PAYMENTS_ENABLED=false
+PAYMENT_ENVIRONMENT=sandbox
+SERVER_PUBLIC_URL=https://your-api.example
+CHAPA_SECRET_KEY=
+CHAPA_WEBHOOK_SECRET=
+CHAPA_BASE_URL=https://api.chapa.co/v1
+CHAPA_FEE_PERCENT=2.5
+TELEBIRR_BASE_URL=
+TELEBIRR_MERCHANT_APP_ID=
+TELEBIRR_MERCHANT_CODE=
+TELEBIRR_PRIVATE_KEY=
+TELEBIRR_PUBLIC_KEY=
+TELEBIRR_NOTIFY_URL=
+TELEBIRR_FEE_PERCENT=0
 # For Cloudflare R2, set STORAGE_PROVIDER=r2 and fill all R2 values:
 R2_ACCOUNT_ID=
 R2_BUCKET=learnhub-resources
 R2_ACCESS_KEY_ID=
 R2_SECRET_ACCESS_KEY=
 ```
+
+Keep payment keys only in server-side environment secrets, never in `VITE_*` variables. Chapa's webhook URL is `{SERVER_PUBLIC_URL}/api/payments/webhook/chapa`. Configure the matching webhook secret in the Chapa merchant dashboard. Telebirr requires credentials, endpoints, whitelisting, and webhook details issued for the merchant account; do not infer them from another provider's setup. Fee percentages are reporting estimates unless the provider returns an actual charge. Refund support is not assumed to be available through either adapter.
+
+For sandbox testing, configure a provider account, expose the API over HTTPS, register the exact webhook URL, set `PAYMENTS_ENABLED=true` and `PAYMENT_ENVIRONMENT=sandbox`, and complete an initialize → provider payment → webhook/server verification → entitlement → receipt round trip. Only consider `PAYMENT_ENVIRONMENT=live` after live merchant onboarding and a controlled live transaction have been verified. This repository change alone does not establish sandbox or live readiness.
 
 Keep R2 credentials only in `apps/server/.env` (or your hosting provider's server-side secrets), never in frontend environment variables or committed files. Switching to R2 affects new uploads; existing local files must be migrated separately before removing the old server storage.
 

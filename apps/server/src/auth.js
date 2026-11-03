@@ -71,6 +71,12 @@ export function requireRole(...allowedRoles) {
         if (!user || user.isDeleted || user.accountStatus !== "active" || (!isAdminRole(user.role) && !user.emailVerified)) {
             return next(new ApiError(403, "Your account is not active or email is not verified. Please verify your email first."));
         }
+        // Throttled activity heartbeat powering engagement/retention analytics.
+        // At most one write per user per 15 minutes, never blocking the request.
+        const lastActive = user.lastActiveAt ? new Date(user.lastActiveAt).getTime() : 0;
+        if (Date.now() - lastActive > 15 * 60 * 1000) {
+            void UserModel.updateOne({ _id: user._id }, { $set: { lastActiveAt: new Date() } }).catch(() => { });
+        }
         return next();
     };
 }

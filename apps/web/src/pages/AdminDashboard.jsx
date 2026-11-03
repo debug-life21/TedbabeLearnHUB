@@ -6,8 +6,82 @@ import { TIME_ZONES } from "../lib/timezones";
 import { ProfilePhotoField } from "../components/ProfilePhotoField";
 import { DashboardSettings } from "../components/DashboardSettings";
 import { DashboardSidebar } from "../components/DashboardSidebar";
+import { MonetizationPanel } from "../components/MonetizationPanel";
+import { PaymentsAdminPanel } from "../components/PaymentsAdminPanel";
 import { MetricCard, DashboardCard, EmptyState, Badge, Modal } from "../components/UIComponents";
 import { useAuth } from "../context/AuthContext";
+
+// Percentages are nullable by design: null means "not applicable" (zero
+// denominator) and is rendered as an em dash rather than a misleading 0%.
+function formatPercent(value) {
+    return value === null || value === undefined ? "—" : `${value}%`;
+}
+
+function formatNumber(value) {
+    return Number(value ?? 0).toLocaleString();
+}
+
+/** Dependency-free column chart. Each point is { key, value }. */
+function AnalyticsColumnChart({ points, height = 160, emptyLabel = "No data in this window." }) {
+    if (!points || points.length === 0) {
+        return <p className="py-8 text-center text-xs font-medium text-slate-400">{emptyLabel}</p>;
+    }
+    const max = Math.max(1, ...points.map((point) => point.value));
+    return (
+        <div>
+            <div className="flex items-end gap-[2px]" style={{ height }}>
+                {points.map((point, index) => (
+                    <div
+                        key={`${point.key}-${index}`}
+                        title={`${point.key}: ${formatNumber(point.value)}`}
+                        className="min-h-[2px] flex-1 rounded-t bg-gradient-to-t from-[#0066ff] to-[#00d2ff] transition-all hover:from-[#0052cc] hover:to-[#0088e6]"
+                        style={{ height: `${Math.max(2, (point.value / max) * 100)}%` }}
+                    />
+                ))}
+            </div>
+            <div className="mt-2 flex justify-between text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                <span>{points[0]?.key}</span>
+                <span>peak {formatNumber(max)}</span>
+                <span>{points[points.length - 1]?.key}</span>
+            </div>
+        </div>
+    );
+}
+
+const RECENCY_VARIANTS = { active: "emerald", recent: "blue", dormant: "amber", cold: "rose" };
+
+/** Compact table used by the analytics drill-downs. */
+function AnalyticsTable({ columns, rows, emptyLabel = "No data in this window." }) {
+    if (!rows || rows.length === 0) {
+        return <p className="py-8 text-center text-xs font-medium text-slate-400">{emptyLabel}</p>;
+    }
+    return (
+        <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+                <thead>
+                    <tr className="border-b border-slate-100">
+                        {columns.map((column) => (
+                            <th key={column.key} className={`whitespace-nowrap px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-400 ${column.align ?? "text-left"}`}>
+                                {column.label}
+                            </th>
+                        ))}
+                    </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50">
+                    {rows.map((row, index) => (
+                        <tr key={row.id ?? index} className="transition-colors hover:bg-slate-50/70">
+                            {columns.map((column) => (
+                                <td key={column.key} className={`px-3 py-2.5 ${column.align ?? "text-left"} ${column.className ?? "font-medium text-slate-700"}`}>
+                                    {column.render ? column.render(row) : row[column.key]}
+                                </td>
+                            ))}
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        </div>
+    );
+}
 
 export function AdminDashboard({ user }) {
     const { t } = useTranslation();
@@ -31,6 +105,13 @@ export function AdminDashboard({ user }) {
     const [reportsData, setReportsData] = useState(null);
     const [reportsLoaded, setReportsLoaded] = useState(false);
     const [isReportsLoading, setIsReportsLoading] = useState(false);
+    // Analytics (Module 1). Loaded on demand so the main dashboard payload stays lean.
+    const [analyticsData, setAnalyticsData] = useState(null);
+    const [analyticsActivity, setAnalyticsActivity] = useState([]);
+    const [analyticsLoaded, setAnalyticsLoaded] = useState(false);
+    const [isAnalyticsLoading, setIsAnalyticsLoading] = useState(false);
+    const [analyticsGranularity, setAnalyticsGranularity] = useState("day");
+    const [analyticsWindowDays, setAnalyticsWindowDays] = useState(30);
     const [feedback, setFeedback] = useState("");
     const [adminProfile, setAdminProfile] = useState({
         fullName: user.fullName || "",
@@ -267,6 +348,33 @@ export function AdminDashboard({ user }) {
             setSubmissionsLoading(false);
         }
     }, []);
+    const loadAnalytics = useCallback(async (granularity = analyticsGranularity, windowDays = analyticsWindowDays) => {
+        setIsAnalyticsLoading(true);
+        setLoadError("");
+        try {
+            const to = new Date();
+            const from = new Date(to.getTime() - windowDays * 24 * 60 * 60 * 1000);
+            const query = new URLSearchParams({
+                granularity,
+                from: from.toISOString(),
+                to: to.toISOString(),
+                limit: "25",
+            });
+            const [dashboard, activity] = await Promise.all([
+                apiRequest(`/api/admin/analytics/dashboard?${query.toString()}`),
+                apiRequest(`/api/admin/analytics/activity/students?${query.toString()}`),
+            ]);
+            setAnalyticsData(dashboard);
+            setAnalyticsActivity(activity.rows || []);
+            setAnalyticsLoaded(true);
+        }
+        catch (err) {
+            setLoadError(err instanceof Error ? err.message : "Unable to load analytics.");
+        }
+        finally {
+            setIsAnalyticsLoading(false);
+        }
+    }, [analyticsGranularity, analyticsWindowDays]);
     useEffect(() => {
         void loadAll();
     }, [loadAll]);
@@ -794,8 +902,20 @@ export function AdminDashboard({ user }) {
             setSecurityLoading(false);
         }
     };
+    // Derived analytics view-model — every value comes straight from the API.
+    const analyticsOverview = analyticsData?.overview;
+    const analyticsRegistrationPoints = (analyticsData?.registrations?.all?.buckets ?? []).map((bucket) => ({ key: bucket.key, value: bucket.count }));
+    const analyticsCourseRows = analyticsData?.topCourses ?? [];
+    const analyticsTeacherRows = analyticsData?.topTeachers ?? [];
+    const analyticsClassRows = analyticsData?.classes ?? [];
+    const analyticsStages = analyticsData?.funnel?.stages ?? [];
+    const analyticsEngagement = analyticsData?.engagement;
+    const analyticsFunnelBase = Math.max(1, analyticsStages[0]?.count ?? 0);
     const dashboardTabs = [
         { id: "overview", label: "Overview", icon: "📊" },
+        { id: "analytics", label: "Analytics", icon: "📈" },
+        { id: "monetization", label: "Monetization", icon: "💰" },
+        { id: "payments", label: "Payments", icon: "💳" },
         { id: "teachers", label: `Instructors (${teachers.length})`, icon: "👨‍🏫" },
         { id: "students", label: `Learners (${students.length})`, icon: "🎓" },
         { id: "administrators", label: `Admins (${administrators.length})`, icon: "🛡️" },
@@ -814,6 +934,7 @@ export function AdminDashboard({ user }) {
     return (<div className="admin-workspace min-h-screen w-full px-4 py-6 sm:px-6 lg:pl-72 lg:pr-8">
       <DashboardSidebar title="Admin workspace" user={{ ...user, fullName: adminProfile.fullName, avatarUrl: adminProfile.avatarUrl }} tabs={dashboardTabs} activeTab={activeTab} onSelect={(tabId) => {
           setActiveTab(tabId);
+          if (tabId === "analytics" && !analyticsLoaded) void loadAnalytics();
           if (tabId === "reports" && !reportsLoaded) void loadReports();
           if (tabId === "submissions") void loadSubmissions();
       }}/>
@@ -1585,6 +1706,226 @@ export function AdminDashboard({ user }) {
             </div>
           </DashboardCard>
         </div>) : null}
+
+      {/* 6b. ANALYTICS TAB (Module 1) */}
+      {activeTab === "analytics" ? (<div className="space-y-8">
+          {isAnalyticsLoading && !analyticsData && (
+            <div role="status" className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm font-medium text-blue-800">
+              Computing analytics from live platform data…
+            </div>
+          )}
+
+          <DashboardCard
+            title="Learning analytics"
+            subtitle="Live figures computed from platform data. Day boundaries use Africa/Addis_Ababa (UTC+03:00)."
+            action={
+              <div className="flex flex-wrap items-center gap-2">
+                <select
+                  value={analyticsGranularity}
+                  onChange={(event) => {
+                    const next = event.target.value;
+                    setAnalyticsGranularity(next);
+                    void loadAnalytics(next, analyticsWindowDays);
+                  }}
+                  className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700"
+                >
+                  <option value="day">Daily</option>
+                  <option value="week">Weekly</option>
+                  <option value="month">Monthly</option>
+                  <option value="year">Yearly</option>
+                </select>
+                <select
+                  value={analyticsWindowDays}
+                  onChange={(event) => {
+                    const next = Number(event.target.value);
+                    setAnalyticsWindowDays(next);
+                    void loadAnalytics(analyticsGranularity, next);
+                  }}
+                  className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700"
+                >
+                  <option value={7}>Last 7 days</option>
+                  <option value={30}>Last 30 days</option>
+                  <option value={90}>Last 90 days</option>
+                  <option value={365}>Last 12 months</option>
+                </select>
+                <button
+                  type="button"
+                  onClick={() => void loadAnalytics()}
+                  disabled={isAnalyticsLoading}
+                  className="rounded-xl bg-gradient-to-r from-[#0066ff] to-[#0099ff] px-4 py-2 text-xs font-extrabold text-white shadow-sm transition-all hover:from-[#0052cc] hover:to-[#0088e6] disabled:cursor-wait disabled:opacity-60"
+                >
+                  {isAnalyticsLoading ? "Refreshing…" : "↻ Refresh"}
+                </button>
+              </div>
+            }
+          >
+            {!analyticsOverview ? (
+              <EmptyState title="Analytics are not loaded yet." description="Use the refresh action to compute the latest figures." />
+            ) : (
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+                <MetricCard label="Learners" value={formatNumber(analyticsOverview.students.total)} subtext={`${formatNumber(analyticsOverview.students.active)} active`} icon="🎓" />
+                <MetricCard label="New in window" value={formatNumber(analyticsOverview.students.newInRange)} subtext={`${formatNumber(analyticsOverview.students.newToday)} today`} icon="✨" />
+                <MetricCard label="Instructors" value={formatNumber(analyticsOverview.teachers.total)} subtext={`${formatNumber(analyticsOverview.teachers.active)} active`} icon="👨‍🏫" />
+                <MetricCard label="Cohorts" value={formatNumber(analyticsOverview.classes.total)} subtext={`${formatNumber(analyticsOverview.classes.upcomingSessions)} upcoming sessions`} icon="🏫" />
+                <MetricCard label="Attendance rate" value={formatPercent(analyticsOverview.learning.attendanceRate)} subtext={`${formatNumber(analyticsOverview.learning.attendanceRecords)} records`} icon="✅" />
+              </div>
+            )}
+          </DashboardCard>
+
+          <DashboardCard title="Registration statistics" subtitle={`${analyticsData?.registrations?.totals?.all ?? 0} accounts created in the selected window`}>
+            <AnalyticsColumnChart points={analyticsRegistrationPoints} />
+            <div className="mt-6 grid gap-4 sm:grid-cols-3">
+              <div className="rounded-2xl bg-slate-50 p-4">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">New learners</p>
+                <p className="mt-1 text-2xl font-black text-slate-900">{formatNumber(analyticsData?.registrations?.totals?.students ?? 0)}</p>
+              </div>
+              <div className="rounded-2xl bg-slate-50 p-4">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">New instructors</p>
+                <p className="mt-1 text-2xl font-black text-slate-900">{formatNumber(analyticsData?.registrations?.totals?.teachers ?? 0)}</p>
+              </div>
+              <div className="rounded-2xl bg-slate-50 p-4">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">All new accounts</p>
+                <p className="mt-1 text-2xl font-black text-slate-900">{formatNumber(analyticsData?.registrations?.totals?.all ?? 0)}</p>
+              </div>
+            </div>
+          </DashboardCard>
+
+          <div className="grid gap-8 lg:grid-cols-2">
+            <DashboardCard title="Registration conversion funnel" subtitle="Stages are measured over learners who registered inside the selected window.">
+              {analyticsStages.length === 0 ? (
+                <EmptyState title="No funnel data in this window." />
+              ) : (
+                <div className="space-y-3">
+                  {analyticsStages.map((stage) => (
+                    <div key={stage.key}>
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-bold text-slate-700">{stage.label}</span>
+                        <span className="font-extrabold text-slate-900">
+                          {formatNumber(stage.count)}
+                          <span className="ml-2 font-medium text-slate-400">{formatPercent(stage.conversionFromTop)} of top</span>
+                        </span>
+                      </div>
+                      <div className="mt-1.5 h-2.5 w-full overflow-hidden rounded-full bg-slate-100">
+                        <div className="h-full rounded-full bg-gradient-to-r from-[#0066ff] to-[#00d2ff]" style={{ width: `${Math.round((stage.count / analyticsFunnelBase) * 100)}%` }} />
+                      </div>
+                      <p className="mt-1 text-[10px] font-medium text-slate-400">
+                        {formatPercent(stage.conversionFromPrevious)} from previous step
+                        {stage.dropOffFromPrevious ? ` · ${formatNumber(stage.dropOffFromPrevious)} dropped off` : ""}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </DashboardCard>
+
+            <DashboardCard title="Engagement and retention" subtitle="Activity signals, at-risk learners and assessment outcomes.">
+              {!analyticsEngagement ? (
+                <EmptyState title="No engagement data yet." />
+              ) : (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="rounded-2xl border border-slate-100 p-3">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Active learners</p>
+                      <p className="mt-1 text-xl font-black text-slate-900">{formatNumber(analyticsEngagement.students?.active ?? 0)}</p>
+                    </div>
+                    <div className="rounded-2xl border border-slate-100 p-3">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">At risk</p>
+                      <p className="mt-1 text-xl font-black text-slate-900">{formatNumber(analyticsEngagement.engagement?.atRisk ?? 0)} <span className="text-xs font-bold text-slate-400">({formatPercent(analyticsEngagement.engagement?.atRiskRate)})</span></p>
+                    </div>
+                    <div className="rounded-2xl border border-slate-100 p-3">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Assessment attempts</p>
+                      <p className="mt-1 text-xl font-black text-slate-900">{formatNumber(analyticsEngagement.assessments?.attempts ?? 0)}</p>
+                    </div>
+                    <div className="rounded-2xl border border-slate-100 p-3">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Pass rate</p>
+                      <p className="mt-1 text-xl font-black text-slate-900">{formatPercent(analyticsEngagement.assessments?.passRate)}</p>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-500">Recency spread</p>
+                    <div className="flex flex-wrap gap-2">
+                      {Object.entries(analyticsEngagement.students ?? {}).filter(([key]) => key !== "total").map(([key, value]) => (
+                        <Badge key={key} variant={RECENCY_VARIANTS[key] ?? "slate"}>{key}: {formatNumber(value)}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-500">Submission trend</p>
+                    <AnalyticsColumnChart
+                      height={110}
+                      points={(analyticsEngagement.submissionTrend?.buckets ?? []).map((bucket) => ({ key: bucket.key, value: bucket.count }))}
+                    />
+                  </div>
+                </div>
+              )}
+            </DashboardCard>
+          </div>
+
+          <DashboardCard title="Course popularity and performance" subtitle="Top 10 programmes in the selected window.">
+            <AnalyticsTable
+              rows={analyticsCourseRows}
+              columns={[
+                { key: "title", label: "Programme", render: (row) => (<div><p className="font-bold text-slate-900">{row.title}</p><p className="text-[10px] text-slate-400">{row.category}</p></div>) },
+                { key: "students", label: "Learners", align: "text-right", render: (row) => formatNumber(row.students) },
+                { key: "cohorts", label: "Cohorts", align: "text-right" },
+                { key: "fillRate", label: "Fill rate", align: "text-right", render: (row) => formatPercent(row.fillRate) },
+                { key: "attendanceRate", label: "Attendance", align: "text-right", render: (row) => formatPercent(row.attendanceRate) },
+                { key: "averageGradePercentage", label: "Avg grade", align: "text-right", render: (row) => formatPercent(row.averageGradePercentage) },
+                { key: "completionRate", label: "Completion", align: "text-right", render: (row) => formatPercent(row.completionRate) },
+              ]}
+            />
+          </DashboardCard>
+
+          <DashboardCard title="Instructor performance" subtitle="Top 10 instructors by enrolment in the selected window.">
+            <AnalyticsTable
+              rows={analyticsTeacherRows}
+              columns={[
+                { key: "name", label: "Instructor", render: (row) => (<div><p className="font-bold text-slate-900">{row.name}</p><p className="text-[10px] text-slate-400">{row.email}</p></div>) },
+                { key: "students", label: "Learners", align: "text-right", render: (row) => formatNumber(row.students) },
+                { key: "cohorts", label: "Cohorts", align: "text-right" },
+                { key: "sessions", label: "Sessions", align: "text-right" },
+                { key: "gradingRate", label: "Grading rate", align: "text-right", render: (row) => formatPercent(row.gradingRate) },
+                { key: "averageGradePercentage", label: "Avg grade", align: "text-right", render: (row) => formatPercent(row.averageGradePercentage) },
+                { key: "attendanceRate", label: "Attendance", align: "text-right", render: (row) => formatPercent(row.attendanceRate) },
+              ]}
+            />
+          </DashboardCard>
+
+          <DashboardCard title="Class performance" subtitle="Top 10 cohorts in the selected window.">
+            <AnalyticsTable
+              rows={analyticsClassRows}
+              columns={[
+                { key: "title", label: "Cohort", render: (row) => (<div><p className="font-bold text-slate-900">{row.title}</p><p className="text-[10px] text-slate-400">{row.course} · {row.teacher}</p></div>) },
+                { key: "status", label: "Status", render: (row) => <Badge variant="blue">{row.status}</Badge> },
+                { key: "students", label: "Learners", align: "text-right", render: (row) => `${formatNumber(row.students)} / ${formatNumber(row.capacity)}` },
+                { key: "fillRate", label: "Fill rate", align: "text-right", render: (row) => formatPercent(row.fillRate) },
+                { key: "sessions", label: "Sessions", align: "text-right" },
+                { key: "attendanceRate", label: "Attendance", align: "text-right", render: (row) => formatPercent(row.attendanceRate) },
+                { key: "submissions", label: "Submissions", align: "text-right" },
+              ]}
+            />
+          </DashboardCard>
+
+          <DashboardCard title="Student activity monitoring" subtitle="Recency is derived from the latest platform activity for each learner.">
+            <AnalyticsTable
+              rows={analyticsActivity}
+              emptyLabel="No learner activity recorded in this window."
+              columns={[
+                { key: "name", label: "Learner", render: (row) => (<div><p className="font-bold text-slate-900">{row.name}</p><p className="text-[10px] text-slate-400">{row.email}</p></div>) },
+                { key: "recency", label: "Recency", render: (row) => <Badge variant={RECENCY_VARIANTS[row.recency] ?? "slate"}>{row.recency}</Badge> },
+                { key: "placementStatus", label: "Placement", className: "capitalize text-slate-600" },
+                { key: "lastActiveAt", label: "Last active", render: (row) => (row.lastActiveAt ? new Date(row.lastActiveAt).toLocaleString() : "Never") },
+                { key: "submissions", label: "Submissions", align: "text-right" },
+                { key: "attendanceRate", label: "Attendance", align: "text-right", render: (row) => formatPercent(row.attendanceRate) },
+                { key: "certificates", label: "Certificates", align: "text-right" },
+              ]}
+            />
+          </DashboardCard>
+        </div>) : null}
+
+      {/* 6c. MONETIZATION TAB (Module 2). Self-loading: the panel fetches its own data. */}
+      {activeTab === "monetization" ? <MonetizationPanel /> : null}
+      {activeTab === "payments" ? <PaymentsAdminPanel /> : null}
 
       {/* 7. REPORTS & AUDIT LOGS TAB */}
       {activeTab === "reports" ? (<div className="space-y-8">

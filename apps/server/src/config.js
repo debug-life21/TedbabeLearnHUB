@@ -34,6 +34,44 @@ const envSchema = z.object({
     RESEND_FROM: z.string().default(""),
     SENDGRID_API_KEY: z.string().default(""),
     BREVO_API_KEY: z.string().default(""),
+    // ----------------------------------------------------------------
+    // Payments (Module 3). PAYMENTS_ENABLED must be "true" before any paid
+    // checkout, webhook or reconciliation route will respond.
+    // ----------------------------------------------------------------
+    PAYMENTS_ENABLED: z.enum(["true", "false"]).default("false"),
+    // sandbox | live — travels with every order/transaction for reporting.
+    PAYMENT_ENVIRONMENT: z.enum(["sandbox", "live"]).default("sandbox"),
+    // Public HTTPS base URL of this API. Required to build gateway callback and
+    // notify URLs (e.g. https://learnhub-api.onrender.com).
+    SERVER_PUBLIC_URL: z.string().default(""),
+    // ----------------------------------------------------------------
+    // Chapa — self-serve sandbox keys from https://dashboard.chapa.co
+    // Initialize: POST {CHAPA_BASE_URL}/transaction/initialize
+    // Verify:     GET  {CHAPA_BASE_URL}/transaction/verify/<tx_ref>
+    // Webhook signature: x-chapa-signature = HMAC-SHA256(raw body, webhook secret)
+    // ----------------------------------------------------------------
+    CHAPA_SECRET_KEY: z.string().default(""),
+    CHAPA_WEBHOOK_SECRET: z.string().default(""),
+    CHAPA_BASE_URL: z.string().default("https://api.chapa.co/v1"),
+    // Chapa's published domestic fee. Used only to estimate gateway fees in
+    // revenue reporting until actual per-transaction fees are reconciled.
+    CHAPA_FEE_PERCENT: z.coerce.number().default(2.5),
+    // ----------------------------------------------------------------
+    // Telebirr — every value below is issued by Ethio Telecom during merchant
+    // onboarding. TELEBIRR_BASE_URL is intentionally empty: the production
+    // gateway endpoint is provided by Ethio Telecom, not guessed here.
+    // ----------------------------------------------------------------
+    TELEBIRR_BASE_URL: z.string().default(""),
+    TELEBIRR_FABRIC_APP_ID: z.string().default(""),
+    TELEBIRR_APP_SECRET: z.string().default(""),
+    TELEBIRR_MERCHANT_APP_ID: z.string().default(""),
+    TELEBIRR_MERCHANT_CODE: z.string().default(""),
+    // PEM strings. Supports literal "\n" escapes so they survive .env files.
+    TELEBIRR_PRIVATE_KEY: z.string().default(""),
+    TELEBIRR_PUBLIC_KEY: z.string().default(""),
+    TELEBIRR_NOTIFY_URL: z.string().default(""),
+    TELEBIRR_RETURN_URL: z.string().default(""),
+    TELEBIRR_FEE_PERCENT: z.coerce.number().default(0),
 }).superRefine((values, context) => {
     if (values.STORAGE_PROVIDER === "r2") {
         for (const name of ["R2_ACCOUNT_ID", "R2_BUCKET", "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY"]) {
@@ -48,6 +86,20 @@ const envSchema = z.object({
     }
     if (values.NODE_ENV === "production" && values.JWT_SECRET === "learnhub_dev_secret_please_change_in_production") {
         console.warn("[SECURITY] WARNING: JWT_SECRET is using the default dev value in production. Set a strong JWT_SECRET environment variable immediately.");
+    }
+    if (values.PAYMENTS_ENABLED === "true") {
+        if (!values.SERVER_PUBLIC_URL.trim()) {
+            console.warn("[PAYMENTS] WARNING: PAYMENTS_ENABLED=true but SERVER_PUBLIC_URL is empty. Gateway callback and notify URLs cannot be built, so webhooks will never arrive.");
+        }
+        else if (!/^https:\/\//i.test(values.SERVER_PUBLIC_URL.trim())) {
+            console.warn("[PAYMENTS] WARNING: SERVER_PUBLIC_URL is not HTTPS. Both Chapa and Telebirr require HTTPS callback URLs.");
+        }
+        if (!values.CHAPA_SECRET_KEY.trim() && !values.TELEBIRR_BASE_URL.trim()) {
+            console.warn("[PAYMENTS] WARNING: PAYMENTS_ENABLED=true but no provider is configured (CHAPA_SECRET_KEY and TELEBIRR_BASE_URL are both empty). Checkout will be unavailable.");
+        }
+        if (values.PAYMENT_ENVIRONMENT === "live" && values.TELEBIRR_BASE_URL.trim() && !values.TELEBIRR_PRIVATE_KEY.trim()) {
+            console.warn("[PAYMENTS] WARNING: Telebirr is configured in live mode without TELEBIRR_PRIVATE_KEY. Request signing will fail.");
+        }
     }
 });
 export const env = envSchema.parse(process.env);
