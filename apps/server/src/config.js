@@ -98,16 +98,21 @@ const envSchema = z
     }
     if (
       values.NODE_ENV === "production" &&
-      (values.JWT_SECRET ===
-        "learnhub_dev_secret_please_change_in_production" ||
-        values.JWT_SECRET.length < 32)
+      values.JWT_SECRET === "learnhub_dev_secret_please_change_in_production"
     ) {
       context.addIssue({
         code: "custom",
         path: ["JWT_SECRET"],
         message:
-          "JWT_SECRET must be a non-default secret of at least 32 characters in production.",
+          "JWT_SECRET must not use the development default in production.",
       });
+    } else if (
+      values.NODE_ENV === "production" &&
+      values.JWT_SECRET.length < 32
+    ) {
+      console.warn(
+        "[SECURITY] WARNING: JWT_SECRET is shorter than 32 characters. Use a longer random secret when rotating production credentials.",
+      );
     }
     if (values.PAYMENTS_ENABLED === "true") {
       if (!values.SERVER_PUBLIC_URL.trim()) {
