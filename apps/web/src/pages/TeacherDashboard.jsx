@@ -82,12 +82,6 @@ export function TeacherDashboard({ user }) {
   // Attendance state
   const [selectedSessionId, setSelectedSessionId] = useState("");
   const [attendanceRecords, setAttendanceRecords] = useState({});
-  const [teacherAttendanceForm, setTeacherAttendanceForm] = useState({
-    status: "present",
-    notes: "",
-  });
-  const [teacherAttendanceSummary, setTeacherAttendanceSummary] = useState(null);
-  const [teacherAttendanceHistory, setTeacherAttendanceHistory] = useState([]);
   const [registerClassroomId, setRegisterClassroomId] = useState("");
   const [cohortRegister, setCohortRegister] = useState(null);
   const [registerLoading, setRegisterLoading] = useState(false);
@@ -170,7 +164,7 @@ export function TeacherDashboard({ user }) {
   });
   const loadTeacherData = useCallback(async () => {
     try {
-      const [dash, classesRes, assignRes, quizRes, resRes, annRes, attendRes] =
+      const [dash, classesRes, assignRes, quizRes, resRes, annRes] =
         await Promise.all([
           apiRequest("/api/teacher/dashboard"),
           apiRequest("/api/teacher/classes"),
@@ -179,10 +173,6 @@ export function TeacherDashboard({ user }) {
           apiRequest("/api/resources"),
           apiRequest("/api/teacher/announcements").catch(() => ({
             announcements: [],
-          })),
-          apiRequest("/api/teacher/attendance").catch(() => ({
-            records: [],
-            summary: null,
           })),
         ]);
       setClasses(classesRes.classes || []);
@@ -193,8 +183,6 @@ export function TeacherDashboard({ user }) {
       setNotifications(dash.notifications || []);
       setAnnouncements(annRes.announcements || []);
       setOverview(dash.overview || null);
-      setTeacherAttendanceHistory(attendRes.records || []);
-      setTeacherAttendanceSummary(attendRes.summary || null);
       if (dash.upcomingLessons?.[0] && !selectedSessionId) {
         setSelectedSessionId(dash.upcomingLessons[0]._id);
       }
@@ -237,30 +225,6 @@ export function TeacherDashboard({ user }) {
         },
       );
       setFeedback("Attendance saved.");
-    } catch (err) {
-      setFeedback(err.message);
-    }
-  };
-  // Mark the teacher's own attendance for a teaching day (session)
-  const saveTeacherAttendance = async () => {
-    if (!selectedSessionId) {
-      setFeedback("Select a teaching session first.");
-      return;
-    }
-    try {
-      const res = await apiRequest(
-        `/api/teacher/sessions/${selectedSessionId}/teacher-attendance`,
-        {
-          method: "POST",
-          body: JSON.stringify({
-            status: teacherAttendanceForm.status,
-            notes: teacherAttendanceForm.notes,
-          }),
-        },
-      );
-      setFeedback(res.message || "Teaching attendance recorded.");
-      setTeacherAttendanceForm({ status: "present", notes: "" });
-      void loadTeacherData();
     } catch (err) {
       setFeedback(err.message);
     }
@@ -1110,112 +1074,6 @@ export function TeacherDashboard({ user }) {
                 {t("markAttendance")}
               </button>
             </div>
-          </DashboardCard>
-
-          <DashboardCard
-            title="My teaching attendance"
-            subtitle="Record your own attendance for the selected teaching day (session only)."
-          >
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-              <MetricCard
-                label="Attendance rate"
-                value={`${teacherAttendanceSummary?.attendanceRate ?? 0}%`}
-              />
-              <MetricCard
-                label="Present"
-                value={teacherAttendanceSummary?.present ?? 0}
-              />
-              <MetricCard
-                label="Late"
-                value={teacherAttendanceSummary?.late ?? 0}
-              />
-              <MetricCard
-                label="Absent"
-                value={teacherAttendanceSummary?.absent ?? 0}
-              />
-              <MetricCard
-                label="Excused"
-                value={teacherAttendanceSummary?.excused ?? 0}
-              />
-            </div>
-            <div className="mt-5 flex flex-wrap items-end gap-3">
-              <label className="block text-xs font-bold text-slate-700">
-                Status
-                <select
-                  value={teacherAttendanceForm.status}
-                  onChange={(e) =>
-                    setTeacherAttendanceForm({
-                      ...teacherAttendanceForm,
-                      status: e.target.value,
-                    })
-                  }
-                  className="mt-1 w-40 rounded-xl border border-slate-200 bg-white p-2.5 text-sm"
-                >
-                  {["present", "late", "absent", "excused"].map((st) => (
-                    <option key={st} value={st}>
-                      {t(st)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="block flex-1 text-xs font-bold text-slate-700 min-w-[200px]">
-                Notes (optional)
-                <input
-                  type="text"
-                  maxLength={500}
-                  value={teacherAttendanceForm.notes}
-                  onChange={(e) =>
-                    setTeacherAttendanceForm({
-                      ...teacherAttendanceForm,
-                      notes: e.target.value,
-                    })
-                  }
-                  className="mt-1 w-full rounded-xl border border-slate-200 p-2.5 text-sm"
-                  placeholder="e.g. Taught full session, substituted for a colleague"
-                />
-              </label>
-              <button
-                onClick={saveTeacherAttendance}
-                className="rounded-xl bg-[#0066ff] px-6 py-2.5 text-xs font-bold text-white hover:bg-[#0052cc]"
-              >
-                Record my attendance
-              </button>
-            </div>
-            {teacherAttendanceHistory.length > 0 ? (
-              <div className="mt-5 divide-y divide-slate-100">
-                {teacherAttendanceHistory.slice(0, 8).map((rec) => (
-                  <div
-                    key={rec._id}
-                    className="flex items-center justify-between py-2.5 text-xs"
-                  >
-                    <div>
-                      <span className="font-bold text-slate-900">
-                        {rec.session?.title || "Teaching day"}
-                      </span>
-                      <p className="text-slate-400">
-                        {rec.classroom?.title ? `${rec.classroom.title} · ` : ""}
-                        {new Date(
-                          rec.teachingDate || rec.createdAt,
-                        ).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <Badge
-                      variant={
-                        rec.status === "present"
-                          ? "emerald"
-                          : rec.status === "absent"
-                            ? "rose"
-                            : "amber"
-                      }
-                    >
-                      {t(rec.status)}
-                    </Badge>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <EmptyState title="No teaching attendance recorded yet." />
-            )}
           </DashboardCard>
 
           <DashboardCard
