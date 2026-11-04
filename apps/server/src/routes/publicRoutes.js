@@ -170,13 +170,15 @@ publicRouter.get("/instructors", asyncHandler(async (_req, res) => {
 publicRouter.get("/certificates/:certificateNumber", asyncHandler(async (req, res) => {
     const cert = await CertificateModel.findOne({
         certificateNumber: req.params.certificateNumber.trim(),
-        status: "valid",
+        // Drafts are still being prepared by the academy and must not be
+        // publicly verifiable. "valid" is the legacy published status.
+        status: { $in: ["published", "valid"] },
     })
         .populate("course", "title slug")
         .lean();
 
     if (!cert) {
-        throw new ApiError(404, "Certificate not found or has been revoked.");
+        throw new ApiError(404, "Certificate not found, not yet published, or revoked.");
     }
 
     res.json({
@@ -188,6 +190,9 @@ publicRouter.get("/certificates/:certificateNumber", asyncHandler(async (req, re
             issueDate: cert.issueDate,
             overallScore: cert.overallScore,
             status: cert.status,
+            signatureName: cert.signatureName || "",
+            signatureTitle: cert.signatureTitle || "",
+            signatureImage: cert.signatureImage || "",
             verificationUrl: `/verify-certificate/${cert.certificateNumber}`,
         },
     });

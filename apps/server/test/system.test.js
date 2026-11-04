@@ -619,7 +619,7 @@ test("Certificate Verification: valid certificate lookup", async () => {
     courseTitle: "Full-Stack Web Development",
     overallScore: 94,
     issueDate: new Date(),
-    status: "valid",
+    status: "published",
     verificationUrl: `https://tedbabelearnhub.et/verify-certificate?id=${certNumber}`,
   });
 
@@ -631,5 +631,25 @@ test("Certificate Verification: valid certificate lookup", async () => {
 
 test("Certificate Verification: returns 404 for unknown credential", async () => {
   const res = await request("/api/public/certificates/TLH-DOES-NOT-EXIST-0000");
+  assert.equal(res.status, 404);
+});
+
+test("Certificate Verification: draft certificate is not publicly visible", async () => {
+  const stubId = new mongoose.Types.ObjectId();
+  const certNumber = `TLH-2026-DRAFT-${Date.now()}`;
+  await Certificate.create({
+    certificateNumber: certNumber,
+    student: stubId,
+    classroom: stubId,
+    course: stubId,
+    studentName: "Draft Learner",
+    courseTitle: "Full-Stack Web Development",
+    overallScore: 88,
+    issueDate: new Date(),
+    status: "draft",
+    verificationUrl: `https://tedbabelearnhub.et/verify-certificate?id=${certNumber}`,
+  });
+
+  const res = await request(`/api/public/certificates/${certNumber}`);
   assert.equal(res.status, 404);
 });

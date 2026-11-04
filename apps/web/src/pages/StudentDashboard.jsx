@@ -11,6 +11,10 @@ import { DashboardSettings } from "../components/DashboardSettings";
 import { DashboardSidebar } from "../components/DashboardSidebar";
 import { formatSessionTime } from "../lib/sessionTime";
 import {
+  downloadCertificate,
+  printCertificate,
+} from "../lib/certificateDocument";
+import {
   MetricCard,
   DashboardCard,
   EmptyState,
@@ -1798,13 +1802,42 @@ export function StudentDashboard({ user }) {
                           {cert.overallScore}%
                         </strong>
                       </p>
+                      <p>
+                        Signed by:{" "}
+                        <strong>
+                          {cert.signatureName || cert.instructorName}
+                        </strong>
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!printCertificate(cert)) {
+                            window.open(
+                              `/verify-certificate/${cert.certificateNumber}`,
+                              "_blank",
+                            );
+                          }
+                        }}
+                        className="flex-1 rounded-xl bg-slate-900 py-2.5 text-center text-xs font-bold text-white hover:bg-slate-800 transition"
+                      >
+                        🖨️ Print
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => downloadCertificate(cert)}
+                        className="flex-1 rounded-xl border border-slate-300 bg-white py-2.5 text-center text-xs font-bold text-slate-800 hover:bg-slate-50 transition"
+                      >
+                        ⬇️ Download
+                      </button>
                     </div>
                     <Link
                       to={`/verify-certificate/${cert.certificateNumber}`}
                       target="_blank"
-                      className="block text-center rounded-xl bg-slate-900 py-2.5 text-xs font-bold text-white hover:bg-slate-800 transition"
+                      className="block text-center text-[11px] font-bold text-[#0066ff] hover:underline"
                     >
-                      View & Print Certificate 🖨️
+                      Open public verification page ↗
                     </Link>
                   </div>
                 ))}

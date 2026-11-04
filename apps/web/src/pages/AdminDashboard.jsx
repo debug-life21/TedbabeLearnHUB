@@ -156,6 +156,9 @@ export function AdminDashboard({ user }) {
     classroomId: "",
     overallScore: "",
     notes: "",
+    signatureName: "",
+    signatureTitle: "",
+    signatureImage: "",
   });
   const [publishedResults, setPublishedResults] = useState({
     attempts: [],
@@ -567,8 +570,15 @@ export function AdminDashboard({ user }) {
     studentId,
     classroomId,
     overallScore,
-    notes = "",
+    options = {},
   ) => {
+    const {
+      notes = "",
+      action = "publish",
+      signatureName = "",
+      signatureTitle = "",
+      signatureImage = "",
+    } = options;
     const key = `${studentId}-${classroomId}`;
     setCertificateBusyKey(key);
     try {
@@ -581,10 +591,14 @@ export function AdminDashboard({ user }) {
             overallScore === "" || overallScore === undefined
               ? undefined
               : Number(overallScore),
-          notes: notes || "",
+          notes,
+          action,
+          signatureName,
+          signatureTitle,
+          signatureImage,
         }),
       });
-      setFeedback(res.message || "Certificate issued.");
+      setFeedback(res.message || "Certificate saved.");
       await loadCertificates();
     } catch (err) {
       setFeedback(err.message);
@@ -607,8 +621,23 @@ export function AdminDashboard({ user }) {
       setCertificateBusyKey("");
     }
   };
-  const handleManualIssueCertificate = async (e) => {
-    e.preventDefault();
+  const handleSignatureUpload = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (file.size > 1_500_000) {
+      setFeedback("Signature image must be smaller than 1.5 MB.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () =>
+      setCertificateForm((prev) => ({
+        ...prev,
+        signatureImage: String(reader.result || ""),
+      }));
+    reader.readAsDataURL(file);
+  };
+  const handleManualIssueCertificate = async (event, action = "publish") => {
+    event.preventDefault();
     if (!certificateForm.studentId || !certificateForm.classroomId) {
       setFeedback("Select both a learner and a cohort.");
       return;
@@ -617,13 +646,22 @@ export function AdminDashboard({ user }) {
       certificateForm.studentId,
       certificateForm.classroomId,
       certificateForm.overallScore,
-      certificateForm.notes,
+      {
+        notes: certificateForm.notes,
+        action,
+        signatureName: certificateForm.signatureName,
+        signatureTitle: certificateForm.signatureTitle,
+        signatureImage: certificateForm.signatureImage,
+      },
     );
     setCertificateForm({
       studentId: "",
       classroomId: "",
       overallScore: "",
       notes: "",
+      signatureName: "",
+      signatureTitle: "",
+      signatureImage: "",
     });
   };
   const loadAnalytics = useCallback(
@@ -2825,7 +2863,7 @@ export function AdminDashboard({ user }) {
 
               <form
                 onSubmit={handleManualIssueCertificate}
-                className="mt-6 grid gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 lg:grid-cols-5"
+                className="mt-6 grid gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 lg:grid-cols-3"
               >
                 <label className="block text-xs font-bold text-slate-700">
                   Cohort
@@ -2905,12 +2943,74 @@ export function AdminDashboard({ user }) {
                     placeholder="Recorded on the credential"
                   />
                 </label>
-                <div className="flex items-end">
+                <label className="block text-xs font-bold text-slate-700">
+                  Signatory name
+                  <input
+                    type="text"
+                    maxLength={120}
+                    value={certificateForm.signatureName}
+                    onChange={(e) =>
+                      setCertificateForm({
+                        ...certificateForm,
+                        signatureName: e.target.value,
+                      })
+                    }
+                    className="mt-1 w-full rounded-xl border border-slate-200 p-2.5 text-sm"
+                    placeholder="e.g. Dr. Abebe Tadesse"
+                  />
+                </label>
+                <label className="block text-xs font-bold text-slate-700">
+                  Signatory title
+                  <input
+                    type="text"
+                    maxLength={120}
+                    value={certificateForm.signatureTitle}
+                    onChange={(e) =>
+                      setCertificateForm({
+                        ...certificateForm,
+                        signatureTitle: e.target.value,
+                      })
+                    }
+                    className="mt-1 w-full rounded-xl border border-slate-200 p-2.5 text-sm"
+                    placeholder="e.g. Academy Director"
+                  />
+                </label>
+                <label className="block text-xs font-bold text-slate-700 lg:col-span-2">
+                  Signature image (optional)
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg"
+                    onChange={handleSignatureUpload}
+                    className="mt-1 w-full rounded-xl border border-slate-200 bg-white p-2 text-xs file:mr-3 file:rounded-lg file:border-0 file:bg-slate-900 file:px-3 file:py-1.5 file:text-xs file:font-bold file:text-white"
+                  />
+                  {certificateForm.signatureImage ? (
+                    <span className="mt-1 flex items-center gap-2 text-[11px] font-semibold text-emerald-700">
+                      <img
+                        src={certificateForm.signatureImage}
+                        alt="Signature preview"
+                        className="h-8 object-contain"
+                      />
+                      Signature attached
+                    </span>
+                  ) : null}
+                </label>
+                <div className="flex items-end gap-2">
+                  <button
+                    type="button"
+                    disabled={Boolean(certificateBusyKey)}
+                    onClick={(e) =>
+                      void handleManualIssueCertificate(e, "draft")
+                    }
+                    className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-xs font-bold text-slate-800 hover:bg-slate-100 disabled:opacity-60"
+                  >
+                    Save as draft
+                  </button>
                   <button
                     type="submit"
-                    className="w-full rounded-xl bg-gradient-to-r from-[#0066ff] to-[#0099ff] px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-blue-500/25 hover:from-[#0052cc] hover:to-[#0088e6]"
+                    disabled={Boolean(certificateBusyKey)}
+                    className="w-full rounded-xl bg-gradient-to-r from-[#0066ff] to-[#0099ff] px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-blue-500/25 hover:from-[#0052cc] hover:to-[#0088e6] disabled:opacity-60"
                   >
-                    Issue certificate
+                    Publish certificate
                   </button>
                 </div>
               </form>
@@ -3013,34 +3113,57 @@ export function AdminDashboard({ user }) {
                             <td className="py-2.5 px-3">
                               <Badge
                                 variant={
-                                  cert.status === "revoked" ? "rose" : "emerald"
+                                  cert.status === "revoked"
+                                    ? "rose"
+                                    : cert.status === "draft"
+                                      ? "amber"
+                                      : "emerald"
                                 }
                               >
-                                {cert.status}
+                                {cert.status === "valid"
+                                  ? "published"
+                                  : cert.status}
                               </Badge>
                             </td>
                             <td className="py-2.5 pl-3">
-                              <button
-                                type="button"
-                                disabled={certificateBusyKey === cert._id}
-                                onClick={() =>
-                                  void handleCertificateStatus(
-                                    cert,
+                              <div className="flex items-center gap-2">
+                                {cert.status === "draft" && (
+                                  <button
+                                    type="button"
+                                    disabled={certificateBusyKey === cert._id}
+                                    onClick={() =>
+                                      void handleCertificateStatus(
+                                        cert,
+                                        "published",
+                                      )
+                                    }
+                                    className="rounded-lg bg-emerald-50 px-3 py-1.5 text-[11px] font-bold text-emerald-700 hover:bg-emerald-100 disabled:opacity-60"
+                                  >
+                                    Publish
+                                  </button>
+                                )}
+                                <button
+                                  type="button"
+                                  disabled={certificateBusyKey === cert._id}
+                                  onClick={() =>
+                                    void handleCertificateStatus(
+                                      cert,
+                                      cert.status === "revoked"
+                                        ? "published"
+                                        : "revoked",
+                                    )
+                                  }
+                                  className={`rounded-lg px-3 py-1.5 text-[11px] font-bold disabled:opacity-60 ${
                                     cert.status === "revoked"
-                                      ? "valid"
-                                      : "revoked",
-                                  )
-                                }
-                                className={`rounded-lg px-3 py-1.5 text-[11px] font-bold disabled:opacity-60 ${
-                                  cert.status === "revoked"
-                                    ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
-                                    : "bg-rose-50 text-rose-700 hover:bg-rose-100"
-                                }`}
-                              >
-                                {cert.status === "revoked"
-                                  ? "Reinstate"
-                                  : "Revoke"}
-                              </button>
+                                      ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                                      : "bg-rose-50 text-rose-700 hover:bg-rose-100"
+                                  }`}
+                                >
+                                  {cert.status === "revoked"
+                                    ? "Reinstate"
+                                    : "Revoke"}
+                                </button>
+                              </div>
                             </td>
                           </tr>
                         ))}

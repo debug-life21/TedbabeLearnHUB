@@ -2432,6 +2432,12 @@ adminRouter.post(
         classroomId: z.string().min(1),
         overallScore: z.number().min(0).max(100).optional(),
         notes: z.string().trim().max(500).default(""),
+        signatureName: z.string().trim().max(120).default(""),
+        signatureTitle: z.string().trim().max(120).default(""),
+        signatureImage: z.string().trim().max(2_000_000).default(""),
+        // Administrators can keep a certificate as a draft until it is signed
+        // and ready, then publish it so it reaches the student.
+        action: z.enum(["draft", "publish"]).default("publish"),
       })
       .parse(req.body);
     if (
@@ -2497,6 +2503,7 @@ adminRouter.post(
     }
 
     const certificateNumber = makeCertificateNumber();
+    const shouldPublish = data.action === "publish";
     const certificate = await CertificateModel.create({
       student: student._id,
       classroom: classroom._id,
@@ -2510,36 +2517,93 @@ adminRouter.post(
         "TedbabeLearnHUB Academic Faculty",
       issueDate: new Date(),
       overallScore,
-      status: "valid",
+      status: shouldPublish ? "published" : "draft",
+      publishedAt: shouldPublish ? new Date() : null,
       verificationUrl: `/verify-certificate/${certificateNumber}`,
       issuedBy: req.user.id,
+      signatureName: data.signatureName,
+      signatureTitle: data.signatureTitle,
+      signatureImage: data.signatureImage,
       notes: data.notes,
     });
 
-    await NotificationModel.create({
-      user: student._id,
-      title: "Certificate of Completion Awarded!",
-      message: `Congratulations! The academy issued your certificate ${certificateNumber} for "${classroom.course?.title || classroom.title}".`,
-      kind: "certificate",
-      link: "/student/certificates",
-    });
+    if (shouldPublish) {
+      await NotificationModel.create({
+        user: student._id,
+        title: "Certificate of Completion Awarded!",
+        message: `Congratulations! The academy issued your certificate ${certificateNumber} for "${classroom.course?.title || classroom.title}". You can now view, print, and download it.`,
+        kind: "certificate",
+        link: "/student/certificates",
+      });
+    }
     await writeAudit(
       req.user.id,
-      "certificate_issued",
+      shouldPublish ? "certificate_published" : "certificate_drafted",
       "Certificate",
       certificate._id.toString(),
       {
         studentId: student._id.toString(),
         classroomId: classroom._id.toString(),
         certificateNumber,
+        status: certificate.status,
       },
     );
     res.status(201).json({
-      message: "Certificate issued and delivered to the student.",
+      message: shouldPublish
+        ? "Certificate published and delivered to the student."
+        : "Certificate saved as a draft. Publish it when it is signed and ready.",
       certificate,
     });
   }),
 );
+// Update a certificate the academy is preparing (score, notes, signature).
+adminRouter.patch(
+  "/certificates/:certificateId",
+  asyncHandler(async (req, res) => {
+    if (!mongoose.isValidObjectId(req.params.certificateId)) {
+      throw new ApiError(400, "Invalid certificate ID.");
+    }
+    const data = z
+      .object({
+        overallScore: z.number().min(0).max(100).optional(),
+        notes: z.string().trim().max(500).optional(),
+        signatureName: z.string().trim().max(120).optional(),
+        signatureTitle: z.string().trim().max(120).optional(),
+        signatureImage: z.string().trim().max(2_000_000).optional(),
+      })
+      .parse(req.body);
+    const certificate = await CertificateModel.findById(req.params.certificateId);
+    if (!certificate) throw new ApiError(404, "Certificate not found.");
+    if (certificate.status === "revoked") {
+      throw new ApiError(
+        400,
+        "Revoked certificates cannot be edited. Reinstate the certificate first.",
+      );
+    }
+    if (data.overallScore !== undefined) {
+      certificate.overallScore = data.overallScore;
+    }
+    if (data.notes !== undefined) certificate.notes = data.notes;
+    if (data.signatureName !== undefined) {
+      certificate.signatureName = data.signatureName;
+    }
+    if (data.signatureTitle !== undefined) {
+      certificate.signatureTitle = data.signatureTitle;
+    }
+    if (data.signatureImage !== undefined) {
+      certificate.signatureImage = data.signatureImage;
+    }
+    await certificate.save();
+    await writeAudit(
+      req.user.id,
+      "certificate_updated",
+      "Certificate",
+      certificate._id.toString(),
+    );
+    res.json({ message: "Certificate details updated.", certificate });
+  }),
+);
+// Move a certificate through its lifecycle: draft → published → revoked.
 adminRouter.patch(
   "/certificates/:certificateId/status",
   asyncHandler(async (req, res) => {
@@ -2547,41 +2611,56 @@ adminRouter.patch(
       throw new ApiError(400, "Invalid certificate ID.");
     }
     const { status } = z
-      .object({ status: z.enum(["valid", "revoked"]) })
+      .object({ status: z.enum(["draft", "published", "revoked"]) })
       .parse(req.body);
     const certificate = await CertificateModel.findById(
       req.params.certificateId,
     );
     if (!certificate) throw new ApiError(404, "Certificate not found.");
+    const previous = certificate.status;
     certificate.status = status;
-    certificate.revokedAt = status === "revoked" ? new Date() : null;
+    if (status === "published") {
+      certificate.publishedAt = certificate.publishedAt || new Date();
+      certificate.revokedAt = null;
+    } else if (status === "revoked") {
+      certificate.revokedAt = new Date();
+    }
     await certificate.save();
-    await NotificationModel.create({
-      user: certificate.student,
-      title:
-        status === "revoked"
-          ? "Certificate revoked"
-          : "Certificate reinstated",
-      message:
-        status === "revoked"
-          ? `Your certificate ${certificate.certificateNumber} has been revoked. Please contact the academy.`
-          : `Your certificate ${certificate.certificateNumber} is valid again.`,
-      kind: "certificate",
-      link: "/student/certificates",
-    });
+
+    // Only notify the student when the certificate actually reaches them.
+    if (status === "published" && previous !== "published") {
+      await NotificationModel.create({
+        user: certificate.student,
+        title: "Certificate of Completion Awarded!",
+        message: `Congratulations! Your certificate ${certificate.certificateNumber} is now available. You can view, print, and download it.`,
+        kind: "certificate",
+        link: "/student/certificates",
+      });
+    } else if (status === "revoked") {
+      await NotificationModel.create({
+        user: certificate.student,
+        title: "Certificate revoked",
+        message: `Your certificate ${certificate.certificateNumber} has been revoked. Please contact the academy.`,
+        kind: "certificate",
+        link: "/student/certificates",
+      });
+    }
     await writeAudit(
       req.user.id,
       `certificate_${status}`,
       "Certificate",
       certificate._id.toString(),
+      { previousStatus: previous },
     );
-    res.json({
-      message:
-        status === "revoked"
-          ? "Certificate revoked."
-          : "Certificate reinstated.",
-      certificate,
-    });
+    const messages = {
+      draft: "Certificate returned to draft. The student can no longer see it.",
+      published:
+        previous === "published"
+          ? "Certificate is already published."
+          : "Certificate published and delivered to the student.",
+      revoked: "Certificate revoked.",
+    };
+    res.json({ message: messages[status], certificate });
   }),
 );
 

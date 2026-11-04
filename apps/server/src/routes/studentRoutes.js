@@ -799,6 +799,9 @@ studentRouter.get(
     const studentId = req.user.id;
     const certificates = await CertificateModel.find({
       student: studentId,
+      // Students only see credentials the academy has published to them;
+      // drafts remain private until the admin releases them.
+      status: { $ne: "draft" },
     })
       .populate("course", "title slug thumbnailUrl")
       .populate("classroom", "title")
