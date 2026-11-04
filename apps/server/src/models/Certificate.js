@@ -16,6 +16,10 @@ const certificateSchema = new Schema({
         default: "valid",
     },
     verificationUrl: { type: String, default: "" },
+    // Issued by an administrator after reviewing published results.
+    issuedBy: { type: Schema.Types.ObjectId, ref: "User", default: null },
+    notes: { type: String, default: "" },
+    revokedAt: { type: Date, default: null },
 }, { timestamps: true });
 
 // Prevent duplicate certificates for the same student and classroom

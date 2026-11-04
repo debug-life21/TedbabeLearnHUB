@@ -21,10 +21,29 @@ const PROGRESS_COMPONENTS = [
   { category: "attendance", label: "Attendance" },
   { category: "assignment", label: "Assignments" },
   { category: "quiz", label: "Quizzes" },
-  { category: "midterm", label: "Midterm" },
-  { category: "final", label: "Final" },
+  { category: "midExam", label: "Mid Exam" },
+  { category: "finalExam", label: "Final Exam" },
+  { category: "project", label: "Project" },
   { category: "comprehensive", label: "Comprehensive assessment" },
 ];
+
+// Canonical assessment categories shared with the backend enum.
+const ASSESSMENT_TYPE_OPTIONS = [
+  { value: "quiz", label: "Quiz" },
+  { value: "assignment", label: "Assignment" },
+  { value: "midExam", label: "Mid Exam" },
+  { value: "finalExam", label: "Final Exam" },
+  { value: "project", label: "Project" },
+  { value: "presentation", label: "Presentation" },
+  { value: "practical", label: "Practical / Lab" },
+  { value: "comprehensive", label: "Comprehensive assessment" },
+  { value: "selfAssessment", label: "Teacher-reviewed self-assessment" },
+];
+
+const ASSESSMENT_TYPE_LABELS = ASSESSMENT_TYPE_OPTIONS.reduce(
+  (labels, option) => ({ ...labels, [option.value]: option.label }),
+  { midterm: "Mid Exam", final: "Final Exam", self_assessment: "Self Assessment" },
+);
 
 const emptyQuizQuestion = () => ({
   prompt: "",
@@ -65,6 +84,15 @@ export function TeacherDashboard({ user }) {
   // Attendance state
   const [selectedSessionId, setSelectedSessionId] = useState("");
   const [attendanceRecords, setAttendanceRecords] = useState({});
+  const [teacherAttendanceForm, setTeacherAttendanceForm] = useState({
+    status: "present",
+    notes: "",
+  });
+  const [teacherAttendanceSummary, setTeacherAttendanceSummary] = useState(null);
+  const [teacherAttendanceHistory, setTeacherAttendanceHistory] = useState([]);
+  const [registerClassroomId, setRegisterClassroomId] = useState("");
+  const [cohortRegister, setCohortRegister] = useState(null);
+  const [registerLoading, setRegisterLoading] = useState(false);
   // Submissions state
   const [submissionsModal, setSubmissionsModal] = useState({
     open: false,
@@ -85,8 +113,9 @@ export function TeacherDashboard({ user }) {
     attendance: "",
     assignment: "",
     quiz: "",
-    midterm: "",
-    final: "",
+    midExam: "",
+    finalExam: "",
+    project: "",
     comprehensive: "",
     selfAssessment: "",
     feedback: "",
@@ -124,6 +153,7 @@ export function TeacherDashboard({ user }) {
     description: "",
     instructions: "",
     assessmentType: "quiz",
+    maxScore: 100,
     timeLimitMinutes: 30,
     passingScorePercentage: 70,
     questions: [emptyQuizQuestion()],
@@ -143,7 +173,7 @@ export function TeacherDashboard({ user }) {
   });
   const loadTeacherData = useCallback(async () => {
     try {
-      const [dash, classesRes, assignRes, quizRes, resRes, annRes] =
+      const [dash, classesRes, assignRes, quizRes, resRes, annRes, attendRes] =
         await Promise.all([
           apiRequest("/api/teacher/dashboard"),
           apiRequest("/api/teacher/classes"),
@@ -152,6 +182,10 @@ export function TeacherDashboard({ user }) {
           apiRequest("/api/resources"),
           apiRequest("/api/teacher/announcements").catch(() => ({
             announcements: [],
+          })),
+          apiRequest("/api/teacher/attendance").catch(() => ({
+            records: [],
+            summary: null,
           })),
         ]);
       setClasses(classesRes.classes || []);
@@ -162,6 +196,8 @@ export function TeacherDashboard({ user }) {
       setNotifications(dash.notifications || []);
       setAnnouncements(annRes.announcements || []);
       setOverview(dash.overview || null);
+      setTeacherAttendanceHistory(attendRes.records || []);
+      setTeacherAttendanceSummary(attendRes.summary || null);
       if (dash.upcomingLessons?.[0] && !selectedSessionId) {
         setSelectedSessionId(dash.upcomingLessons[0]._id);
       }
@@ -206,6 +242,49 @@ export function TeacherDashboard({ user }) {
       setFeedback("Attendance saved.");
     } catch (err) {
       setFeedback(err.message);
+    }
+  };
+  // Mark the teacher's own attendance for a teaching day (session)
+  const saveTeacherAttendance = async () => {
+    if (!selectedSessionId) {
+      setFeedback("Select a teaching session first.");
+      return;
+    }
+    try {
+      const res = await apiRequest(
+        `/api/teacher/sessions/${selectedSessionId}/teacher-attendance`,
+        {
+          method: "POST",
+          body: JSON.stringify({
+            status: teacherAttendanceForm.status,
+            notes: teacherAttendanceForm.notes,
+          }),
+        },
+      );
+      setFeedback(res.message || "Teaching attendance recorded.");
+      setTeacherAttendanceForm({ status: "present", notes: "" });
+      void loadTeacherData();
+    } catch (err) {
+      setFeedback(err.message);
+    }
+  };
+  // Load the cumulative attendance register for one of the teacher's cohorts
+  const loadCohortRegister = async (classroomId) => {
+    setRegisterClassroomId(classroomId);
+    if (!classroomId) {
+      setCohortRegister(null);
+      return;
+    }
+    setRegisterLoading(true);
+    try {
+      const res = await apiRequest(
+        `/api/teacher/classes/${classroomId}/attendance`,
+      );
+      setCohortRegister(res.register || null);
+    } catch (err) {
+      setFeedback(err.message);
+    } finally {
+      setRegisterLoading(false);
     }
   };
   // Create Assignment
@@ -334,8 +413,9 @@ export function TeacherDashboard({ user }) {
       attendance: "",
       assignment: "",
       quiz: "",
-      midterm: "",
-      final: "",
+      midExam: "",
+      finalExam: "",
+      project: "",
       comprehensive: "",
       selfAssessment: "",
       feedback: "",
@@ -443,7 +523,7 @@ export function TeacherDashboard({ user }) {
     e.preventDefault();
     try {
       const questions =
-        quizForm.assessmentType === "self_assessment"
+        quizForm.assessmentType === "selfAssessment"
           ? []
           : quizForm.questions
               .filter((question) => question.prompt.trim())
@@ -461,6 +541,7 @@ export function TeacherDashboard({ user }) {
           description: quizForm.description,
           instructions: quizForm.instructions,
           assessmentType: quizForm.assessmentType,
+          maxScore: Number(quizForm.maxScore) || 100,
           timeLimitMinutes: Number(quizForm.timeLimitMinutes),
           passingScorePercentage: Number(quizForm.passingScorePercentage),
           questions,
@@ -473,11 +554,12 @@ export function TeacherDashboard({ user }) {
         description: "",
         instructions: "",
         assessmentType: "quiz",
+        maxScore: 100,
         timeLimitMinutes: 30,
         passingScorePercentage: 70,
         questions: [emptyQuizQuestion()],
       });
-      setFeedback("Assessment created.");
+      setFeedback("Assessment created and shared with your cohort.");
       void loadTeacherData();
     } catch (err) {
       setFeedback(err.message);
@@ -596,34 +678,26 @@ export function TeacherDashboard({ user }) {
   };
 
   const currentClassForAttendance = classes.find((c) => c.students?.length > 0);
-  const progressFormFromReport = (report, studentId) => ({
-    studentId,
-    period: report?.period || "",
-    overallScore: report?.overallScore ?? "",
-    attendance:
-      report?.components?.find(
-        (component) => component.category === "attendance",
-      )?.score ?? "",
-    assignment:
-      report?.components?.find(
-        (component) => component.category === "assignment",
-      )?.score ?? "",
-    quiz:
-      report?.components?.find((component) => component.category === "quiz")
-        ?.score ?? "",
-    midterm:
-      report?.components?.find((component) => component.category === "midterm")
-        ?.score ?? "",
-    final:
-      report?.components?.find((component) => component.category === "final")
-        ?.score ?? "",
-    comprehensive:
-      report?.components?.find(
-        (component) => component.category === "comprehensive",
-      )?.score ?? "",
-    selfAssessment: report?.selfAssessment || "",
-    feedback: report?.feedback || "",
-  });
+  const progressFormFromReport = (report, studentId) => {
+    const scoreFor = (...categories) =>
+      report?.components?.find((component) =>
+        categories.includes(component.category),
+      )?.score ?? "";
+    return {
+      studentId,
+      period: report?.period || "",
+      overallScore: report?.overallScore ?? "",
+      attendance: scoreFor("attendance"),
+      assignment: scoreFor("assignment", "Assignment"),
+      quiz: scoreFor("quiz"),
+      midExam: scoreFor("midExam", "midterm", "mid Exam"),
+      finalExam: scoreFor("finalExam", "final", "final Exam "),
+      project: scoreFor("project"),
+      comprehensive: scoreFor("comprehensive"),
+      selfAssessment: report?.selfAssessment || "",
+      feedback: report?.feedback || "",
+    };
+  };
   const dashboardTabs = [
     { id: "overview", label: "Overview", icon: "📊" },
     { id: "classes", label: `My cohorts (${classes.length})`, icon: "🏫" },
@@ -1032,6 +1106,184 @@ export function TeacherDashboard({ user }) {
               </button>
             </div>
           </DashboardCard>
+
+          <DashboardCard
+            title="My teaching attendance"
+            subtitle="Record your own attendance for the selected teaching day (session only)."
+          >
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+              <MetricCard
+                label="Attendance rate"
+                value={`${teacherAttendanceSummary?.attendanceRate ?? 0}%`}
+              />
+              <MetricCard
+                label="Present"
+                value={teacherAttendanceSummary?.present ?? 0}
+              />
+              <MetricCard
+                label="Late"
+                value={teacherAttendanceSummary?.late ?? 0}
+              />
+              <MetricCard
+                label="Absent"
+                value={teacherAttendanceSummary?.absent ?? 0}
+              />
+              <MetricCard
+                label="Excused"
+                value={teacherAttendanceSummary?.excused ?? 0}
+              />
+            </div>
+            <div className="mt-5 flex flex-wrap items-end gap-3">
+              <label className="block text-xs font-bold text-slate-700">
+                Status
+                <select
+                  value={teacherAttendanceForm.status}
+                  onChange={(e) =>
+                    setTeacherAttendanceForm({
+                      ...teacherAttendanceForm,
+                      status: e.target.value,
+                    })
+                  }
+                  className="mt-1 w-40 rounded-xl border border-slate-200 bg-white p-2.5 text-sm"
+                >
+                  {["present", "late", "absent", "excused"].map((st) => (
+                    <option key={st} value={st}>
+                      {t(st)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="block flex-1 text-xs font-bold text-slate-700 min-w-[200px]">
+                Notes (optional)
+                <input
+                  type="text"
+                  maxLength={500}
+                  value={teacherAttendanceForm.notes}
+                  onChange={(e) =>
+                    setTeacherAttendanceForm({
+                      ...teacherAttendanceForm,
+                      notes: e.target.value,
+                    })
+                  }
+                  className="mt-1 w-full rounded-xl border border-slate-200 p-2.5 text-sm"
+                  placeholder="e.g. Taught full session, substituted for a colleague"
+                />
+              </label>
+              <button
+                onClick={saveTeacherAttendance}
+                className="rounded-xl bg-[#0066ff] px-6 py-2.5 text-xs font-bold text-white hover:bg-[#0052cc]"
+              >
+                Record my attendance
+              </button>
+            </div>
+            {teacherAttendanceHistory.length > 0 ? (
+              <div className="mt-5 divide-y divide-slate-100">
+                {teacherAttendanceHistory.slice(0, 8).map((rec) => (
+                  <div
+                    key={rec._id}
+                    className="flex items-center justify-between py-2.5 text-xs"
+                  >
+                    <div>
+                      <span className="font-bold text-slate-900">
+                        {rec.session?.title || "Teaching day"}
+                      </span>
+                      <p className="text-slate-400">
+                        {rec.classroom?.title ? `${rec.classroom.title} · ` : ""}
+                        {new Date(
+                          rec.teachingDate || rec.createdAt,
+                        ).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <Badge
+                      variant={
+                        rec.status === "present"
+                          ? "emerald"
+                          : rec.status === "absent"
+                            ? "rose"
+                            : "amber"
+                      }
+                    >
+                      {t(rec.status)}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <EmptyState title="No teaching attendance recorded yet." />
+            )}
+          </DashboardCard>
+
+          <DashboardCard
+            title="Cohort attendance register"
+            subtitle="Cumulative attendance for each learner across all sessions."
+          >
+            <select
+              value={registerClassroomId}
+              onChange={(e) => void loadCohortRegister(e.target.value)}
+              className="w-full sm:w-96 rounded-xl border border-slate-200 bg-white p-2.5 text-xs outline-none"
+            >
+              <option value="">Select a cohort</option>
+              {classes.map((classroom) => (
+                <option key={classroom._id} value={classroom._id}>
+                  {classroom.title}
+                </option>
+              ))}
+            </select>
+
+            {registerLoading ? (
+              <p className="mt-4 text-xs text-slate-500">Loading register…</p>
+            ) : cohortRegister ? (
+              <div className="mt-4 overflow-x-auto">
+                <div className="mb-3 text-xs text-slate-500">
+                  Sessions held: <strong>{cohortRegister.summary?.sessions ?? 0}</strong>{" "}
+                  · Cohort attendance rate:{" "}
+                  <strong>{cohortRegister.summary?.attendanceRate ?? 0}%</strong>
+                </div>
+                <table className="w-full min-w-[640px] text-left text-xs">
+                  <thead>
+                    <tr className="border-b border-slate-200 text-slate-500 uppercase tracking-wider">
+                      <th className="py-2 pr-3 font-bold">Learner</th>
+                      <th className="py-2 px-3 font-bold">Present</th>
+                      <th className="py-2 px-3 font-bold">Late</th>
+                      <th className="py-2 px-3 font-bold">Absent</th>
+                      <th className="py-2 px-3 font-bold">Excused</th>
+                      <th className="py-2 px-3 font-bold">Marked</th>
+                      <th className="py-2 pl-3 font-bold">Rate</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {cohortRegister.students?.map((row) => (
+                      <tr key={row._id}>
+                        <td className="py-2.5 pr-3 font-semibold text-slate-900">
+                          {row.fullName || row.name}
+                        </td>
+                        <td className="py-2.5 px-3 text-emerald-600 font-semibold">
+                          {row.present}
+                        </td>
+                        <td className="py-2.5 px-3 text-amber-600 font-semibold">
+                          {row.late}
+                        </td>
+                        <td className="py-2.5 px-3 text-rose-600 font-semibold">
+                          {row.absent}
+                        </td>
+                        <td className="py-2.5 px-3 text-slate-600">
+                          {row.excused}
+                        </td>
+                        <td className="py-2.5 px-3 text-slate-600">{row.total}</td>
+                        <td className="py-2.5 pl-3 font-bold text-slate-900">
+                          {row.attendanceRate}%
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <p className="mt-4 text-xs text-slate-500">
+                Select a cohort to view its attendance register.
+              </p>
+            )}
+          </DashboardCard>
         </div>
       ) : null}
 
@@ -1104,7 +1356,7 @@ export function TeacherDashboard({ user }) {
                 <div className="flex items-center justify-between">
                   <h4 className="font-bold text-slate-900">{qz.title}</h4>
                   <Badge variant="cyan">
-                    {qz.assessmentType?.replace("_", " ") || "quiz"}
+                    {ASSESSMENT_TYPE_LABELS[qz.assessmentType] || "Quiz"}
                   </Badge>
                 </div>
                 <p className="text-xs text-slate-600">{qz.description}</p>
@@ -2028,24 +2280,40 @@ export function TeacherDashboard({ user }) {
               }
               className="mt-1 w-full rounded-xl border border-slate-200 bg-white p-2.5 text-sm"
             >
-              <option value="quiz">Quiz</option>
-              <option value="midterm">Midterm</option>
-              <option value="final">Final</option>
-              <option value="comprehensive">Comprehensive assessment</option>
-              <option value="self_assessment">
-                Teacher-reviewed self-assessment
-              </option>
+              {ASSESSMENT_TYPE_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
             </select>
+          </label>
+          <label className="block text-xs font-bold text-slate-700">
+            Maximum marks
+            <input
+              type="number"
+              min={1}
+              max={1000}
+              required
+              value={quizForm.maxScore}
+              onChange={(event) =>
+                setQuizForm({ ...quizForm, maxScore: event.target.value })
+              }
+              className="mt-1 w-full rounded-xl border border-slate-200 p-2.5 text-sm outline-none"
+              placeholder="e.g. 100"
+            />
+            <span className="mt-1 block text-[11px] font-normal text-slate-500">
+              The total marks this assessment is graded out of.
+            </span>
           </label>
           <label className="block text-xs font-bold text-slate-700">
             Instructions
             <textarea
               required={
-                quizForm.assessmentType === "self_assessment" ||
+                quizForm.assessmentType === "selfAssessment" ||
                 quizForm.questions.length === 0
               }
               minLength={
-                quizForm.assessmentType === "self_assessment" ||
+                quizForm.assessmentType === "selfAssessment" ||
                 quizForm.questions.length === 0
                   ? 5
                   : undefined
@@ -2059,14 +2327,14 @@ export function TeacherDashboard({ user }) {
               placeholder="Explain how learners should complete the assessment."
             />
           </label>
-          {quizForm.assessmentType === "self_assessment" ||
+          {quizForm.assessmentType === "selfAssessment" ||
           quizForm.questions.length === 0 ? (
             <div className="space-y-3">
               <p className="rounded-xl border border-blue-200 bg-blue-50 p-3 text-xs leading-5 text-blue-900">
                 Learners submit written work. You review it and release the
                 result; answers are never scored automatically.
               </p>
-              {quizForm.assessmentType !== "self_assessment" && (
+              {quizForm.assessmentType !== "selfAssessment" && (
                 <button
                   type="button"
                   onClick={() =>

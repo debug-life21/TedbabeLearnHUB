@@ -15,6 +15,7 @@ import { AssignmentSubmissionModel } from "../models/AssignmentSubmission.js";
 import { AssessmentModel } from "../models/Assessment.js";
 import { AssessmentAttemptModel } from "../models/AssessmentAttempt.js";
 import { AttendanceRecordModel } from "../models/AttendanceRecord.js";
+import { TeacherAttendanceRecordModel } from "../models/TeacherAttendanceRecord.js";
 import { UserModel } from "../models/User.js";
 import { DiscussionModel } from "../models/Discussion.js";
 import { TeacherProgressReportModel } from "../models/TeacherProgressReport.js";
@@ -23,8 +24,39 @@ import {
   pickAttachment,
   streamSubmissionFile,
 } from "../utils/submissionFiles.js";
+import {
+  ASSESSMENT_CATEGORIES,
+  LEGACY_ASSESSMENT_CATEGORIES,
+  assessmentCategoryLabel,
+} from "../utils/assessmentCategories.js";
+import { buildAttendanceRegister } from "../utils/attendanceRegister.js";
 export const teacherRouter = Router();
 teacherRouter.use(requireAuth, requireRole("teacher"));
+
+/**
+ * Broadcast a published result to every active administrator so the academy
+ * can review performance and prepare certificates. Teachers never issue
+ * certificates themselves.
+ */
+async function notifyAdminsOfResult({ title, message, link }) {
+  const admins = await UserModel.find({
+    role: { $in: ["admin", "hub_admin"] },
+    accountStatus: "active",
+    isDeleted: { $ne: true },
+  })
+    .select("_id")
+    .lean();
+  if (admins.length === 0) return;
+  await NotificationModel.insertMany(
+    admins.map((admin) => ({
+      user: admin._id,
+      title,
+      message,
+      kind: "result",
+      link,
+    })),
+  );
+}
 // 1. Teacher Dashboard
 teacherRouter.get(
   "/dashboard",
@@ -397,6 +429,7 @@ teacherRouter.patch(
         (total, question) => total + (question.points || 1),
         0,
       ) ||
+      assessment.maxScore ||
       100;
     if (data.score > maxScore) {
       throw new ApiError(
@@ -423,6 +456,11 @@ teacherRouter.patch(
       message: `Your submission for "${assessment.title}" has been reviewed: ${data.score}/${maxScore} (${percentage}%).`,
       kind: "grade",
       link: "/student/assessments",
+    });
+    await notifyAdminsOfResult({
+      title: `Result published: ${assessment.title}`,
+      message: `${attempt.student.fullName || attempt.student.name || "A student"} scored ${data.score}/${maxScore} (${percentage}%) on the ${assessmentCategoryLabel(assessment.assessmentType)} "${assessment.title}". Review and prepare a certificate if eligible.`,
+      link: "/admin/certificates",
     });
     res.json({
       message: "Assessment result released to the student.",
@@ -463,12 +501,8 @@ teacherRouter.put(
           .array(
             z.object({
               category: z.enum([
-                "attendance",
-                "assignment",
-                "quiz",
-                "mid Exam",
-                "final Exam ",
-                "comprehensive",
+                ...ASSESSMENT_CATEGORIES,
+                ...LEGACY_ASSESSMENT_CATEGORIES,
               ]),
               title: z.string().trim().min(1).max(120),
               score: z.number().min(0).max(1000),
@@ -567,6 +601,11 @@ teacherRouter.put(
         kind: "grade",
         link: "/student/progress",
       });
+      await notifyAdminsOfResult({
+        title: "Progress report published",
+        message: `A progress report for ${data.period} was published with an overall score of ${data.overallScore}%. Review and prepare a certificate if eligible.`,
+        link: "/admin/certificates",
+      });
     }
     res.json({
       message:
@@ -623,6 +662,99 @@ teacherRouter.post(
     res.json({ message: "Attendance recorded successfully." });
   }),
 );
+// 8b. Cohort attendance register (students x sessions with cumulative totals)
+teacherRouter.get(
+  "/classes/:classId/attendance",
+  asyncHandler(async (req, res) => {
+    const classroom = await ClassroomModel.findOne({
+      _id: req.params.classId,
+      teacher: req.user.id,
+    })
+      .populate("students", "fullName name email avatarUrl")
+      .lean();
+    if (!classroom) {
+      throw new ApiError(404, "Cohort not found or not assigned to you.");
+    }
+    const [sessions, records] = await Promise.all([
+      ClassSessionModel.find({ classroom: classroom._id })
+        .sort({ startsAt: 1 })
+        .lean(),
+      AttendanceRecordModel.find({ classroom: classroom._id }).lean(),
+    ]);
+    res.json({
+      classroom: {
+        _id: classroom._id,
+        title: classroom.title,
+        timeZone: classroom.timeZone,
+      },
+      register: buildAttendanceRegister({ classroom, sessions, records }),
+    });
+  }),
+);
+// 8c. Teacher marks their own attendance for a teaching day (session)
+teacherRouter.post(
+  "/sessions/:sessionId/teacher-attendance",
+  asyncHandler(async (req, res) => {
+    const teacherId = req.user.id;
+    const data = z
+      .object({
+        status: z.enum(["present", "late", "absent", "excused"]),
+        notes: z.string().max(500).default(""),
+      })
+      .parse(req.body);
+    const session = await ClassSessionModel.findOne({
+      _id: req.params.sessionId,
+      teacher: teacherId,
+    }).lean();
+    if (!session) {
+      throw new ApiError(404, "Session not found or not assigned to you.");
+    }
+    const record = await TeacherAttendanceRecordModel.findOneAndUpdate(
+      { session: session._id, teacher: teacherId },
+      {
+        $set: {
+          classroom: session.classroom,
+          teachingDate: session.startsAt,
+          status: data.status,
+          notes: data.notes,
+          markedBy: teacherId,
+        },
+      },
+      { upsert: true, new: true, setDefaultsOnInsert: true },
+    );
+    res.json({
+      message: "Teaching attendance recorded.",
+      record,
+    });
+  }),
+);
+// 8d. Teacher's own attendance history and cumulative totals
+teacherRouter.get(
+  "/attendance",
+  asyncHandler(async (req, res) => {
+    const teacherId = req.user.id;
+    const records = await TeacherAttendanceRecordModel.find({
+      teacher: teacherId,
+    })
+      .populate("classroom", "title")
+      .populate("session", "title startsAt endsAt")
+      .sort({ teachingDate: -1 })
+      .lean();
+    const summary = { total: records.length, present: 0, late: 0, absent: 0, excused: 0 };
+    for (const record of records) {
+      if (summary[record.status] !== undefined) summary[record.status] += 1;
+    }
+    const attended = summary.present + summary.late;
+    summary.attendanceRate =
+      summary.total > 0 ? Math.round((attended / summary.total) * 100) : 0;
+    const upcoming = await ClassSessionModel.countDocuments({
+      teacher: teacherId,
+      endsAt: { $gte: new Date() },
+      status: "scheduled",
+    });
+    res.json({ records, summary, pendingTeachingDays: upcoming });
+  }),
+);
 // 9. Mark session as completed
 teacherRouter.patch(
   "/sessions/:sessionId/complete",
@@ -659,15 +791,8 @@ teacherRouter.post(
         title: z.string().min(3),
         description: z.string().default(""),
         instructions: z.string().max(4000).default(""),
-        assessmentType: z
-          .enum([
-            "quiz",
-            "midterm",
-            "final",
-            "comprehensive",
-            "self_assessment",
-          ])
-          .default("quiz"),
+        assessmentType: z.enum(ASSESSMENT_CATEGORIES).default("quiz"),
+        maxScore: z.number().int().min(1).max(1000).default(100),
         timeLimitMinutes: z.number().int().min(5).max(180).default(30),
         passingScorePercentage: z.number().min(1).max(100).default(60),
         questions: z
@@ -705,7 +830,7 @@ teacherRouter.post(
           });
         }
         if (
-          value.assessmentType === "self_assessment" &&
+          value.assessmentType === "selfAssessment" &&
           value.questions.length > 0
         ) {
           context.addIssue({
@@ -734,6 +859,7 @@ teacherRouter.post(
       classroom: classroom._id,
       teacher: teacherId,
       assessmentType: data.assessmentType,
+      maxScore: data.maxScore,
       timeLimitMinutes: data.timeLimitMinutes,
       passingScorePercentage: data.passingScorePercentage,
       questions: data.questions,

@@ -145,6 +145,32 @@ export function AdminDashboard({ user }) {
   const [reportsData, setReportsData] = useState(null);
   const [reportsLoaded, setReportsLoaded] = useState(false);
   const [isReportsLoading, setIsReportsLoading] = useState(false);
+  // Certificates & published results review
+  const [certificates, setCertificates] = useState([]);
+  const [eligibleCertificates, setEligibleCertificates] = useState([]);
+  const [certificateThreshold, setCertificateThreshold] = useState(70);
+  const [certificatesLoading, setCertificatesLoading] = useState(false);
+  const [certificateBusyKey, setCertificateBusyKey] = useState("");
+  const [certificateForm, setCertificateForm] = useState({
+    studentId: "",
+    classroomId: "",
+    overallScore: "",
+    notes: "",
+  });
+  const [publishedResults, setPublishedResults] = useState({
+    attempts: [],
+    reports: [],
+  });
+  // Teacher attendance tracking
+  const [teacherAttendance, setTeacherAttendance] = useState({
+    records: [],
+    summary: [],
+  });
+  const [teacherAttendanceLoading, setTeacherAttendanceLoading] = useState(false);
+  // Cohort attendance register
+  const [registerClassroomId, setRegisterClassroomId] = useState("");
+  const [cohortRegister, setCohortRegister] = useState(null);
+  const [registerLoading, setRegisterLoading] = useState(false);
   // Analytics (Module 1). Loaded on demand so the main dashboard payload stays lean.
   const [analyticsData, setAnalyticsData] = useState(null);
   const [analyticsActivity, setAnalyticsActivity] = useState([]);
@@ -279,7 +305,7 @@ export function AdminDashboard({ user }) {
     meetingUrl: "",
     status: "scheduled",
     recurrencePattern: "none",
-    recurrenceIntervalWeeks: 1,
+    recurrenceInterval: 1,
     recurrenceOccurrences: 4,
   });
   const [resourceForm, setResourceForm] = useState({
@@ -474,6 +500,132 @@ export function AdminDashboard({ user }) {
       setSubmissionsLoading(false);
     }
   }, []);
+  const loadCertificates = useCallback(async () => {
+    setCertificatesLoading(true);
+    try {
+      const [certRes, resultsRes] = await Promise.all([
+        apiRequest("/api/admin/certificates"),
+        apiRequest("/api/admin/results").catch(() => ({
+          attempts: [],
+          reports: [],
+        })),
+      ]);
+      setCertificates(certRes.certificates || []);
+      setEligibleCertificates(certRes.eligible || []);
+      setCertificateThreshold(certRes.threshold ?? 70);
+      setPublishedResults({
+        attempts: resultsRes.attempts || [],
+        reports: resultsRes.reports || [],
+      });
+    } catch (err) {
+      setFeedback(
+        err instanceof Error ? err.message : "Unable to load certificates.",
+      );
+    } finally {
+      setCertificatesLoading(false);
+    }
+  }, []);
+  const loadTeacherAttendance = useCallback(async () => {
+    setTeacherAttendanceLoading(true);
+    try {
+      const res = await apiRequest("/api/admin/teacher-attendance");
+      setTeacherAttendance({
+        records: res.records || [],
+        summary: res.summary || [],
+      });
+    } catch (err) {
+      setFeedback(
+        err instanceof Error
+          ? err.message
+          : "Unable to load teacher attendance.",
+      );
+    } finally {
+      setTeacherAttendanceLoading(false);
+    }
+  }, []);
+  const loadCohortRegister = useCallback(async (classroomId) => {
+    setRegisterClassroomId(classroomId);
+    if (!classroomId) {
+      setCohortRegister(null);
+      return;
+    }
+    setRegisterLoading(true);
+    try {
+      const res = await apiRequest(
+        `/api/admin/classes/${classroomId}/attendance`,
+      );
+      setCohortRegister(res.register || null);
+    } catch (err) {
+      setFeedback(
+        err instanceof Error ? err.message : "Unable to load attendance.",
+      );
+    } finally {
+      setRegisterLoading(false);
+    }
+  }, []);
+  const handleIssueCertificate = async (
+    studentId,
+    classroomId,
+    overallScore,
+    notes = "",
+  ) => {
+    const key = `${studentId}-${classroomId}`;
+    setCertificateBusyKey(key);
+    try {
+      const res = await apiRequest("/api/admin/certificates", {
+        method: "POST",
+        body: JSON.stringify({
+          studentId,
+          classroomId,
+          overallScore:
+            overallScore === "" || overallScore === undefined
+              ? undefined
+              : Number(overallScore),
+          notes: notes || "",
+        }),
+      });
+      setFeedback(res.message || "Certificate issued.");
+      await loadCertificates();
+    } catch (err) {
+      setFeedback(err.message);
+    } finally {
+      setCertificateBusyKey("");
+    }
+  };
+  const handleCertificateStatus = async (certificate, status) => {
+    setCertificateBusyKey(certificate._id);
+    try {
+      const res = await apiRequest(
+        `/api/admin/certificates/${certificate._id}/status`,
+        { method: "PATCH", body: JSON.stringify({ status }) },
+      );
+      setFeedback(res.message || "Certificate updated.");
+      await loadCertificates();
+    } catch (err) {
+      setFeedback(err.message);
+    } finally {
+      setCertificateBusyKey("");
+    }
+  };
+  const handleManualIssueCertificate = async (e) => {
+    e.preventDefault();
+    if (!certificateForm.studentId || !certificateForm.classroomId) {
+      setFeedback("Select both a learner and a cohort.");
+      return;
+    }
+    await handleIssueCertificate(
+      certificateForm.studentId,
+      certificateForm.classroomId,
+      certificateForm.overallScore,
+      certificateForm.notes,
+    );
+    setCertificateForm({
+      studentId: "",
+      classroomId: "",
+      overallScore: "",
+      notes: "",
+    });
+  };
   const loadAnalytics = useCallback(
     async (
       granularity = analyticsGranularity,
@@ -955,8 +1107,7 @@ export function AdminDashboard({ user }) {
               : {
                   recurrence: {
                     pattern: sessionForm.recurrencePattern,
-                    intervalWeeks:
-                      Number(sessionForm.recurrenceIntervalWeeks) || 1,
+                    interval: Number(sessionForm.recurrenceInterval) || 1,
                     occurrences: Number(sessionForm.recurrenceOccurrences) || 1,
                   },
                 }),
@@ -974,14 +1125,14 @@ export function AdminDashboard({ user }) {
         meetingUrl: "",
         status: "scheduled",
         recurrencePattern: "none",
-        recurrenceIntervalWeeks: 1,
+        recurrenceInterval: 1,
         recurrenceOccurrences: 4,
       });
       setFeedback(
         editingSessionId
           ? "Session updated."
           : response?.occurrences > 1
-            ? `Weekly schedule created — ${response.occurrences} sessions were added.`
+            ? `Recurring schedule created — ${response.occurrences} sessions were added.`
             : "Session scheduled.",
       );
       void loadAll();
@@ -1287,6 +1438,13 @@ export function AdminDashboard({ user }) {
     },
     { id: "courses", label: `Programs (${courses.length})`, icon: "📚" },
     { id: "classes", label: `Cohorts (${classes.length})`, icon: "🏫" },
+    { id: "certificates", label: "Certificates", icon: "🎓" },
+    { id: "class_attendance", label: "Cohort attendance", icon: "🧾" },
+    {
+      id: "teacher_attendance",
+      label: "Teacher attendance",
+      icon: "🕒",
+    },
     { id: "submissions", label: "Submissions", icon: "🗂️" },
     {
       id: "resources",
@@ -1325,6 +1483,13 @@ export function AdminDashboard({ user }) {
           if (tabId === "analytics" && !analyticsLoaded) void loadAnalytics();
           if (tabId === "reports" && !reportsLoaded) void loadReports();
           if (tabId === "submissions") void loadSubmissions();
+          if (tabId === "certificates") void loadCertificates();
+          if (tabId === "teacher_attendance") void loadTeacherAttendance();
+          if (tabId === "class_attendance") {
+            if (classes[0]?._id && !registerClassroomId) {
+              void loadCohortRegister(classes[0]._id);
+            }
+          }
         }}
       />
       <div className="mx-auto max-w-7xl space-y-8">
@@ -2420,7 +2585,7 @@ export function AdminDashboard({ user }) {
                             meetingUrl: "",
                             status: "scheduled",
                             recurrencePattern: "none",
-                            recurrenceIntervalWeeks: 1,
+                            recurrenceInterval: 1,
                             recurrenceOccurrences: 4,
                           });
                           setCreateSessionModal(true);
@@ -2475,9 +2640,16 @@ export function AdminDashboard({ user }) {
                                     >
                                       {statusLabel}
                                     </span>
-                                    {session.recurrencePattern === "weekly" ? (
+                                    {session.recurrencePattern &&
+                                    session.recurrencePattern !== "none" ? (
                                       <span className="inline-flex rounded-full bg-indigo-100 px-2 py-0.5 text-[10px] font-bold text-indigo-700">
-                                        Weekly
+                                        {{
+                                          daily: "Daily",
+                                          weekly: "Weekly",
+                                          biweekly: "Every 2 weeks",
+                                          monthly: "Monthly",
+                                        }[session.recurrencePattern] ||
+                                          session.recurrencePattern}
                                         {typeof session.recurrenceIndex ===
                                         "number"
                                           ? ` · ${session.recurrenceIndex + 1}${session.recurrenceCount ? `/${session.recurrenceCount}` : ""}`
@@ -2526,7 +2698,7 @@ export function AdminDashboard({ user }) {
                                       meetingUrl: session.meetingUrl || "",
                                       status: session.status,
                                       recurrencePattern: "none",
-                                      recurrenceIntervalWeeks: 1,
+                                      recurrenceInterval: 1,
                                       recurrenceOccurrences: 4,
                                     });
                                     setCreateSessionModal(true);
@@ -2621,6 +2793,544 @@ export function AdminDashboard({ user }) {
               )}
             </div>
           </div>
+        ) : null}
+
+        {/* CERTIFICATES & RESULTS REVIEW TAB */}
+        {activeTab === "certificates" ? (
+          <div className="space-y-6">
+            <DashboardCard
+              title="Certificate management"
+              subtitle="Review results published by teachers and issue verified certificates."
+            >
+              <div className="flex flex-wrap items-center gap-3">
+                <MetricCard
+                  label="Issued certificates"
+                  value={certificates.length}
+                />
+                <MetricCard
+                  label="Awaiting issuance"
+                  value={eligibleCertificates.length}
+                />
+                <MetricCard
+                  label="Pass mark"
+                  value={`${certificateThreshold}%`}
+                />
+              </div>
+
+              {certificatesLoading ? (
+                <p className="mt-4 text-sm text-slate-500">
+                  Loading certificates and results…
+                </p>
+              ) : null}
+
+              <form
+                onSubmit={handleManualIssueCertificate}
+                className="mt-6 grid gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 lg:grid-cols-5"
+              >
+                <label className="block text-xs font-bold text-slate-700">
+                  Cohort
+                  <select
+                    value={certificateForm.classroomId}
+                    onChange={(e) =>
+                      setCertificateForm({
+                        ...certificateForm,
+                        classroomId: e.target.value,
+                        studentId: "",
+                      })
+                    }
+                    className="mt-1 w-full rounded-xl border border-slate-200 bg-white p-2.5 text-sm"
+                  >
+                    <option value="">Select a cohort</option>
+                    {classes.map((cls) => (
+                      <option key={cls._id} value={cls._id}>
+                        {cls.title}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="block text-xs font-bold text-slate-700">
+                  Learner
+                  <select
+                    value={certificateForm.studentId}
+                    onChange={(e) =>
+                      setCertificateForm({
+                        ...certificateForm,
+                        studentId: e.target.value,
+                      })
+                    }
+                    className="mt-1 w-full rounded-xl border border-slate-200 bg-white p-2.5 text-sm"
+                  >
+                    <option value="">Select a learner</option>
+                    {(
+                      classes.find(
+                        (cls) => cls._id === certificateForm.classroomId,
+                      )?.students || []
+                    ).map((student) => (
+                      <option key={student._id} value={student._id}>
+                        {student.fullName}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="block text-xs font-bold text-slate-700">
+                  Overall score (optional)
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    value={certificateForm.overallScore}
+                    onChange={(e) =>
+                      setCertificateForm({
+                        ...certificateForm,
+                        overallScore: e.target.value,
+                      })
+                    }
+                    className="mt-1 w-full rounded-xl border border-slate-200 p-2.5 text-sm"
+                    placeholder="Defaults to published score"
+                  />
+                </label>
+                <label className="block text-xs font-bold text-slate-700">
+                  Notes (optional)
+                  <input
+                    type="text"
+                    maxLength={500}
+                    value={certificateForm.notes}
+                    onChange={(e) =>
+                      setCertificateForm({
+                        ...certificateForm,
+                        notes: e.target.value,
+                      })
+                    }
+                    className="mt-1 w-full rounded-xl border border-slate-200 p-2.5 text-sm"
+                    placeholder="Recorded on the credential"
+                  />
+                </label>
+                <div className="flex items-end">
+                  <button
+                    type="submit"
+                    className="w-full rounded-xl bg-gradient-to-r from-[#0066ff] to-[#0099ff] px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-blue-500/25 hover:from-[#0052cc] hover:to-[#0088e6]"
+                  >
+                    Issue certificate
+                  </button>
+                </div>
+              </form>
+
+              <div className="mt-8">
+                <h4 className="text-sm font-bold text-slate-900">
+                  Awaiting issuance
+                </h4>
+                {eligibleCertificates.length === 0 ? (
+                  <p className="mt-2 text-xs text-slate-500">
+                    No learners have a published result at or above the pass
+                    mark awaiting a certificate.
+                  </p>
+                ) : (
+                  <div className="mt-3 space-y-3">
+                    {eligibleCertificates.map((item) => {
+                      const key = `${item.student._id}-${item.classroom._id}`;
+                      return (
+                        <div
+                          key={key}
+                          className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-amber-200 bg-amber-50/50 p-4"
+                        >
+                          <div>
+                            <p className="text-sm font-bold text-slate-900">
+                              {item.student.fullName}
+                            </p>
+                            <p className="text-xs text-slate-500">
+                              {item.course?.title || item.classroom.title} ·{" "}
+                              {item.classroom.title} · Period {item.period}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <span className="rounded-xl bg-white px-3 py-1 text-sm font-black text-emerald-700">
+                              {item.overallScore}%
+                            </span>
+                            <button
+                              type="button"
+                              disabled={certificateBusyKey === key}
+                              onClick={() =>
+                                void handleIssueCertificate(
+                                  item.student._id,
+                                  item.classroom._id,
+                                  item.overallScore,
+                                )
+                              }
+                              className="rounded-xl bg-slate-900 px-4 py-2 text-xs font-bold text-white hover:bg-slate-800 disabled:opacity-60"
+                            >
+                              {certificateBusyKey === key
+                                ? "Issuing…"
+                                : "Issue certificate"}
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-8">
+                <h4 className="text-sm font-bold text-slate-900">
+                  Issued certificates
+                </h4>
+                {certificates.length === 0 ? (
+                  <p className="mt-2 text-xs text-slate-500">
+                    No certificates have been issued yet.
+                  </p>
+                ) : (
+                  <div className="mt-3 overflow-x-auto">
+                    <table className="w-full min-w-[720px] text-left text-xs">
+                      <thead>
+                        <tr className="border-b border-slate-200 text-slate-500 uppercase tracking-wider">
+                          <th className="py-2 pr-3 font-bold">Number</th>
+                          <th className="py-2 px-3 font-bold">Learner</th>
+                          <th className="py-2 px-3 font-bold">Course</th>
+                          <th className="py-2 px-3 font-bold">Score</th>
+                          <th className="py-2 px-3 font-bold">Issued</th>
+                          <th className="py-2 px-3 font-bold">Status</th>
+                          <th className="py-2 pl-3 font-bold">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {certificates.map((cert) => (
+                          <tr key={cert._id}>
+                            <td className="py-2.5 pr-3 font-mono font-semibold text-slate-700">
+                              {cert.certificateNumber}
+                            </td>
+                            <td className="py-2.5 px-3 text-slate-800">
+                              {cert.student?.fullName || cert.studentName}
+                            </td>
+                            <td className="py-2.5 px-3 text-slate-600">
+                              {cert.courseTitle}
+                            </td>
+                            <td className="py-2.5 px-3 font-bold text-slate-900">
+                              {cert.overallScore}%
+                            </td>
+                            <td className="py-2.5 px-3 text-slate-600">
+                              {new Date(cert.issueDate).toLocaleDateString()}
+                            </td>
+                            <td className="py-2.5 px-3">
+                              <Badge
+                                variant={
+                                  cert.status === "revoked" ? "rose" : "emerald"
+                                }
+                              >
+                                {cert.status}
+                              </Badge>
+                            </td>
+                            <td className="py-2.5 pl-3">
+                              <button
+                                type="button"
+                                disabled={certificateBusyKey === cert._id}
+                                onClick={() =>
+                                  void handleCertificateStatus(
+                                    cert,
+                                    cert.status === "revoked"
+                                      ? "valid"
+                                      : "revoked",
+                                  )
+                                }
+                                className={`rounded-lg px-3 py-1.5 text-[11px] font-bold disabled:opacity-60 ${
+                                  cert.status === "revoked"
+                                    ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                                    : "bg-rose-50 text-rose-700 hover:bg-rose-100"
+                                }`}
+                              >
+                                {cert.status === "revoked"
+                                  ? "Reinstate"
+                                  : "Revoke"}
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </DashboardCard>
+
+            <DashboardCard
+              title="Published results"
+              subtitle="Results teachers released to the academy and learners."
+            >
+              {publishedResults.attempts.length === 0 &&
+              publishedResults.reports.length === 0 ? (
+                <EmptyState
+                  title="No results published yet."
+                  description="Assessment and progress results appear here as soon as teachers release them."
+                />
+              ) : (
+                <div className="space-y-3">
+                  {publishedResults.attempts.map((attempt) => (
+                    <div
+                      key={attempt._id}
+                      className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 p-4"
+                    >
+                      <div>
+                        <p className="text-sm font-bold text-slate-900">
+                          {attempt.student?.fullName} ·{" "}
+                          {attempt.assessment?.title}
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          {attempt.classroom?.title} ·{" "}
+                          {attempt.assessment?.assessmentType || "Assessment"}
+                        </p>
+                      </div>
+                      <span className="rounded-xl bg-blue-50 px-3 py-1 text-sm font-black text-blue-700">
+                        {attempt.score ?? 0}/{attempt.maxScore ?? 100}
+                      </span>
+                    </div>
+                  ))}
+                  {publishedResults.reports.map((report) => (
+                    <div
+                      key={report._id}
+                      className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 p-4"
+                    >
+                      <div>
+                        <p className="text-sm font-bold text-slate-900">
+                          {report.student?.fullName} · Progress report
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          {report.classroom?.title} · Period {report.period} ·{" "}
+                          {report.teacher?.fullName || "Teacher"}
+                        </p>
+                      </div>
+                      <span className="rounded-xl bg-emerald-50 px-3 py-1 text-sm font-black text-emerald-700">
+                        {report.overallScore}%
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </DashboardCard>
+          </div>
+        ) : null}
+
+        {/* COHORT ATTENDANCE REGISTER TAB */}
+        {activeTab === "class_attendance" ? (
+          <DashboardCard
+            title="Cohort attendance register"
+            subtitle="Total attendance per cohort with cumulative totals for every learner."
+          >
+            <select
+              value={registerClassroomId}
+              onChange={(e) => void loadCohortRegister(e.target.value)}
+              className="w-full sm:w-96 rounded-xl border border-slate-200 bg-white p-2.5 text-xs outline-none"
+            >
+              <option value="">Select a cohort</option>
+              {classes.map((cls) => (
+                <option key={cls._id} value={cls._id}>
+                  {cls.title}
+                </option>
+              ))}
+            </select>
+
+            {registerLoading ? (
+              <p className="mt-4 text-sm text-slate-500">Loading register…</p>
+            ) : cohortRegister ? (
+              <div className="mt-5 space-y-6">
+                <div className="flex flex-wrap gap-3">
+                  <MetricCard
+                    label="Sessions held"
+                    value={cohortRegister.summary?.sessions ?? 0}
+                  />
+                  <MetricCard
+                    label="Records marked"
+                    value={cohortRegister.summary?.records ?? 0}
+                  />
+                  <MetricCard
+                    label="Cohort rate"
+                    value={`${cohortRegister.summary?.attendanceRate ?? 0}%`}
+                  />
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[720px] text-left text-xs">
+                    <thead>
+                      <tr className="border-b border-slate-200 text-slate-500 uppercase tracking-wider">
+                        <th className="py-2 pr-3 font-bold">Learner</th>
+                        {cohortRegister.sessions?.map((session, index) => (
+                          <th
+                            key={session._id}
+                            className="py-2 px-2 text-center font-bold"
+                            title={session.title}
+                          >
+                            S{index + 1}
+                          </th>
+                        ))}
+                        <th className="py-2 px-3 font-bold">Present</th>
+                        <th className="py-2 px-3 font-bold">Absent</th>
+                        <th className="py-2 pl-3 font-bold">Rate</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {cohortRegister.students?.map((row) => (
+                        <tr key={row._id}>
+                          <td className="py-2.5 pr-3 font-semibold text-slate-900">
+                            {row.fullName || row.name}
+                          </td>
+                          {cohortRegister.sessions?.map((session) => {
+                            const status =
+                              row.bySession?.[session._id] || undefined;
+                            return (
+                              <td
+                                key={session._id}
+                                className={`py-2.5 px-2 text-center font-bold ${
+                                  status === "present"
+                                    ? "text-emerald-600"
+                                    : status === "absent"
+                                      ? "text-rose-600"
+                                      : status === "late"
+                                        ? "text-amber-600"
+                                        : status === "excused"
+                                          ? "text-slate-500"
+                                          : "text-slate-300"
+                                }`}
+                              >
+                                {status
+                                  ? status.charAt(0).toUpperCase()
+                                  : "–"}
+                              </td>
+                            );
+                          })}
+                          <td className="py-2.5 px-3 font-semibold text-emerald-600">
+                            {row.present}
+                          </td>
+                          <td className="py-2.5 px-3 font-semibold text-rose-600">
+                            {row.absent}
+                          </td>
+                          <td className="py-2.5 pl-3 font-bold text-slate-900">
+                            {row.attendanceRate}%
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <p className="text-[11px] text-slate-500">
+                  Legend: P = present, L = late, A = absent, E = excused, – = not
+                  marked.
+                </p>
+              </div>
+            ) : (
+              <p className="mt-4 text-sm text-slate-500">
+                Select a cohort to view its attendance register.
+              </p>
+            )}
+          </DashboardCard>
+        ) : null}
+
+        {/* TEACHER ATTENDANCE TAB */}
+        {activeTab === "teacher_attendance" ? (
+          <DashboardCard
+            title="Teacher attendance"
+            subtitle="Attendance recorded by teachers for each teaching day (session)."
+          >
+            {teacherAttendanceLoading ? (
+              <p className="text-sm text-slate-500">
+                Loading teacher attendance…
+              </p>
+            ) : (
+              <>
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[720px] text-left text-xs">
+                    <thead>
+                      <tr className="border-b border-slate-200 text-slate-500 uppercase tracking-wider">
+                        <th className="py-2 pr-3 font-bold">Teacher</th>
+                        <th className="py-2 px-3 font-bold">Present</th>
+                        <th className="py-2 px-3 font-bold">Late</th>
+                        <th className="py-2 px-3 font-bold">Absent</th>
+                        <th className="py-2 px-3 font-bold">Excused</th>
+                        <th className="py-2 px-3 font-bold">Logged days</th>
+                        <th className="py-2 px-3 font-bold">Upcoming</th>
+                        <th className="py-2 pl-3 font-bold">Rate</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {teacherAttendance.summary?.map((row) => (
+                        <tr key={row.teacher?._id}>
+                          <td className="py-2.5 pr-3 font-semibold text-slate-900">
+                            {row.teacher?.fullName}
+                            <span className="block text-[11px] font-normal text-slate-400">
+                              {row.teacher?.email}
+                            </span>
+                          </td>
+                          <td className="py-2.5 px-3 font-semibold text-emerald-600">
+                            {row.present}
+                          </td>
+                          <td className="py-2.5 px-3 font-semibold text-amber-600">
+                            {row.late}
+                          </td>
+                          <td className="py-2.5 px-3 font-semibold text-rose-600">
+                            {row.absent}
+                          </td>
+                          <td className="py-2.5 px-3 text-slate-600">
+                            {row.excused}
+                          </td>
+                          <td className="py-2.5 px-3 text-slate-600">
+                            {row.loggedSessions}
+                          </td>
+                          <td className="py-2.5 px-3 text-slate-600">
+                            {row.scheduledTeachingDays}
+                          </td>
+                          <td className="py-2.5 pl-3 font-bold text-slate-900">
+                            {row.attendanceRate}%
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="mt-8">
+                  <h4 className="text-sm font-bold text-slate-900">
+                    Recent records
+                  </h4>
+                  {teacherAttendance.records.length === 0 ? (
+                    <p className="mt-2 text-xs text-slate-500">
+                      No teaching attendance has been recorded yet.
+                    </p>
+                  ) : (
+                    <div className="mt-3 divide-y divide-slate-100">
+                      {teacherAttendance.records.slice(0, 25).map((rec) => (
+                        <div
+                          key={rec._id}
+                          className="flex flex-wrap items-center justify-between gap-2 py-2.5 text-xs"
+                        >
+                          <div>
+                            <span className="font-bold text-slate-900">
+                              {rec.teacher?.fullName} ·{" "}
+                              {rec.session?.title || "Teaching day"}
+                            </span>
+                            <p className="text-slate-400">
+                              {rec.classroom?.title
+                                ? `${rec.classroom.title} · `
+                                : ""}
+                              {new Date(
+                                rec.teachingDate || rec.createdAt,
+                              ).toLocaleDateString()}
+                            </p>
+                          </div>
+                          <Badge
+                            variant={
+                              rec.status === "present"
+                                ? "emerald"
+                                : rec.status === "absent"
+                                  ? "rose"
+                                  : "amber"
+                            }
+                          >
+                            {rec.status}
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+          </DashboardCard>
         ) : null}
 
         {/* SUBMISSIONS & STORAGE TAB */}
@@ -5174,7 +5884,7 @@ export function AdminDashboard({ user }) {
               meetingUrl: "",
               status: "scheduled",
               recurrencePattern: "none",
-              recurrenceIntervalWeeks: 1,
+              recurrenceInterval: 1,
               recurrenceOccurrences: 4,
             });
           }}
@@ -5304,24 +6014,33 @@ export function AdminDashboard({ user }) {
                   className="w-full rounded-xl border border-slate-200 bg-white p-2 text-sm outline-none"
                 >
                   <option value="none">One-time session</option>
-                  <option value="weekly">Repeat weekly</option>
+                  <option value="daily">Every day</option>
+                  <option value="weekly">Every week</option>
+                  <option value="biweekly">Every 2 weeks</option>
+                  <option value="monthly">Every month</option>
                 </select>
-                {sessionForm.recurrencePattern === "weekly" && (
+                {sessionForm.recurrencePattern !== "none" && (
                   <>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
                         <label className="block text-xs font-bold text-slate-700">
-                          Every (weeks)
+                          {sessionForm.recurrencePattern === "daily"
+                            ? "Every (days)"
+                            : sessionForm.recurrencePattern === "weekly"
+                              ? "Every (weeks)"
+                              : sessionForm.recurrencePattern === "biweekly"
+                                ? "Every (2-week blocks)"
+                                : "Every (months)"}
                         </label>
                         <input
                           type="number"
                           min="1"
-                          max="8"
-                          value={sessionForm.recurrenceIntervalWeeks}
+                          max={sessionForm.recurrencePattern === "daily" ? 12 : 12}
+                          value={sessionForm.recurrenceInterval}
                           onChange={(e) =>
                             setSessionForm({
                               ...sessionForm,
-                              recurrenceIntervalWeeks: e.target.value,
+                              recurrenceInterval: e.target.value,
                             })
                           }
                           className="mt-1 w-full rounded-xl border border-slate-200 p-2 text-xs outline-none"
@@ -5334,7 +6053,7 @@ export function AdminDashboard({ user }) {
                         <input
                           type="number"
                           min="1"
-                          max="52"
+                          max="120"
                           value={sessionForm.recurrenceOccurrences}
                           onChange={(e) =>
                             setSessionForm({
@@ -5347,14 +6066,30 @@ export function AdminDashboard({ user }) {
                       </div>
                     </div>
                     <p className="text-[11px] text-slate-600">
-                      Creates a weekly chart of{" "}
-                      {Number(sessionForm.recurrenceOccurrences) || 1} session
+                      Creates a{" "}
+                      {
+                        {
+                          daily: "daily",
+                          weekly: "weekly",
+                          biweekly: "bi-weekly",
+                          monthly: "monthly",
+                        }[sessionForm.recurrencePattern]
+                      }{" "}
+                      chart of {Number(sessionForm.recurrenceOccurrences) || 1}{" "}
+                      session
                       {Number(sessionForm.recurrenceOccurrences) === 1
                         ? ""
                         : "s"}
-                      , each {Number(sessionForm.recurrenceIntervalWeeks) || 1}{" "}
-                      week apart, starting from the time above. The teacher must
-                      be free for every occurrence.
+                      , each {Number(sessionForm.recurrenceInterval) || 1}{" "}
+                      {{
+                        daily: "day",
+                        weekly: "week",
+                        biweekly: "2-week block",
+                        monthly: "month",
+                      }[sessionForm.recurrencePattern] || "period"}
+                      {Number(sessionForm.recurrenceInterval) === 1 ? "" : "s"}{" "}
+                      apart, starting from the time above. The teacher must be
+                      free for every occurrence.
                     </p>
                   </>
                 )}

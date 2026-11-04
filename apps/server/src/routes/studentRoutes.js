@@ -20,7 +20,6 @@ import { CertificateModel } from "../models/Certificate.js";
 import { DiscussionModel } from "../models/Discussion.js";
 import { CourseModel } from "../models/Course.js";
 import { TeacherProgressReportModel } from "../models/TeacherProgressReport.js";
-import { randomBytes } from "node:crypto";
 import {
   cleanupSubmissionFiles,
   persistSubmissionFiles,
@@ -397,10 +396,13 @@ studentRouter.post(
       );
     }
     // Record the maximum possible score so teachers can grade consistently.
-    const maxScore = assessment.questions.reduce(
+    // Quiz-style assessments derive it from question points; written/category
+    // assessments use the maximum marks the teacher configured.
+    const questionPoints = assessment.questions.reduce(
       (total, question) => total + (question.points || 1),
       0,
     );
+    const maxScore = questionPoints > 0 ? questionPoints : assessment.maxScore || 100;
     const evaluatedAnswers = hasQuestions
       ? assessment.questions.map((question) => {
           const studentAns = data.answers.find(
@@ -479,26 +481,73 @@ studentRouter.get(
     );
   }),
 );
-// 8. View Attendance history
+// 8. View Attendance history with cumulative totals per cohort
 studentRouter.get(
   "/attendance",
   asyncHandler(async (req, res) => {
     const studentId = req.user.id;
-    const publishedClassrooms = await TeacherProgressReportModel.distinct(
-      "classroom",
-      { student: studentId, status: "published" },
-    );
-    const records = publishedClassrooms.length
-      ? await AttendanceRecordModel.find({
-          student: studentId,
-          classroom: { $in: publishedClassrooms },
-        })
-          .populate("session", "title startsAt endsAt")
-          .populate("classroom", "title")
-          .sort({ createdAt: -1 })
-          .lean()
-      : [];
-    res.json({ records });
+    const classes = await ClassroomModel.find({ students: studentId })
+      .populate("course", "title")
+      .select("title course")
+      .lean();
+    const classIds = classes.map((c) => c._id);
+    const [records, sessions] = await Promise.all([
+      AttendanceRecordModel.find({ student: studentId, classroom: { $in: classIds } })
+        .populate("session", "title startsAt endsAt")
+        .populate("classroom", "title")
+        .sort({ createdAt: -1 })
+        .lean(),
+      ClassSessionModel.find({ classroom: { $in: classIds } })
+        .select("classroom startsAt status")
+        .lean(),
+    ]);
+
+    const summary = {
+      total: records.length,
+      present: 0,
+      absent: 0,
+      late: 0,
+      excused: 0,
+      attendanceRate: 0,
+    };
+    for (const record of records) {
+      if (summary[record.status] !== undefined) summary[record.status] += 1;
+    }
+    const attended = summary.present + summary.late;
+    summary.attendanceRate =
+      summary.total > 0 ? Math.round((attended / summary.total) * 100) : 0;
+
+    // Per-cohort cumulative totals and how many sessions were held.
+    const classes_summary = classes.map((classroom) => {
+      const classRecords = records.filter(
+        (record) => record.classroom?._id?.toString() === classroom._id.toString(),
+      );
+      const present = classRecords.filter((r) => r.status === "present").length;
+      const late = classRecords.filter((r) => r.status === "late").length;
+      const absent = classRecords.filter((r) => r.status === "absent").length;
+      const excused = classRecords.filter((r) => r.status === "excused").length;
+      return {
+        classroom: {
+          _id: classroom._id,
+          title: classroom.title,
+          courseTitle: classroom.course?.title ?? "",
+        },
+        sessionsHeld: sessions.filter(
+          (s) => s.classroom?.toString() === classroom._id.toString(),
+        ).length,
+        marked: classRecords.length,
+        present,
+        late,
+        absent,
+        excused,
+        attendanceRate:
+          classRecords.length > 0
+            ? Math.round(((present + late) / classRecords.length) * 100)
+            : 0,
+      };
+    });
+
+    res.json({ records, summary, classes: classes_summary });
   }),
 );
 // 9. Student progress is visible only through teacher-published reports.
@@ -743,14 +792,13 @@ studentRouter.post(
   }),
 );
 
-// 13. Student Certificates
+// 13. Student Certificates (issued by the academy after reviewing results)
 studentRouter.get(
   "/certificates",
   asyncHandler(async (req, res) => {
     const studentId = req.user.id;
     const certificates = await CertificateModel.find({
       student: studentId,
-      status: "valid",
     })
       .populate("course", "title slug thumbnailUrl")
       .populate("classroom", "title")
@@ -760,97 +808,24 @@ studentRouter.get(
   }),
 );
 
-// 14. Claim Certificate upon completing criteria
-studentRouter.post(
-  "/classes/:classId/claim-certificate",
+// 14. Teacher-published results for the signed-in student
+studentRouter.get(
+  "/results",
   asyncHandler(async (req, res) => {
     const studentId = req.user.id;
-    const classroom = await ClassroomModel.findOne({
-      _id: req.params.classId,
-      students: studentId,
-    })
-      .populate("course")
-      .populate("teacher", "fullName name")
-      .lean();
-
-    if (!classroom) {
-      throw new ApiError(403, "Class not found or you are not enrolled.");
-    }
-
-    // Check if certificate already issued
-    const existing = await CertificateModel.findOne({
-      student: studentId,
-      classroom: classroom._id,
-    });
-    if (existing) {
-      res.json({
-        message: "Certificate already issued.",
-        certificate: existing,
-      });
-      return;
-    }
-
-    // Verify course completion criteria per PDF section 14:
-    // "Implement certificates only when the configured completion criteria have been satisfied.
-    // Do not issue a certificate solely because a student opened a course page."
-    const [progressReport, studentUser] = await Promise.all([
-      TeacherProgressReportModel.findOne({
-        student: studentId,
-        classroom: classroom._id,
-        status: "published",
-        overallScore: { $ne: null },
-      })
+    const [attempts, reports] = await Promise.all([
+      AssessmentAttemptModel.find({ student: studentId, status: "reviewed" })
+        .populate("assessment", "title assessmentType maxScore")
+        .populate("classroom", "title")
+        .sort({ reviewedAt: -1, createdAt: -1 })
+        .lean(),
+      TeacherProgressReportModel.find({ student: studentId, status: "published" })
+        .populate("classroom", "title")
+        .populate("teacher", "fullName name")
         .sort({ publishedAt: -1 })
         .lean(),
-      UserModel.findById(studentId).lean(),
     ]);
-    if (!progressReport) {
-      throw new ApiError(
-        400,
-        "Your teacher must publish your course progress before you can claim a certificate.",
-      );
-    }
-    if (progressReport.overallScore < 70) {
-      throw new ApiError(
-        400,
-        `The published course progress score must be at least 70% to earn a certificate. Current score: ${progressReport.overallScore}%.`,
-      );
-    }
-
-    const certSuffix = randomBytes(4).toString("hex").toUpperCase();
-    const certificateNumber = `TLH-${new Date().getFullYear()}-${certSuffix}`;
-
-    const cert = await CertificateModel.create({
-      student: studentId,
-      classroom: classroom._id,
-      course: classroom.course._id,
-      certificateNumber,
-      studentName:
-        studentUser?.fullName || studentUser?.name || "TedbabeLearnHUB Scholar",
-      courseTitle: classroom.course?.title || classroom.title,
-      instructorName:
-        classroom.teacher?.fullName ||
-        classroom.teacher?.name ||
-        "TedbabeLearnHUB Faculty",
-      issueDate: new Date(),
-      overallScore: progressReport.overallScore,
-      status: "valid",
-      verificationUrl: `/verify-certificate/${certificateNumber}`,
-    });
-
-    await NotificationModel.create({
-      user: studentId,
-      title: "Certificate of Completion Awarded!",
-      message: `Congratulations! You have completed "${classroom.course?.title || classroom.title}" and received your certificate ${certificateNumber}.`,
-      kind: "certificate",
-      link: "/dashboard",
-    });
-
-    res.status(201).json({
-      message:
-        "Congratulations! Your certificate of completion has been issued.",
-      certificate: cert,
-    });
+    res.json({ attempts, reports });
   }),
 );
 

@@ -5,9 +5,12 @@ const classSessionSchema = new Schema({
     seriesId: { type: String, default: "", index: true },
     recurrencePattern: {
         type: String,
-        enum: ["none", "weekly"],
+        enum: ["none", "daily", "weekly", "biweekly", "monthly"],
         default: "none",
     },
+    // Number of days / weeks / months between occurrences, based on the pattern.
+    recurrenceInterval: { type: Number, default: 1 },
+    // Retained for backwards compatibility with existing weekly series.
     recurrenceIntervalWeeks: { type: Number, default: 1 },
     recurrenceCount: { type: Number, default: 1 },
     recurrenceIndex: { type: Number, default: 0 },

@@ -83,6 +83,9 @@ export function StudentDashboard({ user }) {
   const [progressData, setProgressData] = useState(null);
   const [progressReports, setProgressReports] = useState([]);
   const [certificates, setCertificates] = useState([]);
+  const [resultAttempts, setResultAttempts] = useState([]);
+  const [attendanceSummary, setAttendanceSummary] = useState(null);
+  const [attendanceClasses, setAttendanceClasses] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [announcements, setAnnouncements] = useState([]);
   const [feedback, setFeedback] = useState("");
@@ -144,6 +147,7 @@ export function StudentDashboard({ user }) {
         progRes,
         certRes,
         annRes,
+        resultsRes,
       ] = await Promise.all([
         apiRequest("/api/student/dashboard"),
         apiRequest("/api/student/classes"),
@@ -158,6 +162,7 @@ export function StudentDashboard({ user }) {
         apiRequest("/api/student/announcements").catch(() => ({
           announcements: [],
         })),
+        apiRequest("/api/student/results").catch(() => ({ attempts: [] })),
       ]);
       setClasses(classesRes.classes || []);
       setUpcomingLessons(dash.upcomingLessons || []);
@@ -165,9 +170,12 @@ export function StudentDashboard({ user }) {
       setAssessments(quizRes.assessments || []);
       setResources(resRes.resources || []);
       setAttendanceRecords(attendRes.records || []);
+      setAttendanceSummary(attendRes.summary || null);
+      setAttendanceClasses(attendRes.classes || []);
       setProgressData(progRes.progress || null);
       setProgressReports(progRes.reports || []);
       setCertificates(certRes.certificates || []);
+      setResultAttempts(resultsRes.attempts || []);
       setNotifications(dash.notifications || []);
       setAnnouncements(annRes.announcements || []);
       if (dash.student?.studentProfile) {
@@ -368,19 +376,6 @@ export function StudentDashboard({ user }) {
     }
   };
 
-  const handleClaimCertificate = async (classId) => {
-    try {
-      const res = await apiRequest(
-        `/api/student/classes/${classId}/claim-certificate`,
-        { method: "POST" },
-      );
-      setFeedback(res.message);
-      loadStudentData();
-    } catch (err) {
-      setFeedback(err.message);
-    }
-  };
-
   const handleChangePassword = async (e) => {
     e.preventDefault();
     if (securityForm.newPassword !== securityForm.confirmPassword) {
@@ -437,6 +432,11 @@ export function StudentDashboard({ user }) {
       icon: "📁",
     },
     { id: "progress", label: "My progress", icon: "📈" },
+    {
+      id: "results",
+      label: `My results (${resultAttempts.length + progressReports.length})`,
+      icon: "🏅",
+    },
     {
       id: "certificates",
       label: `Certificates (${certificates.length})`,
@@ -1313,8 +1313,72 @@ export function StudentDashboard({ user }) {
             ))
           )}
 
-          {progressReports.length > 0 ? (
-            <DashboardCard title="Attendance history">
+          <DashboardCard
+            title="Attendance register"
+            subtitle="Cumulative attendance across every cohort you are enrolled in."
+          >
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+              <MetricCard
+                label="Attendance rate"
+                value={`${attendanceSummary?.attendanceRate ?? 0}%`}
+              />
+              <MetricCard label="Present" value={attendanceSummary?.present ?? 0} />
+              <MetricCard label="Late" value={attendanceSummary?.late ?? 0} />
+              <MetricCard label="Absent" value={attendanceSummary?.absent ?? 0} />
+              <MetricCard
+                label="Excused"
+                value={attendanceSummary?.excused ?? 0}
+              />
+            </div>
+
+            {attendanceClasses.length > 0 ? (
+              <div className="mt-6 overflow-x-auto">
+                <table className="w-full min-w-[520px] text-left text-xs">
+                  <thead>
+                    <tr className="border-b border-slate-200 text-slate-500 uppercase tracking-wider">
+                      <th className="py-2 pr-3 font-bold">Cohort</th>
+                      <th className="py-2 px-3 font-bold">Sessions held</th>
+                      <th className="py-2 px-3 font-bold">Present</th>
+                      <th className="py-2 px-3 font-bold">Late</th>
+                      <th className="py-2 px-3 font-bold">Absent</th>
+                      <th className="py-2 pl-3 font-bold">Rate</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {attendanceClasses.map((row) => (
+                      <tr key={row.classroom?._id}>
+                        <td className="py-2.5 pr-3 font-semibold text-slate-900">
+                          {row.classroom?.courseTitle || row.classroom?.title}
+                          <span className="block text-[11px] font-normal text-slate-400">
+                            {row.classroom?.title}
+                          </span>
+                        </td>
+                        <td className="py-2.5 px-3 text-slate-600">
+                          {row.sessionsHeld ?? 0}
+                        </td>
+                        <td className="py-2.5 px-3 text-emerald-600 font-semibold">
+                          {row.present ?? 0}
+                        </td>
+                        <td className="py-2.5 px-3 text-amber-600 font-semibold">
+                          {row.late ?? 0}
+                        </td>
+                        <td className="py-2.5 px-3 text-rose-600 font-semibold">
+                          {row.absent ?? 0}
+                        </td>
+                        <td className="py-2.5 pl-3 font-bold text-slate-900">
+                          {row.attendanceRate ?? 0}%
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : null}
+
+            <div className="mt-6">
+              <h4 className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-500">
+                Session-by-session
+              </h4>
               <div className="divide-y divide-slate-100">
                 {attendanceRecords.length === 0 ? (
                   <EmptyState title="No attendance records yet." />
@@ -1329,7 +1393,8 @@ export function StudentDashboard({ user }) {
                           {rec.session?.title || "Class Session"}
                         </span>
                         <p className="text-slate-400">
-                          {new Date(rec.createdAt).toLocaleDateString()}
+                          {rec.classroom?.title ? `${rec.classroom.title} · ` : ""}
+                          {new Date(rec.session?.startsAt || rec.createdAt).toLocaleDateString()}
                         </p>
                       </div>
                       <Badge
@@ -1347,8 +1412,91 @@ export function StudentDashboard({ user }) {
                   ))
                 )}
               </div>
-            </DashboardCard>
-          ) : null}
+            </div>
+          </DashboardCard>
+        </div>
+      ) : null}
+
+      {activeTab === "results" ? (
+        <div className="space-y-6">
+          <DashboardCard
+            title="Published results"
+            subtitle="Results released by your teachers for this account."
+          >
+            {resultAttempts.length === 0 && progressReports.length === 0 ? (
+              <EmptyState
+                title="No results published yet."
+                description="Assessment and exam results appear here once your teacher reviews and publishes them."
+              />
+            ) : (
+              <div className="space-y-4">
+                {resultAttempts.map((attempt) => (
+                  <div
+                    key={attempt._id}
+                    className="rounded-2xl border border-slate-200 p-4"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div>
+                        <h4 className="font-bold text-slate-900">
+                          {attempt.assessment?.title || "Assessment"}
+                        </h4>
+                        <p className="text-xs text-slate-500">
+                          {attempt.classroom?.title || "Cohort"} ·{" "}
+                          {attempt.assessment?.assessmentType || "Assessment"}
+                        </p>
+                      </div>
+                      <span className="rounded-xl bg-blue-50 px-3 py-1 text-sm font-black text-blue-700">
+                        {attempt.score ?? 0}/{attempt.maxScore ?? 100}
+                      </span>
+                    </div>
+                    {attempt.feedback ? (
+                      <p className="mt-2 text-xs text-slate-600">
+                        Feedback: {attempt.feedback}
+                      </p>
+                    ) : null}
+                  </div>
+                ))}
+                {progressReports.map((report) => (
+                  <div
+                    key={report._id}
+                    className="rounded-2xl border border-slate-200 p-4"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div>
+                        <h4 className="font-bold text-slate-900">
+                          Progress report · {report.classroom?.title || "Cohort"}
+                        </h4>
+                        <p className="text-xs text-slate-500">
+                          Period: {report.period} ·{" "}
+                          {report.teacher?.fullName || "Teacher"}
+                        </p>
+                      </div>
+                      <span className="rounded-xl bg-emerald-50 px-3 py-1 text-sm font-black text-emerald-700">
+                        {report.overallScore}%
+                      </span>
+                    </div>
+                    {report.components?.length ? (
+                      <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                        {report.components.map((component) => (
+                          <div
+                            key={component._id}
+                            className="rounded-xl bg-slate-50 p-2.5 text-xs"
+                          >
+                            <span className="font-bold text-slate-700">
+                              {component.title}
+                            </span>
+                            <span className="ml-2 text-slate-600">
+                              {component.score}/{component.maxScore}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+            )}
+          </DashboardCard>
         </div>
       ) : null}
 
@@ -1585,41 +1733,50 @@ export function StudentDashboard({ user }) {
             {certificates.length === 0 ? (
               <div className="space-y-6">
                 <EmptyState
-                  title="No certificates earned yet."
-                  description="Your teacher must publish a progress report with an overall score of at least 70% before you can claim a certificate."
+                  title="No certificates issued yet."
+                  description="Certificates are issued by the academy. Once your teacher publishes your reviewed results, the administration verifies them and issues your certificate here automatically."
                 />
-                {classes.map((cls) => (
-                  <div
-                    key={cls._id}
-                    className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4"
-                  >
-                    <div>
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {attendanceClasses.map((row) => (
+                    <div
+                      key={row.classroom?._id}
+                      className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
+                    >
                       <h4 className="font-bold text-slate-900">
-                        {cls.course?.title || cls.title}
+                        {row.classroom?.courseTitle || row.classroom?.title}
                       </h4>
-                      <p className="text-xs text-slate-500">
-                        Cohort: {cls.title}
+                      <p className="mt-1 text-xs text-slate-500">
+                        Cohort: {row.classroom?.title}
+                      </p>
+                      <p className="mt-2 inline-flex rounded-lg bg-amber-100 px-2 py-0.5 text-[11px] font-bold text-amber-700">
+                        Awaiting academy issuance
                       </p>
                     </div>
-                    <button
-                      onClick={() => handleClaimCertificate(cls._id)}
-                      className="rounded-xl bg-gradient-to-r from-[#0066ff] to-[#0099ff] px-4 py-2 text-xs font-bold text-white shadow-md shadow-blue-500/25 hover:from-[#0052cc] hover:to-[#0088e6]"
-                    >
-                      Check & Claim Certificate
-                    </button>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             ) : (
               <div className="grid gap-6 md:grid-cols-2">
                 {certificates.map((cert) => (
                   <div
                     key={cert._id}
-                    className="rounded-3xl border border-amber-300 bg-amber-50/50 p-6 shadow-sm space-y-4"
+                    className={`rounded-3xl border p-6 shadow-sm space-y-4 ${
+                      cert.status === "revoked"
+                        ? "border-rose-300 bg-rose-50/50"
+                        : "border-amber-300 bg-amber-50/50"
+                    }`}
                   >
                     <div className="flex items-center justify-between">
-                      <span className="rounded-lg bg-gradient-to-r from-[#0066ff] to-[#0099ff] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
-                        Verified Credential
+                      <span
+                        className={`rounded-lg px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white ${
+                          cert.status === "revoked"
+                            ? "bg-rose-600"
+                            : "bg-gradient-to-r from-[#0066ff] to-[#0099ff]"
+                        }`}
+                      >
+                        {cert.status === "revoked"
+                          ? "Revoked"
+                          : "Verified Credential"}
                       </span>
                       <span className="font-mono text-xs font-bold text-slate-600">
                         {cert.certificateNumber}

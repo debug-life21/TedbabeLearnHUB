@@ -1,4 +1,8 @@
 import mongoose, { Schema } from "mongoose";
+import {
+  ASSESSMENT_CATEGORIES,
+  LEGACY_ASSESSMENT_CATEGORIES,
+} from "../utils/assessmentCategories.js";
 const questionSchema = new Schema(
   {
     prompt: { type: String, required: true },
@@ -28,17 +32,13 @@ const assessmentSchema = new Schema(
     },
     assessmentType: {
       type: String,
-      enum: [
-        "quiz",
-        "midExam",
-        "final Exam ",
-        "Assignment",
-        "Attendance",
-        "comprehensive",
-      ],
+      enum: [...ASSESSMENT_CATEGORIES, ...LEGACY_ASSESSMENT_CATEGORIES],
       default: "quiz",
       index: true,
     },
+    // Maximum marks for the assessment. Written/category assessments use this
+    // directly; quiz-style assessments also accept a sum of question points.
+    maxScore: { type: Number, default: 100, min: 1 },
     timeLimitMinutes: { type: Number, default: 30 },
     passingScorePercentage: { type: Number, default: 60 },
     isPublished: { type: Boolean, default: true, index: true },

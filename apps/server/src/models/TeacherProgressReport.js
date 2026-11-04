@@ -1,17 +1,14 @@
 import mongoose, { Schema } from "mongoose";
+import {
+  ASSESSMENT_CATEGORIES,
+  LEGACY_ASSESSMENT_CATEGORIES,
+} from "../utils/assessmentCategories.js";
 
 const componentSchema = new Schema(
   {
     category: {
       type: String,
-      enum: [
-        "attendance",
-        "assignment",
-        "quiz",
-        "midterm",
-        "final",
-        "comprehensive",
-      ],
+      enum: [...ASSESSMENT_CATEGORIES, ...LEGACY_ASSESSMENT_CATEGORIES],
       required: true,
     },
     title: { type: String, required: true, trim: true },

@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import { Router } from "express";
 import { pipeline } from "node:stream/promises";
+import { randomBytes } from "node:crypto";
 import { z } from "zod";
 import { hashPassword, requireAuth, requireRole } from "../auth.js";
 import { asyncHandler, ApiError } from "../lib/http.js";
@@ -21,17 +22,21 @@ import { UserModel } from "../models/User.js";
 import { AnnouncementModel } from "../models/Announcement.js";
 import { PlatformSettingModel } from "../models/PlatformSetting.js";
 import { AttendanceRecordModel } from "../models/AttendanceRecord.js";
+import { TeacherAttendanceRecordModel } from "../models/TeacherAttendanceRecord.js";
 import { AssessmentAttemptModel } from "../models/AssessmentAttempt.js";
 import { AssignmentModel } from "../models/Assignment.js";
 import { AssignmentSubmissionModel } from "../models/AssignmentSubmission.js";
 import { AssessmentModel } from "../models/Assessment.js";
 import { CertificateModel } from "../models/Certificate.js";
 import { DiscussionModel } from "../models/Discussion.js";
+import { TeacherProgressReportModel } from "../models/TeacherProgressReport.js";
 import { LearningResourceModel } from "../models/LearningResource.js";
 import { slugify } from "../utils.js";
+import { buildAttendanceRegister } from "../utils/attendanceRegister.js";
 import {
   buildRecurringSessions,
   recurrenceSchema,
+  RECURRENCE_LABELS,
 } from "../utils/recurrence.js";
 import {
   cleanupSubmissionFiles,
@@ -53,6 +58,16 @@ function isValidTimeZone(timeZone) {
   } catch {
     return false;
   }
+}
+
+// Minimum published overall score required before an administrator can issue a
+// certificate of completion.
+const CERTIFICATE_PASS_MARK = 70;
+
+function makeCertificateNumber() {
+  return `TLH-${new Date().getFullYear()}-${randomBytes(4)
+    .toString("hex")
+    .toUpperCase()}`;
 }
 // Admin: get own notifications (capped at 20)
 adminRouter.get(
@@ -179,6 +194,8 @@ adminRouter.get(
       activeClasses,
       upcomingClasses,
       pendingSupportInquiries,
+      certificatesIssued,
+      teacherAttendanceRecords,
     ] = await Promise.all([
       UserModel.countDocuments({ role: "student", isDeleted: { $ne: true } }),
       UserModel.countDocuments({
@@ -205,6 +222,8 @@ adminRouter.get(
         status: "scheduled",
       }),
       ContactInquiryModel.countDocuments({ status: { $ne: "closed" } }),
+      CertificateModel.countDocuments({ status: "valid" }),
+      TeacherAttendanceRecordModel.countDocuments(),
     ]);
     res.json({
       metrics: {
@@ -218,6 +237,8 @@ adminRouter.get(
         activeClasses,
         upcomingClasses,
         pendingSupportInquiries,
+        certificatesIssued,
+        teacherAttendanceRecords,
       },
     });
   }),
@@ -1150,6 +1171,12 @@ adminRouter.delete(
           ...(sessionIds.length ? [{ session: { $in: sessionIds } }] : []),
         ],
       }),
+      TeacherAttendanceRecordModel.deleteMany({
+        $or: [
+          { classroom: classroom._id },
+          ...(sessionIds.length ? [{ session: { $in: sessionIds } }] : []),
+        ],
+      }),
       CertificateModel.deleteMany({ classroom: classroom._id }),
       DiscussionModel.deleteMany({ classroom: classroom._id }),
       LearningResourceModel.deleteMany({ classroom: classroom._id }),
@@ -1544,6 +1571,159 @@ adminRouter.get(
   }),
 );
 
+// Cohort attendance register (students x sessions with cumulative totals)
+adminRouter.get(
+  "/classes/:classId/attendance",
+  asyncHandler(async (req, res) => {
+    if (!mongoose.isValidObjectId(req.params.classId))
+      throw new ApiError(400, "Invalid cohort ID.");
+    const classroom = await ClassroomModel.findById(req.params.classId)
+      .populate("students", "fullName name email avatarUrl")
+      .lean();
+    if (!classroom) throw new ApiError(404, "Cohort not found.");
+    const [sessions, records] = await Promise.all([
+      ClassSessionModel.find({ classroom: classroom._id })
+        .sort({ startsAt: 1 })
+        .lean(),
+      AttendanceRecordModel.find({ classroom: classroom._id }).lean(),
+    ]);
+    res.json({
+      classroom: {
+        _id: classroom._id,
+        title: classroom.title,
+        timeZone: classroom.timeZone,
+      },
+      register: buildAttendanceRegister({ classroom, sessions, records }),
+    });
+  }),
+);
+
+// Teacher attendance: records, per-teacher summaries and pending teaching days
+adminRouter.get(
+  "/teacher-attendance",
+  asyncHandler(async (req, res) => {
+    const filter = {};
+    if (
+      req.query.teacherId &&
+      mongoose.isValidObjectId(req.query.teacherId)
+    ) {
+      filter.teacher = req.query.teacherId;
+    }
+    const [records, teachers] = await Promise.all([
+      TeacherAttendanceRecordModel.find(filter)
+        .populate("teacher", "fullName name email avatarUrl")
+        .populate("classroom", "title")
+        .populate("session", "title startsAt endsAt")
+        .sort({ teachingDate: -1 })
+        .limit(500)
+        .lean(),
+      UserModel.find({ role: "teacher", isDeleted: { $ne: true } })
+        .select("fullName name email avatarUrl accountStatus")
+        .sort({ fullName: 1 })
+        .lean(),
+    ]);
+
+    const upcomingSessions = await ClassSessionModel.find({
+      status: "scheduled",
+      endsAt: { $gte: new Date() },
+    })
+      .select("teacher classroom startsAt")
+      .lean();
+
+    const summaryMap = new Map();
+    const ensure = (teacher) => {
+      const id = teacher._id.toString();
+      if (!summaryMap.has(id)) {
+        summaryMap.set(id, {
+          teacher: {
+            _id: teacher._id,
+            fullName: teacher.fullName || teacher.name,
+            email: teacher.email,
+            avatarUrl: teacher.avatarUrl,
+            accountStatus: teacher.accountStatus,
+          },
+          present: 0,
+          late: 0,
+          absent: 0,
+          excused: 0,
+          total: 0,
+          loggedSessions: 0,
+          scheduledTeachingDays: 0,
+        });
+      }
+      return summaryMap.get(id);
+    };
+
+    for (const teacher of teachers) ensure(teacher);
+    for (const record of records) {
+      if (!record.teacher) continue;
+      const entry = ensure(record.teacher);
+      if (entry[record.status] !== undefined) entry[record.status] += 1;
+      entry.total += 1;
+      if (record.status !== "excused") entry.loggedSessions += 1;
+    }
+    for (const session of upcomingSessions) {
+      const teacherId = session.teacher?.toString();
+      if (!teacherId || !summaryMap.has(teacherId)) continue;
+      summaryMap.get(teacherId).scheduledTeachingDays += 1;
+    }
+
+    const summary = Array.from(summaryMap.values()).map((entry) => {
+      const attended = entry.present + entry.late;
+      return {
+        ...entry,
+        attendanceRate:
+          entry.total > 0 ? Math.round((attended / entry.total) * 100) : 0,
+      };
+    });
+
+    res.json({ records, summary });
+  }),
+);
+
+// Admin records or overrides a teacher's attendance for a teaching day
+adminRouter.post(
+  "/teacher-attendance",
+  asyncHandler(async (req, res) => {
+    const data = z
+      .object({
+        sessionId: z.string().min(1),
+        status: z.enum(["present", "late", "absent", "excused"]),
+        notes: z.string().max(500).default(""),
+      })
+      .parse(req.body);
+    if (!mongoose.isValidObjectId(data.sessionId)) {
+      throw new ApiError(400, "Invalid session ID.");
+    }
+    const session = await ClassSessionModel.findById(data.sessionId).lean();
+    if (!session) throw new ApiError(404, "Session not found.");
+    if (!session.teacher) {
+      throw new ApiError(400, "This session has no assigned teacher.");
+    }
+    const record = await TeacherAttendanceRecordModel.findOneAndUpdate(
+      { session: session._id, teacher: session.teacher },
+      {
+        $set: {
+          classroom: session.classroom,
+          teachingDate: session.startsAt,
+          status: data.status,
+          notes: data.notes,
+          markedBy: req.user.id,
+        },
+      },
+      { upsert: true, new: true, setDefaultsOnInsert: true },
+    );
+    await writeAudit(
+      req.user.id,
+      "teacher_attendance_recorded",
+      "TeacherAttendanceRecord",
+      record._id.toString(),
+      { sessionId: session._id.toString() },
+    );
+    res.json({ message: "Teacher attendance recorded.", record });
+  }),
+);
+
 adminRouter.post(
   "/sessions",
   asyncHandler(async (req, res) => {
@@ -1601,6 +1781,7 @@ adminRouter.post(
         meetingUrl: data.meetingUrl ?? "",
         seriesId: occurrence.seriesId,
         recurrencePattern: occurrence.recurrencePattern,
+        recurrenceInterval: occurrence.recurrenceInterval,
         recurrenceIntervalWeeks: occurrence.recurrenceIntervalWeeks,
         recurrenceCount: occurrence.recurrenceCount,
         recurrenceIndex: occurrence.recurrenceIndex,
@@ -1608,15 +1789,17 @@ adminRouter.post(
     );
     const first = created[0];
     const isSeries = created.length > 1;
+    const recurrenceLabel =
+      RECURRENCE_LABELS[data.recurrence?.pattern] ?? "Recurring";
     const recipientIds = [classroom.teacher, ...classroom.students];
     await NotificationModel.insertMany(
       recipientIds.map((recipientId) => ({
         user: recipientId,
         title: isSeries
-          ? "New weekly class sessions scheduled"
+          ? `${recurrenceLabel} class sessions scheduled`
           : "New class session scheduled",
         message: isSeries
-          ? `${data.title} has been scheduled weekly (${created.length} sessions), starting ${start.toISOString()}.`
+          ? `${data.title} has been scheduled ${recurrenceLabel.toLowerCase()} (${created.length} sessions), starting ${start.toISOString()}.`
           : `${data.title} has been scheduled for ${start.toISOString()}.`,
         kind: "session",
         link: "/dashboard",
@@ -1634,7 +1817,7 @@ adminRouter.post(
             name: recipient.name,
             role: recipient.role,
             sessionTitle: isSeries
-              ? `${data.title} (weekly, ${created.length} sessions)`
+              ? `${data.title} (${recurrenceLabel.toLowerCase()}, ${created.length} sessions)`
               : data.title,
             classroomTitle: classroom.title,
             startsAt: start,
@@ -1769,6 +1952,7 @@ adminRouter.delete(
     const sessionIds = targets.map((item) => item._id);
     await Promise.all([
       AttendanceRecordModel.deleteMany({ session: { $in: sessionIds } }),
+      TeacherAttendanceRecordModel.deleteMany({ session: { $in: sessionIds } }),
       ClassSessionModel.deleteMany({ _id: { $in: sessionIds } }),
     ]);
     await writeAudit(
@@ -1783,7 +1967,7 @@ adminRouter.delete(
     );
     res.json({
       message: deleteSeries
-        ? `Weekly series and its ${sessionIds.length} sessions were deleted.`
+        ? `Recurring series and its ${sessionIds.length} sessions were deleted.`
         : "Session and its attendance records deleted.",
       deletedCount: sessionIds.length,
     });
@@ -2188,6 +2372,249 @@ adminRouter.delete(
     res.json({ message: "Announcement deleted." });
   }),
 );
+// ─── Certificate management (Admin reviews published results and issues) ───
+adminRouter.get(
+  "/certificates",
+  asyncHandler(async (_req, res) => {
+    const [certificates, publishedReports] = await Promise.all([
+      CertificateModel.find()
+        .populate("student", "fullName name email avatarUrl")
+        .populate("classroom", "title")
+        .populate("course", "title slug thumbnailUrl")
+        .populate("issuedBy", "fullName name")
+        .sort({ issueDate: -1 })
+        .lean(),
+      TeacherProgressReportModel.find({
+        status: "published",
+        overallScore: { $ne: null, $gte: CERTIFICATE_PASS_MARK },
+      })
+        .populate("student", "fullName name email avatarUrl")
+        .populate({
+          path: "classroom",
+          select: "title course",
+          populate: { path: "course", select: "title slug thumbnailUrl" },
+        })
+        .sort({ publishedAt: -1 })
+        .lean(),
+    ]);
+
+    const issuedKeys = new Set(
+      certificates.map((cert) => `${cert.student?._id}-${cert.classroom?._id}`),
+    );
+    const eligibleMap = new Map();
+    for (const report of publishedReports) {
+      if (!report.student || !report.classroom) continue;
+      const key = `${report.student._id}-${report.classroom._id}`;
+      if (issuedKeys.has(key) || eligibleMap.has(key)) continue;
+      eligibleMap.set(key, {
+        student: report.student,
+        classroom: report.classroom,
+        course: report.classroom.course ?? null,
+        overallScore: report.overallScore,
+        period: report.period,
+        publishedAt: report.publishedAt,
+      });
+    }
+
+    res.json({
+      certificates,
+      eligible: Array.from(eligibleMap.values()),
+      threshold: CERTIFICATE_PASS_MARK,
+    });
+  }),
+);
+adminRouter.post(
+  "/certificates",
+  asyncHandler(async (req, res) => {
+    const data = z
+      .object({
+        studentId: z.string().min(1),
+        classroomId: z.string().min(1),
+        overallScore: z.number().min(0).max(100).optional(),
+        notes: z.string().trim().max(500).default(""),
+      })
+      .parse(req.body);
+    if (
+      !mongoose.isValidObjectId(data.studentId) ||
+      !mongoose.isValidObjectId(data.classroomId)
+    ) {
+      throw new ApiError(400, "Invalid student or cohort ID.");
+    }
+    const classroom = await ClassroomModel.findById(data.classroomId)
+      .populate("course")
+      .populate("teacher", "fullName name")
+      .lean();
+    if (!classroom) throw new ApiError(404, "Cohort not found.");
+    const student = await UserModel.findOne({
+      _id: data.studentId,
+      role: "student",
+      isDeleted: { $ne: true },
+    }).lean();
+    if (!student) throw new ApiError(404, "Student not found.");
+    if (
+      !classroom.students.some(
+        (studentId) => studentId.toString() === data.studentId,
+      )
+    ) {
+      throw new ApiError(
+        403,
+        "This student is not enrolled in the selected cohort.",
+      );
+    }
+
+    const existing = await CertificateModel.findOne({
+      student: student._id,
+      classroom: classroom._id,
+    });
+    if (existing) {
+      throw new ApiError(
+        409,
+        "A certificate has already been issued to this student for this cohort.",
+      );
+    }
+
+    const publishedReport = await TeacherProgressReportModel.findOne({
+      student: student._id,
+      classroom: classroom._id,
+      status: "published",
+      overallScore: { $ne: null },
+    })
+      .sort({ publishedAt: -1 })
+      .lean();
+
+    const overallScore = data.overallScore ?? publishedReport?.overallScore;
+    if (overallScore === undefined || overallScore === null) {
+      throw new ApiError(
+        400,
+        "Enter an overall score or publish a graded progress report before issuing a certificate.",
+      );
+    }
+    if (overallScore < CERTIFICATE_PASS_MARK) {
+      throw new ApiError(
+        400,
+        `The overall score must be at least ${CERTIFICATE_PASS_MARK}% to issue a certificate.`,
+      );
+    }
+
+    const certificateNumber = makeCertificateNumber();
+    const certificate = await CertificateModel.create({
+      student: student._id,
+      classroom: classroom._id,
+      course: classroom.course?._id ?? classroom.course,
+      certificateNumber,
+      studentName: student.fullName || student.name || "TedbabeLearnHUB Scholar",
+      courseTitle: classroom.course?.title || classroom.title,
+      instructorName:
+        classroom.teacher?.fullName ||
+        classroom.teacher?.name ||
+        "TedbabeLearnHUB Academic Faculty",
+      issueDate: new Date(),
+      overallScore,
+      status: "valid",
+      verificationUrl: `/verify-certificate/${certificateNumber}`,
+      issuedBy: req.user.id,
+      notes: data.notes,
+    });
+
+    await NotificationModel.create({
+      user: student._id,
+      title: "Certificate of Completion Awarded!",
+      message: `Congratulations! The academy issued your certificate ${certificateNumber} for "${classroom.course?.title || classroom.title}".`,
+      kind: "certificate",
+      link: "/student/certificates",
+    });
+    await writeAudit(
+      req.user.id,
+      "certificate_issued",
+      "Certificate",
+      certificate._id.toString(),
+      {
+        studentId: student._id.toString(),
+        classroomId: classroom._id.toString(),
+        certificateNumber,
+      },
+    );
+    res.status(201).json({
+      message: "Certificate issued and delivered to the student.",
+      certificate,
+    });
+  }),
+);
+adminRouter.patch(
+  "/certificates/:certificateId/status",
+  asyncHandler(async (req, res) => {
+    if (!mongoose.isValidObjectId(req.params.certificateId)) {
+      throw new ApiError(400, "Invalid certificate ID.");
+    }
+    const { status } = z
+      .object({ status: z.enum(["valid", "revoked"]) })
+      .parse(req.body);
+    const certificate = await CertificateModel.findById(
+      req.params.certificateId,
+    );
+    if (!certificate) throw new ApiError(404, "Certificate not found.");
+    certificate.status = status;
+    certificate.revokedAt = status === "revoked" ? new Date() : null;
+    await certificate.save();
+    await NotificationModel.create({
+      user: certificate.student,
+      title:
+        status === "revoked"
+          ? "Certificate revoked"
+          : "Certificate reinstated",
+      message:
+        status === "revoked"
+          ? `Your certificate ${certificate.certificateNumber} has been revoked. Please contact the academy.`
+          : `Your certificate ${certificate.certificateNumber} is valid again.`,
+      kind: "certificate",
+      link: "/student/certificates",
+    });
+    await writeAudit(
+      req.user.id,
+      `certificate_${status}`,
+      "Certificate",
+      certificate._id.toString(),
+    );
+    res.json({
+      message:
+        status === "revoked"
+          ? "Certificate revoked."
+          : "Certificate reinstated.",
+      certificate,
+    });
+  }),
+);
+
+// ─── Published results for academy review ───
+adminRouter.get(
+  "/results",
+  asyncHandler(async (req, res) => {
+    const filter = {};
+    if (
+      req.query.classroomId &&
+      mongoose.isValidObjectId(req.query.classroomId)
+    ) {
+      filter.classroom = req.query.classroomId;
+    }
+    const [attempts, reports] = await Promise.all([
+      AssessmentAttemptModel.find({ ...filter, status: "reviewed" })
+        .populate("student", "fullName name email")
+        .populate("assessment", "title assessmentType maxScore")
+        .populate("classroom", "title")
+        .sort({ reviewedAt: -1, createdAt: -1 })
+        .limit(300)
+        .lean(),
+      TeacherProgressReportModel.find({ ...filter, status: "published" })
+        .populate("student", "fullName name email")
+        .populate("teacher", "fullName name")
+        .populate("classroom", "title")
+        .sort({ publishedAt: -1 })
+        .limit(300)
+        .lean(),
+    ]);
+    res.json({ attempts, reports, threshold: CERTIFICATE_PASS_MARK });
+  }),
+);
 adminRouter.get(
   "/reports",
   asyncHandler(async (_req, res) => {
@@ -2195,6 +2622,8 @@ adminRouter.get(
       studentsByPlacement,
       teachersWithClasses,
       attendanceSummary,
+      teacherAttendanceSummary,
+      certificateSummary,
       classesWithOccupancy,
     ] = await Promise.all([
       UserModel.aggregate([
@@ -2213,6 +2642,12 @@ adminRouter.get(
       AttendanceRecordModel.aggregate([
         { $group: { _id: "$status", count: { $sum: 1 } } },
       ]),
+      TeacherAttendanceRecordModel.aggregate([
+        { $group: { _id: "$status", count: { $sum: 1 } } },
+      ]),
+      CertificateModel.aggregate([
+        { $group: { _id: "$status", count: { $sum: 1 } } },
+      ]),
       ClassroomModel.find()
         .populate("teacher", "fullName")
         .populate("course", "title")
@@ -2223,6 +2658,8 @@ adminRouter.get(
       placementStats: studentsByPlacement,
       teacherWorkloads: teachersWithClasses,
       attendanceStats: attendanceSummary,
+      teacherAttendanceStats: teacherAttendanceSummary,
+      certificateStats: certificateSummary,
       classes: classesWithOccupancy.map((c) => ({
         _id: c._id,
         title: c.title,
