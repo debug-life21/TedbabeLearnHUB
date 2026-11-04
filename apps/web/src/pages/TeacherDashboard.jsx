@@ -24,7 +24,6 @@ const PROGRESS_COMPONENTS = [
   { category: "midExam", label: "Mid Exam" },
   { category: "finalExam", label: "Final Exam" },
   { category: "project", label: "Project" },
-  { category: "comprehensive", label: "Comprehensive assessment" },
 ];
 
 // Canonical assessment categories shared with the backend enum.
@@ -36,7 +35,6 @@ const ASSESSMENT_TYPE_OPTIONS = [
   { value: "project", label: "Project" },
   { value: "presentation", label: "Presentation" },
   { value: "practical", label: "Practical / Lab" },
-  { value: "comprehensive", label: "Comprehensive assessment" },
   { value: "selfAssessment", label: "Teacher-reviewed self-assessment" },
 ];
 
@@ -116,7 +114,6 @@ export function TeacherDashboard({ user }) {
     midExam: "",
     finalExam: "",
     project: "",
-    comprehensive: "",
     selfAssessment: "",
     feedback: "",
   });
@@ -416,7 +413,6 @@ export function TeacherDashboard({ user }) {
       midExam: "",
       finalExam: "",
       project: "",
-      comprehensive: "",
       selfAssessment: "",
       feedback: "",
     });
@@ -465,10 +461,7 @@ export function TeacherDashboard({ user }) {
           method: "PUT",
           body: JSON.stringify({
             period: progressForm.period,
-            overallScore:
-              progressForm.overallScore === ""
-                ? null
-                : Number(progressForm.overallScore),
+            overallScore: components.length > 0 ? progressOverallTotal : null,
             components,
             selfAssessment: progressForm.selfAssessment,
             feedback: progressForm.feedback,
@@ -678,6 +671,19 @@ export function TeacherDashboard({ user }) {
   };
 
   const currentClassForAttendance = classes.find((c) => c.students?.length > 0);
+  // The overall score is always the sum of the entered component scores.
+  const hasProgressComponents = PROGRESS_COMPONENTS.some(({ category }) => {
+    const value = progressForm[category];
+    return value !== "" && value !== null && value !== undefined;
+  });
+  const progressOverallTotal = Number(
+    PROGRESS_COMPONENTS.reduce((sum, { category }) => {
+      const value = progressForm[category];
+      if (value === "" || value === null || value === undefined) return sum;
+      const numeric = Number(value);
+      return Number.isFinite(numeric) ? sum + numeric : sum;
+    }, 0).toFixed(2),
+  );
   const progressFormFromReport = (report, studentId) => {
     const scoreFor = (...categories) =>
       report?.components?.find((component) =>
@@ -693,7 +699,6 @@ export function TeacherDashboard({ user }) {
       midExam: scoreFor("midExam", "midterm", "mid Exam"),
       finalExam: scoreFor("finalExam", "final", "final Exam "),
       project: scoreFor("project"),
-      comprehensive: scoreFor("comprehensive"),
       selfAssessment: report?.selfAssessment || "",
       feedback: report?.feedback || "",
     };
@@ -1418,7 +1423,7 @@ export function TeacherDashboard({ user }) {
           {progressClassroomId && !progressLoading ? (
             <DashboardCard
               title="Prepare learner report"
-              subtitle="Enter teacher-assessed results. Scores are not calculated automatically."
+              subtitle="Enter each component score; the overall score is summed automatically."
             >
               {progressRoster.length === 0 ? (
                 <EmptyState title="This cohort has no learners assigned." />
@@ -1463,20 +1468,15 @@ export function TeacherDashboard({ user }) {
                     <label className="block text-xs font-bold text-slate-700">
                       Overall score (%)
                       <input
-                        type="number"
-                        min="0"
-                        max="100"
-                        step="0.1"
-                        value={progressForm.overallScore}
-                        onChange={(event) =>
-                          setProgressForm((form) => ({
-                            ...form,
-                            overallScore: event.target.value,
-                          }))
-                        }
-                        className="mt-1 w-full rounded-xl border border-slate-200 p-2.5 text-sm"
-                        placeholder="0–100"
+                        type="text"
+                        readOnly
+                        value={hasProgressComponents ? progressOverallTotal : ""}
+                        className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-100 p-2.5 text-sm font-bold text-slate-900"
+                        placeholder="Sum of components"
                       />
+                      <span className="mt-1 block text-[11px] font-normal text-slate-500">
+                        Automatically the sum of the component scores above.
+                      </span>
                     </label>
                     {PROGRESS_COMPONENTS.map(({ category, label }) => (
                       <label
@@ -1588,7 +1588,7 @@ export function TeacherDashboard({ user }) {
                       disabled={
                         progressSaving ||
                         !progressForm.period.trim() ||
-                        progressForm.overallScore === "" ||
+                        !hasProgressComponents ||
                         !progressForm.selfAssessment.trim()
                       }
                       onClick={() => void saveProgressReport("published")}

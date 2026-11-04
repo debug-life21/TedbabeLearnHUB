@@ -12,7 +12,6 @@ export const ASSESSMENT_CATEGORIES = [
     "practical",
     "attendance",
     "selfAssessment",
-    "comprehensive",
 ];
 
 // Friendly human labels used in emails, notifications and dashboards.
@@ -40,6 +39,7 @@ export const LEGACY_ASSESSMENT_CATEGORIES = [
     "Attendance",
     "mid Exam",
     "final Exam ",
+    "comprehensive",
 ];
 
 const LEGACY_MAP = {
@@ -50,6 +50,7 @@ const LEGACY_MAP = {
     self_assessment: "selfAssessment",
     Assignment: "assignment",
     Attendance: "attendance",
+    comprehensive: "comprehensive",
 };
 
 export function assessmentCategoryLabel(value) {

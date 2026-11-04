@@ -641,6 +641,10 @@ adminRouter.delete(
 
     const userId = user._id;
     const deletedAt = new Date();
+    // "purge=true" permanently erases the account and everything linked to it
+    // (attendance, results, submissions and their uploaded files, certificates)
+    // so administrators can reclaim database/storage space.
+    const purge = req.query.purge === "true";
     await UserModel.updateOne(
       { _id: userId },
       {
@@ -680,6 +684,45 @@ adminRouter.delete(
       TeacherApplicationModel.deleteOne({ user: userId }),
       NotificationModel.deleteMany({ user: userId }),
     ]);
+    if (purge) {
+      // Remove uploaded blobs first so no orphaned files remain in storage.
+      const [submissions, attempts, resources] = await Promise.all([
+        AssignmentSubmissionModel.find({ student: userId })
+          .select("attachments")
+          .lean(),
+        AssessmentAttemptModel.find({ student: userId })
+          .select("attachments")
+          .lean(),
+        LearningResourceModel.find({ uploader: userId })
+          .select("storedKey storageProvider sourceType")
+          .lean(),
+      ]);
+      await Promise.all([
+        ...submissions.map((item) => cleanupSubmissionFiles(item.attachments)),
+        ...attempts.map((item) => cleanupSubmissionFiles(item.attachments)),
+        ...resources
+          .filter((item) => item.sourceType === "upload" && item.storedKey)
+          .map((item) => deleteStoredFile(item.storedKey, item.storageProvider)),
+      ]);
+      await Promise.all([
+        AttendanceRecordModel.deleteMany({ student: userId }),
+        TeacherAttendanceRecordModel.deleteMany({ teacher: userId }),
+        AssessmentAttemptModel.deleteMany({ student: userId }),
+        AssignmentSubmissionModel.deleteMany({ student: userId }),
+        CertificateModel.deleteMany({ student: userId }),
+        TeacherProgressReportModel.deleteMany({
+          $or: [{ student: userId }, { teacher: userId }],
+        }),
+        DiscussionModel.deleteMany({ author: userId }),
+        AnnouncementModel.deleteMany({ author: userId }),
+        LearningResourceModel.deleteMany({ uploader: userId }),
+        ClassSessionModel.deleteMany({ teacher: userId }),
+        AssessmentModel.deleteMany({ teacher: userId }),
+        AssignmentModel.deleteMany({ teacher: userId }),
+        NotificationModel.deleteMany({ user: userId }),
+      ]);
+      await UserModel.deleteOne({ _id: userId });
+    }
     await writeAudit(
       req.user.id,
       "user_account_deleted",
@@ -688,6 +731,7 @@ adminRouter.delete(
       {
         role: user.role,
         deletedAt: deletedAt.toISOString(),
+        purged: purge,
       },
     );
     const accountType =
@@ -697,7 +741,9 @@ adminRouter.delete(
           ? "Student"
           : "Administrator";
     res.json({
-      message: `${accountType} account deleted. Historical learning records were retained.`,
+      message: purge
+        ? `${accountType} account and all linked records were permanently deleted.`
+        : `${accountType} account deleted. Historical learning records were retained.`,
     });
   }),
 );
@@ -2664,6 +2710,115 @@ adminRouter.patch(
   }),
 );
 
+// ─── Content cleanup: permanently remove heavy records on demand ───
+adminRouter.delete(
+  "/certificates/:certificateId",
+  asyncHandler(async (req, res) => {
+    if (!mongoose.isValidObjectId(req.params.certificateId)) {
+      throw new ApiError(400, "Invalid certificate ID.");
+    }
+    const certificate = await CertificateModel.findByIdAndDelete(
+      req.params.certificateId,
+    );
+    if (!certificate) throw new ApiError(404, "Certificate not found.");
+    await writeAudit(
+      req.user.id,
+      "certificate_deleted",
+      "Certificate",
+      certificate._id.toString(),
+      { certificateNumber: certificate.certificateNumber },
+    );
+    res.json({ message: "Certificate permanently deleted.", certificate });
+  }),
+);
+adminRouter.delete(
+  "/assessments/:assessmentId",
+  asyncHandler(async (req, res) => {
+    if (!mongoose.isValidObjectId(req.params.assessmentId)) {
+      throw new ApiError(400, "Invalid assessment ID.");
+    }
+    const assessment = await AssessmentModel.findById(req.params.assessmentId);
+    if (!assessment) throw new ApiError(404, "Assessment not found.");
+    const attempts = await AssessmentAttemptModel.find({
+      assessment: assessment._id,
+    }).lean();
+    await Promise.all(
+      attempts.map((attempt) =>
+        cleanupSubmissionFiles(attempt.attachments).catch(() => {}),
+      ),
+    );
+    const [attemptResult] = await Promise.all([
+      AssessmentAttemptModel.deleteMany({ assessment: assessment._id }),
+      AssessmentModel.deleteOne({ _id: assessment._id }),
+    ]);
+    await writeAudit(
+      req.user.id,
+      "assessment_deleted",
+      "Assessment",
+      assessment._id.toString(),
+      { title: assessment.title, submissionsRemoved: attemptResult.deletedCount },
+    );
+    res.json({
+      message: "Assessment and its submissions were permanently deleted.",
+    });
+  }),
+);
+adminRouter.delete(
+  "/assignments/:assignmentId",
+  asyncHandler(async (req, res) => {
+    if (!mongoose.isValidObjectId(req.params.assignmentId)) {
+      throw new ApiError(400, "Invalid assignment ID.");
+    }
+    const assignment = await AssignmentModel.findById(req.params.assignmentId);
+    if (!assignment) throw new ApiError(404, "Assignment not found.");
+    const submissions = await AssignmentSubmissionModel.find({
+      assignment: assignment._id,
+    }).lean();
+    await Promise.all(
+      submissions.map((submission) =>
+        cleanupSubmissionFiles(submission.attachments).catch(() => {}),
+      ),
+    );
+    const [submissionResult] = await Promise.all([
+      AssignmentSubmissionModel.deleteMany({ assignment: assignment._id }),
+      AssignmentModel.deleteOne({ _id: assignment._id }),
+    ]);
+    await writeAudit(
+      req.user.id,
+      "assignment_deleted",
+      "Assignment",
+      assignment._id.toString(),
+      {
+        title: assignment.title,
+        submissionsRemoved: submissionResult.deletedCount,
+      },
+    );
+    res.json({
+      message: "Assignment and its submissions were permanently deleted.",
+    });
+  }),
+);
+adminRouter.delete(
+  "/progress-reports/:reportId",
+  asyncHandler(async (req, res) => {
+    if (!mongoose.isValidObjectId(req.params.reportId)) {
+      throw new ApiError(400, "Invalid report ID.");
+    }
+    const report = await TeacherProgressReportModel.findByIdAndDelete(
+      req.params.reportId,
+    );
+    if (!report) throw new ApiError(404, "Progress report not found.");
+    await writeAudit(
+      req.user.id,
+      "progress_report_deleted",
+      "TeacherProgressReport",
+      report._id.toString(),
+      { period: report.period },
+    );
+    res.json({ message: "Progress report permanently deleted.", report });
+  }),
+);
+
 // ─── Published results for academy review ───
 adminRouter.get(
   "/results",
@@ -2833,6 +2988,28 @@ adminRouter.get(
         ),
       },
     });
+  }),
+);
+// Course content overview so administrators can purge individual assignments
+// and assessments (and their submissions) without deleting whole cohorts.
+adminRouter.get(
+  "/content",
+  asyncHandler(async (_req, res) => {
+    const [assignments, assessments] = await Promise.all([
+      AssignmentModel.find()
+        .populate("classroom", "title")
+        .populate("teacher", "fullName name")
+        .sort({ createdAt: -1 })
+        .limit(300)
+        .lean(),
+      AssessmentModel.find()
+        .populate("classroom", "title")
+        .populate("teacher", "fullName name")
+        .sort({ createdAt: -1 })
+        .limit(300)
+        .lean(),
+    ]);
+    res.json({ assignments, assessments });
   }),
 );
 adminRouter.get(

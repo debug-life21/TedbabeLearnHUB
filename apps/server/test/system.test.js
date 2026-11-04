@@ -129,7 +129,7 @@ test("Students only see teacher-published progress reports", async () => {
       headers: { Authorization: `Bearer ${teacherToken}` },
       body: {
         period: "Term 1",
-        overallScore: 84,
+        overallScore: 42,
         components: [
           { category: "midterm", title: "Midterm", score: 42, maxScore: 50 },
         ],
@@ -145,7 +145,7 @@ test("Students only see teacher-published progress reports", async () => {
     });
     assert.equal(visible.status, 200);
     assert.equal(visible.data.reports.length, 1);
-    assert.equal(visible.data.progress.overallScore, 84);
+    assert.equal(visible.data.progress.overallScore, 42);
     assert.equal(visible.data.reports[0].components[0].category, "midterm");
   } finally {
     await TeacherProgressReportModel.deleteMany({ classroom: classroom._id });

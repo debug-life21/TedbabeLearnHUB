@@ -545,15 +545,40 @@ teacherRouter.put(
         "You can only publish progress for students in your assigned cohort.",
       );
     }
+    // The overall score is the sum of the component scores (Mid Exam, Final
+    // Exam, Project, ...) so the report can never drift from its parts.
+    const computedOverall =
+      data.components.length > 0
+        ? Number(
+            data.components
+              .reduce((sum, component) => sum + component.score, 0)
+              .toFixed(2),
+          )
+        : null;
+    if (computedOverall !== null && computedOverall > 100) {
+      throw new ApiError(
+        400,
+        `Component scores add up to ${computedOverall}%, which is above the maximum overall score of 100%.`,
+      );
+    }
     if (
-      data.status === "published" &&
-      (data.overallScore === undefined ||
-        data.overallScore === null ||
-        !data.selfAssessment.trim())
+      data.overallScore !== undefined &&
+      data.overallScore !== null &&
+      computedOverall !== null &&
+      Math.abs(data.overallScore - computedOverall) > 0.01
     ) {
       throw new ApiError(
         400,
-        "Enter an overall score and teacher assessment before publishing this report.",
+        `Overall score must equal the sum of the component scores (${computedOverall}%).`,
+      );
+    }
+    if (
+      data.status === "published" &&
+      (computedOverall === null || !data.selfAssessment.trim())
+    ) {
+      throw new ApiError(
+        400,
+        "Add component scores and a teacher assessment before publishing this report.",
       );
     }
     const existing = await TeacherProgressReportModel.findOne({
@@ -578,7 +603,7 @@ teacherRouter.put(
       {
         $set: {
           teacher: req.user.id,
-          overallScore: data.overallScore ?? null,
+          overallScore: computedOverall,
           components: data.components,
           selfAssessment: data.selfAssessment,
           feedback: data.feedback,
@@ -603,7 +628,7 @@ teacherRouter.put(
       });
       await notifyAdminsOfResult({
         title: "Progress report published",
-        message: `A progress report for ${data.period} was published with an overall score of ${data.overallScore}%. Review and prepare a certificate if eligible.`,
+        message: `A progress report for ${data.period} was published with an overall score of ${computedOverall}%. Review and prepare a certificate if eligible.`,
         link: "/admin/certificates",
       });
     }

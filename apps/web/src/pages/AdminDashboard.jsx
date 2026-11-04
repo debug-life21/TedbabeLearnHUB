@@ -170,6 +170,13 @@ export function AdminDashboard({ user }) {
     summary: [],
   });
   const [teacherAttendanceLoading, setTeacherAttendanceLoading] = useState(false);
+  const [teacherAttendanceForm, setTeacherAttendanceForm] = useState({
+    teacherId: "",
+    sessionId: "",
+    status: "present",
+    notes: "",
+  });
+  const [teacherAttendanceSaving, setTeacherAttendanceSaving] = useState(false);
   // Cohort attendance register
   const [registerClassroomId, setRegisterClassroomId] = useState("");
   const [cohortRegister, setCohortRegister] = useState(null);
@@ -220,6 +227,7 @@ export function AdminDashboard({ user }) {
     teacherId: "",
   });
   const [deleteUserModal, setDeleteUserModal] = useState(null);
+  const [deleteUserPurge, setDeleteUserPurge] = useState(false);
   const [isDeletingUser, setIsDeletingUser] = useState(false);
   const [removingStudentId, setRemovingStudentId] = useState("");
   const [deleteUserError, setDeleteUserError] = useState("");
@@ -270,6 +278,10 @@ export function AdminDashboard({ user }) {
   });
   const [submissionsLoading, setSubmissionsLoading] = useState(false);
   const [submissionFilter, setSubmissionFilter] = useState("all");
+  const [contentData, setContentData] = useState({
+    assignments: [],
+    assessments: [],
+  });
   const [adminFilePreview, setAdminFilePreview] = useState({
     open: false,
     title: "",
@@ -489,11 +501,21 @@ export function AdminDashboard({ user }) {
   const loadSubmissions = useCallback(async () => {
     setSubmissionsLoading(true);
     try {
-      const res = await apiRequest("/api/admin/submissions");
+      const [res, contentRes] = await Promise.all([
+        apiRequest("/api/admin/submissions"),
+        apiRequest("/api/admin/content").catch(() => ({
+          assignments: [],
+          assessments: [],
+        })),
+      ]);
       setSubmissionData({
         submissions: res.submissions || [],
         attempts: res.attempts || [],
         storage: res.storage || { fileCount: 0, totalBytes: 0 },
+      });
+      setContentData({
+        assignments: contentRes.assignments || [],
+        assessments: contentRes.assessments || [],
       });
     } catch (err) {
       setFeedback(
@@ -546,6 +568,39 @@ export function AdminDashboard({ user }) {
       setTeacherAttendanceLoading(false);
     }
   }, []);
+  const handleRecordTeacherAttendance = async () => {
+    if (!teacherAttendanceForm.sessionId) {
+      setFeedback("Select a teaching day to record attendance.");
+      return;
+    }
+    setTeacherAttendanceSaving(true);
+    try {
+      const res = await apiRequest("/api/admin/teacher-attendance", {
+        method: "POST",
+        body: {
+          sessionId: teacherAttendanceForm.sessionId,
+          status: teacherAttendanceForm.status,
+          notes: teacherAttendanceForm.notes,
+        },
+      });
+      setFeedback(res.message || "Teacher attendance recorded.");
+      setTeacherAttendanceForm((prev) => ({
+        ...prev,
+        sessionId: "",
+        status: "present",
+        notes: "",
+      }));
+      await loadTeacherAttendance();
+    } catch (err) {
+      setFeedback(
+        err instanceof Error
+          ? err.message
+          : "Unable to record teacher attendance.",
+      );
+    } finally {
+      setTeacherAttendanceSaving(false);
+    }
+  };
   const loadCohortRegister = useCallback(async (classroomId) => {
     setRegisterClassroomId(classroomId);
     if (!classroomId) {
@@ -758,10 +813,11 @@ export function AdminDashboard({ user }) {
     setDeleteUserError("");
     try {
       const response = await apiRequest(
-        `/api/admin/users/${deleteUserModal.id}`,
+        `/api/admin/users/${deleteUserModal.id}${deleteUserPurge ? "?purge=true" : ""}`,
         { method: "DELETE" },
       );
       setDeleteUserModal(null);
+      setDeleteUserPurge(false);
       setFeedback(response.message);
       await loadAll();
     } catch (err) {
@@ -784,10 +840,17 @@ export function AdminDashboard({ user }) {
       setFeedback(response.message || `${deleteRecord.label} deleted.`);
       const wasSubmissionRecord =
         deleteRecord.endpoint.startsWith("/api/admin/submissions/") ||
-        deleteRecord.endpoint.startsWith("/api/admin/attempts/");
+        deleteRecord.endpoint.startsWith("/api/admin/attempts/") ||
+        deleteRecord.endpoint.startsWith("/api/admin/assessments/") ||
+        deleteRecord.endpoint.startsWith("/api/admin/assignments/");
+      const wasResultRecord =
+        deleteRecord.endpoint.startsWith("/api/admin/attempts/") ||
+        deleteRecord.endpoint.startsWith("/api/admin/certificates/") ||
+        deleteRecord.endpoint.startsWith("/api/admin/progress-reports/");
       setDeleteRecord(null);
       await loadAll();
       if (wasSubmissionRecord) await loadSubmissions();
+      if (wasResultRecord) await loadCertificates();
     } catch (err) {
       setDeleteRecordError(
         err instanceof Error
@@ -1934,6 +1997,7 @@ export function AdminDashboard({ user }) {
                         type="button"
                         onClick={() => {
                           setDeleteUserError("");
+                          setDeleteUserPurge(false);
                           setDeleteUserModal({
                             id: teach._id,
                             name: teach.fullName,
@@ -2077,6 +2141,7 @@ export function AdminDashboard({ user }) {
                         type="button"
                         onClick={() => {
                           setDeleteUserError("");
+                          setDeleteUserPurge(false);
                           setDeleteUserModal({
                             id: stud._id,
                             name: stud.fullName,
@@ -2183,13 +2248,14 @@ export function AdminDashboard({ user }) {
                         {!isCurrentUser && (
                           <button
                             type="button"
-                            onClick={() =>
+                            onClick={() => {
+                              setDeleteUserPurge(false);
                               setDeleteUserModal({
                                 id: administrator._id,
                                 name: administrator.fullName,
                                 role: "admin",
-                              })
-                            }
+                              });
+                            }}
                             className="rounded-lg border border-rose-200 px-3 py-2 text-xs font-bold text-rose-700 hover:bg-rose-50"
                           >
                             Delete
@@ -3163,6 +3229,19 @@ export function AdminDashboard({ user }) {
                                     ? "Reinstate"
                                     : "Revoke"}
                                 </button>
+                                <button
+                                  type="button"
+                                  disabled={certificateBusyKey === cert._id}
+                                  onClick={() =>
+                                    setDeleteRecord({
+                                      endpoint: `/api/admin/certificates/${cert._id}`,
+                                      label: `Certificate ${cert.certificateNumber} for “${cert.student?.fullName || cert.studentName}”`,
+                                    })
+                                  }
+                                  className="rounded-lg border border-rose-200 px-3 py-1.5 text-[11px] font-bold text-rose-700 hover:bg-rose-50 disabled:opacity-60"
+                                >
+                                  Delete
+                                </button>
                               </div>
                             </td>
                           </tr>
@@ -3201,9 +3280,23 @@ export function AdminDashboard({ user }) {
                           {attempt.assessment?.assessmentType || "Assessment"}
                         </p>
                       </div>
-                      <span className="rounded-xl bg-blue-50 px-3 py-1 text-sm font-black text-blue-700">
-                        {attempt.score ?? 0}/{attempt.maxScore ?? 100}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="rounded-xl bg-blue-50 px-3 py-1 text-sm font-black text-blue-700">
+                          {attempt.score ?? 0}/{attempt.maxScore ?? 100}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setDeleteRecord({
+                              endpoint: `/api/admin/attempts/${attempt._id}`,
+                              label: `Assessment submission by “${attempt.student?.fullName || "learner"}”`,
+                            })
+                          }
+                          className="rounded-lg border border-rose-200 px-3 py-1.5 text-[11px] font-bold text-rose-700 hover:bg-rose-50"
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </div>
                   ))}
                   {publishedResults.reports.map((report) => (
@@ -3220,9 +3313,23 @@ export function AdminDashboard({ user }) {
                           {report.teacher?.fullName || "Teacher"}
                         </p>
                       </div>
-                      <span className="rounded-xl bg-emerald-50 px-3 py-1 text-sm font-black text-emerald-700">
-                        {report.overallScore}%
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="rounded-xl bg-emerald-50 px-3 py-1 text-sm font-black text-emerald-700">
+                          {report.overallScore}%
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setDeleteRecord({
+                              endpoint: `/api/admin/progress-reports/${report._id}`,
+                              label: `Progress report for “${report.student?.fullName || "learner"}” (${report.period})`,
+                            })
+                          }
+                          className="rounded-lg border border-rose-200 px-3 py-1.5 text-[11px] font-bold text-rose-700 hover:bg-rose-50"
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -3350,6 +3457,98 @@ export function AdminDashboard({ user }) {
             title="Teacher attendance"
             subtitle="Attendance recorded by teachers for each teaching day (session)."
           >
+            <div className="mb-6 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <h4 className="text-sm font-bold text-slate-900">
+                Record teaching attendance
+              </h4>
+              <p className="mt-1 text-xs text-slate-500">
+                Mark whether an instructor attended a scheduled teaching day.
+                Recording an existing day updates that entry.
+              </p>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                <select
+                  value={teacherAttendanceForm.teacherId}
+                  onChange={(e) =>
+                    setTeacherAttendanceForm((prev) => ({
+                      ...prev,
+                      teacherId: e.target.value,
+                      sessionId: "",
+                    }))
+                  }
+                  className="rounded-xl border border-slate-200 bg-white p-2.5 text-xs outline-none"
+                >
+                  <option value="">Select instructor</option>
+                  {teachers.map((teacher) => (
+                    <option key={teacher._id} value={teacher._id}>
+                      {teacher.fullName || teacher.name}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={teacherAttendanceForm.sessionId}
+                  onChange={(e) =>
+                    setTeacherAttendanceForm((prev) => ({
+                      ...prev,
+                      sessionId: e.target.value,
+                    }))
+                  }
+                  disabled={!teacherAttendanceForm.teacherId}
+                  className="rounded-xl border border-slate-200 bg-white p-2.5 text-xs outline-none disabled:opacity-60"
+                >
+                  <option value="">Select teaching day</option>
+                  {sessions
+                    .filter(
+                      (session) =>
+                        String(session.teacher) ===
+                        teacherAttendanceForm.teacherId,
+                    )
+                    .map((session) => (
+                      <option key={session._id} value={session._id}>
+                        {new Date(session.startsAt).toLocaleDateString()} ·{" "}
+                        {session.classroom?.title || ""} · {session.title}
+                      </option>
+                    ))}
+                </select>
+                <select
+                  value={teacherAttendanceForm.status}
+                  onChange={(e) =>
+                    setTeacherAttendanceForm((prev) => ({
+                      ...prev,
+                      status: e.target.value,
+                    }))
+                  }
+                  className="rounded-xl border border-slate-200 bg-white p-2.5 text-xs outline-none"
+                >
+                  <option value="present">Present</option>
+                  <option value="late">Late</option>
+                  <option value="absent">Absent</option>
+                  <option value="excused">Excused</option>
+                </select>
+                <button
+                  type="button"
+                  disabled={
+                    teacherAttendanceSaving ||
+                    !teacherAttendanceForm.sessionId
+                  }
+                  onClick={() => void handleRecordTeacherAttendance()}
+                  className="rounded-xl bg-gradient-to-r from-[#0066ff] to-[#0099ff] px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-blue-500/25 hover:from-[#0052cc] hover:to-[#0088e6] disabled:opacity-50"
+                >
+                  {teacherAttendanceSaving ? "Recording…" : "Record"}
+                </button>
+              </div>
+              <input
+                type="text"
+                value={teacherAttendanceForm.notes}
+                onChange={(e) =>
+                  setTeacherAttendanceForm((prev) => ({
+                    ...prev,
+                    notes: e.target.value,
+                  }))
+                }
+                placeholder="Optional note (e.g. arrived 10 minutes late)"
+                className="mt-3 w-full rounded-xl border border-slate-200 bg-white p-2.5 text-xs outline-none"
+              />
+            </div>
             {teacherAttendanceLoading ? (
               <p className="text-sm text-slate-500">
                 Loading teacher attendance…
@@ -3701,10 +3900,75 @@ export function AdminDashboard({ user }) {
                 )}
               </div>
             ) : null}
+
+            {(contentData.assignments.length > 0 ||
+              contentData.assessments.length > 0) && (
+              <div className="space-y-3">
+                <div>
+                  <h4 className="text-xs font-extrabold uppercase tracking-wide text-slate-500">
+                    Course content
+                  </h4>
+                  <p className="mt-1 text-xs text-slate-500">
+                    Permanently remove an assignment or assessment together with
+                    every learner submission and uploaded file for it.
+                  </p>
+                </div>
+                {contentData.assignments.map((item) => (
+                  <div
+                    key={`assignment-${item._id}`}
+                    className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-4"
+                  >
+                    <div className="min-w-0">
+                      <p className="font-bold text-slate-900">{item.title}</p>
+                      <p className="text-xs text-slate-500">
+                        Assignment · {item.classroom?.title || "Cohort"} ·{" "}
+                        {item.teacher?.fullName || item.teacher?.name || "Teacher"}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setDeleteRecord({
+                          endpoint: `/api/admin/assignments/${item._id}`,
+                          label: `Assignment “${item.title}” and all its submissions`,
+                        })
+                      }
+                      className="rounded-lg border border-rose-200 px-3 py-1.5 text-[11px] font-bold text-rose-700 hover:bg-rose-50"
+                    >
+                      Delete assignment
+                    </button>
+                  </div>
+                ))}
+                {contentData.assessments.map((item) => (
+                  <div
+                    key={`assessment-${item._id}`}
+                    className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-4"
+                  >
+                    <div className="min-w-0">
+                      <p className="font-bold text-slate-900">{item.title}</p>
+                      <p className="text-xs text-slate-500">
+                        Assessment · {item.classroom?.title || "Cohort"} ·{" "}
+                        {item.teacher?.fullName || item.teacher?.name || "Teacher"}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setDeleteRecord({
+                          endpoint: `/api/admin/assessments/${item._id}`,
+                          label: `Assessment “${item.title}” and all its submissions`,
+                        })
+                      }
+                      className="rounded-lg border border-rose-200 px-3 py-1.5 text-[11px] font-bold text-rose-700 hover:bg-rose-50"
+                    >
+                      Delete assessment
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         ) : null}
-
-        {/* 6. ANNOUNCEMENTS TAB */}
         {activeTab === "resources" ? (
           <div className="space-y-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
@@ -5102,6 +5366,20 @@ export function AdminDashboard({ user }) {
               This cannot be undone. You cannot delete your own administrator
               account or the last active administrator.
             </p>
+            <label className="flex items-start gap-3 rounded-xl border border-rose-200 bg-rose-50/60 p-3 text-xs leading-5 text-rose-900">
+              <input
+                type="checkbox"
+                checked={deleteUserPurge}
+                onChange={(e) => setDeleteUserPurge(e.target.checked)}
+                className="mt-0.5 h-4 w-4 accent-rose-700"
+              />
+              <span>
+                <strong>Also permanently delete all linked records.</strong>{" "}
+                Removes attendance, results, submissions and their uploaded
+                files, certificates and other records. Use this to free up
+                database and storage space. This cannot be undone.
+              </span>
+            </label>
             {deleteUserError && (
               <p
                 role="alert"
