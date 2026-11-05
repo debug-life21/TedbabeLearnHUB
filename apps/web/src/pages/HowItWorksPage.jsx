@@ -96,7 +96,7 @@ export function HowItWorksPage() {
               key={idx}
               className="flex flex-col sm:flex-row items-start gap-6 rounded-3xl bg-white p-8 shadow-sm ring-1 ring-slate-200/80 transition hover:shadow-md"
             >
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[#001b44] font-mono text-xl font-black text-sky-400 border border-sky-500/30 shadow-md">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[var(--tlh-navy)] font-mono text-xl font-black text-sky-400 border border-sky-500/30 shadow-md">
                 {step.number}
               </div>
               <div className="space-y-1.5 flex-1">
@@ -117,7 +117,7 @@ export function HowItWorksPage() {
 
       {/* Educator Quality Section — Brand Dark Layout */}
       <div className="mx-auto max-w-5xl px-4 pt-20 sm:px-6 lg:px-8">
-        <div className="rounded-3xl border border-sky-500/25 bg-gradient-to-br from-[#0c234b] via-[#091b3b] to-[#061124] p-8 sm:p-12 text-white shadow-xl ring-1 ring-white/10">
+        <div className="rounded-3xl border border-[var(--tlh-cyan)]/25 bg-gradient-to-br from-[var(--tlh-navy)] via-[var(--tlh-navy-deep)] to-slate-950 p-8 sm:p-12 text-white shadow-xl ring-1 ring-white/10">
           <div className="max-w-3xl">
             <span className="text-xs font-black uppercase tracking-wider text-sky-300">
               {t("teacherQualityKicker")}
@@ -152,7 +152,7 @@ export function HowItWorksPage() {
           <div className="mt-8 text-center pt-4 border-t border-white/10">
             <Link
               to="/apply/teacher"
-              className="inline-flex rounded-xl bg-gradient-to-r from-[#0066ff] to-[#0099ff] px-6 py-3 text-xs font-black uppercase tracking-wider text-white shadow-md shadow-blue-500/25 transition hover:from-[#0052cc] hover:to-[#0088e6] hover:-translate-y-0.5"
+              className="golden-btn inline-flex rounded-full px-6 py-3 text-xs font-bold text-white shadow-sm hover:shadow-md transition-all active:scale-95"
             >
               {t("applyToTeachCta")} →
             </Link>

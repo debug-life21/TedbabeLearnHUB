@@ -107,7 +107,7 @@ export function ContactPage() {
                         <button
                             disabled={status === "submitting"}
                             type="submit"
-                            className="w-full rounded-2xl bg-gradient-to-r from-[#0066ff] to-[#0099ff] py-3.5 text-xs font-extrabold uppercase tracking-wider text-white shadow-md shadow-blue-500/25 hover:from-[#0052cc] hover:to-[#0088e6] disabled:opacity-50 transition-all hover:scale-[1.01]"
+                            className="golden-btn w-full rounded-full py-3.5 text-xs font-bold text-white shadow-sm hover:shadow-md disabled:opacity-50 transition-all active:scale-95"
                         >
                             {status === "submitting" ? t("loading") : t("submit")}
                         </button>
@@ -116,7 +116,7 @@ export function ContactPage() {
 
                 {/* Contact Info & Office Card — Brand Dark Layout */}
                 <div className="space-y-8">
-                    <div className="rounded-3xl border border-sky-500/25 bg-gradient-to-br from-[#0c234b] via-[#091b3b] to-[#061124] p-8 sm:p-10 text-white shadow-xl ring-1 ring-white/10">
+                    <div className="rounded-3xl border border-[var(--tlh-cyan)]/25 bg-gradient-to-br from-[var(--tlh-navy)] via-[var(--tlh-navy-deep)] to-slate-950 p-8 sm:p-10 text-white shadow-xl ring-1 ring-white/10">
                         <div className="flex items-center justify-between gap-4 mb-6">
                             <BrandLogo appearance="dark" />
                             <span className="rounded-full border border-sky-400/30 bg-sky-500/15 px-3 py-1 text-xs font-bold text-sky-300">
@@ -131,7 +131,7 @@ export function ContactPage() {
 
                         <div className="mt-8 space-y-5 text-sm">
                             <div className="flex items-center gap-3.5 text-slate-200">
-                                <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#001b44] border border-sky-500/30 text-sky-400 text-lg shadow-sm">
+                                <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--tlh-navy)] border border-sky-500/30 text-sky-400 text-lg shadow-sm">
                                     ✉️
                                 </span>
                                 <div>
@@ -143,7 +143,7 @@ export function ContactPage() {
                             </div>
 
                             <div className="flex items-center gap-3.5 text-slate-200">
-                                <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#001b44] border border-sky-500/30 text-sky-400 text-lg shadow-sm">
+                                <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--tlh-navy)] border border-sky-500/30 text-sky-400 text-lg shadow-sm">
                                     📍
                                 </span>
                                 <div>
@@ -153,7 +153,7 @@ export function ContactPage() {
                             </div>
 
                             <div className="flex items-center gap-3.5 text-slate-200">
-                                <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#001b44] border border-sky-500/30 text-sky-400 text-lg shadow-sm">
+                                <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--tlh-navy)] border border-sky-500/30 text-sky-400 text-lg shadow-sm">
                                     ⏰
                                 </span>
                                 <div>

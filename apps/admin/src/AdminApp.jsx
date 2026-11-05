@@ -17,7 +17,7 @@ function AppShell({ children, footerOffset = false }) {
     <div className="flex min-h-screen flex-col bg-slate-50 font-sans text-slate-900 selection:bg-blue-600 selection:text-white">
       <Navbar />
       <main className="flex-1">{children}</main>
-      <div className={footerOffset ? "bg-[#071329] lg:pl-64" : undefined}>
+      <div className={footerOffset ? "bg-[var(--tlh-navy-deep)] lg:pl-64" : undefined}>
         <Footer />
       </div>
     </div>
@@ -72,7 +72,7 @@ export function AdminApp() {
       <AppShell>
         <div className="flex min-h-[60vh] items-center justify-center">
           <div className="flex items-center gap-3 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
-            <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#0066ff] border-t-transparent" />
+            <div className="h-6 w-6 animate-spin rounded-full border-2 border-[var(--tlh-blue-primary)] border-t-transparent" />
             <span className="text-sm font-bold text-slate-700">
               Checking your session…
             </span>
@@ -114,7 +114,7 @@ export function AdminApp() {
               >
                 <BrandLogo imgClassName="h-11 w-auto max-w-[240px] object-contain" />
               </a>
-              <p className="mt-5 text-[11px] font-black uppercase tracking-[0.18em] text-[#0066ff]">
+              <p className="mt-5 text-[11px] font-black uppercase tracking-[0.18em] text-[var(--tlh-blue-primary)]">
                 Private workspace
               </p>
               <h1
@@ -148,7 +148,7 @@ export function AdminApp() {
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
                   placeholder="admin@tedbabelearnhub.com"
-                  className="mt-1.5 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm font-medium normal-case outline-none transition focus:border-[#0066ff] focus:ring-4 focus:ring-blue-500/10"
+                  className="mt-1.5 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm font-medium normal-case outline-none transition focus:border-[var(--tlh-blue-primary)] focus:ring-4 focus:ring-blue-500/10"
                 />
               </label>
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
@@ -160,13 +160,13 @@ export function AdminApp() {
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
                   placeholder="Your password"
-                  className="mt-1.5 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm font-medium normal-case outline-none transition focus:border-[#0066ff] focus:ring-4 focus:ring-blue-500/10"
+                  className="mt-1.5 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm font-medium normal-case outline-none transition focus:border-[var(--tlh-blue-primary)] focus:ring-4 focus:ring-blue-500/10"
                 />
               </label>
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full rounded-2xl bg-gradient-to-r from-[#0066ff] to-[#0099ff] py-3.5 text-xs font-black uppercase tracking-wider text-white shadow-md shadow-blue-500/25 transition hover:from-[#0052cc] hover:to-[#0088e6] disabled:cursor-wait disabled:opacity-50"
+                className="golden-btn w-full rounded-full py-3.5 text-xs font-bold text-white shadow-sm hover:shadow-md transition-all active:scale-95 disabled:cursor-wait disabled:opacity-50"
               >
                 {submitting ? "Signing in…" : "Sign in securely"}
               </button>
@@ -181,7 +181,7 @@ export function AdminApp() {
           <p className="mt-5 text-center text-xs font-medium text-slate-500">
             <a
               href={publicAppUrl}
-              className="font-bold text-[#0066ff] hover:text-[#0052cc] hover:underline"
+              className="font-bold text-[var(--tlh-blue-primary)] hover:text-[var(--tlh-blue-hover)] hover:underline"
             >
               ← Back to TedbabeLearnHUB
             </a>

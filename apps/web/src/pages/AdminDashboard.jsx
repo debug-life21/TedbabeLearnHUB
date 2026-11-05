@@ -18,6 +18,9 @@ import {
   EmptyState,
   Badge,
   Modal,
+  AnalyticsColumnChart,
+  AnalyticsTable,
+  formatNumber,
 } from "../components/UIComponents";
 import { useAuth } from "../context/AuthContext";
 
@@ -27,101 +30,12 @@ function formatPercent(value) {
   return value === null || value === undefined ? "—" : `${value}%`;
 }
 
-function formatNumber(value) {
-  return Number(value ?? 0).toLocaleString();
-}
-
-/** Dependency-free column chart. Each point is { key, value }. */
-function AnalyticsColumnChart({
-  points,
-  height = 160,
-  emptyLabel = "No data in this window.",
-}) {
-  if (!points || points.length === 0) {
-    return (
-      <p className="py-8 text-center text-xs font-medium text-slate-400">
-        {emptyLabel}
-      </p>
-    );
-  }
-  const max = Math.max(1, ...points.map((point) => point.value));
-  return (
-    <div>
-      <div className="flex items-end gap-[2px]" style={{ height }}>
-        {points.map((point, index) => (
-          <div
-            key={`${point.key}-${index}`}
-            title={`${point.key}: ${formatNumber(point.value)}`}
-            className="min-h-[2px] flex-1 rounded-t bg-gradient-to-t from-[#0066ff] to-[#00d2ff] transition-all hover:from-[#0052cc] hover:to-[#0088e6]"
-            style={{ height: `${Math.max(2, (point.value / max) * 100)}%` }}
-          />
-        ))}
-      </div>
-      <div className="mt-2 flex justify-between text-[10px] font-bold uppercase tracking-wider text-slate-400">
-        <span>{points[0]?.key}</span>
-        <span>peak {formatNumber(max)}</span>
-        <span>{points[points.length - 1]?.key}</span>
-      </div>
-    </div>
-  );
-}
-
 const RECENCY_VARIANTS = {
   active: "emerald",
   recent: "blue",
   dormant: "amber",
   cold: "rose",
 };
-
-/** Compact table used by the analytics drill-downs. */
-function AnalyticsTable({
-  columns,
-  rows,
-  emptyLabel = "No data in this window.",
-}) {
-  if (!rows || rows.length === 0) {
-    return (
-      <p className="py-8 text-center text-xs font-medium text-slate-400">
-        {emptyLabel}
-      </p>
-    );
-  }
-  return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-left text-xs">
-        <thead>
-          <tr className="border-b border-slate-100">
-            {columns.map((column) => (
-              <th
-                key={column.key}
-                className={`whitespace-nowrap px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-400 ${column.align ?? "text-left"}`}
-              >
-                {column.label}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-slate-50">
-          {rows.map((row, index) => (
-            <tr
-              key={row.id ?? index}
-              className="transition-colors hover:bg-slate-50/70"
-            >
-              {columns.map((column) => (
-                <td
-                  key={column.key}
-                  className={`px-3 py-2.5 ${column.align ?? "text-left"} ${column.className ?? "font-medium text-slate-700"}`}
-                >
-                  {column.render ? column.render(row) : row[column.key]}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}
 
 export function AdminDashboard({ user }) {
   const { t } = useTranslation();
@@ -1595,14 +1509,14 @@ export function AdminDashboard({ user }) {
       />
       <div className="mx-auto max-w-7xl space-y-8">
         {/* Top Welcome Card */}
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0c234b] via-[#091b3b] to-[#061124] p-6 sm:p-8 text-white border border-sky-500/25 shadow-xl">
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[var(--tlh-navy)] via-[var(--tlh-navy-deep)] to-slate-950 p-6 sm:p-8 text-white border border-[var(--tlh-cyan)]/25 shadow-xl">
           <div
             aria-hidden="true"
             className="pointer-events-none absolute -right-20 -top-24 h-64 w-64 rounded-full bg-blue-500/10 blur-3xl"
           />
           <div className="relative flex flex-wrap items-center justify-between gap-6">
             <div>
-              <span className="text-xs font-extrabold uppercase tracking-[0.16em] text-sky-400">
+              <span className="text-xs font-extrabold uppercase tracking-[0.16em] text-[var(--tlh-cyan)]">
                 TedbabeLearnHUB · {t("adminOverview")}
               </span>
               <div className="flex items-center gap-4">
@@ -1635,13 +1549,13 @@ export function AdminDashboard({ user }) {
               <button
                 onClick={() => setCreateCategoryModal(true)}
                 type="button"
-                className="rounded-full border border-sky-400/40 bg-sky-500/15 px-4 py-2.5 text-xs font-bold text-sky-200 transition-colors hover:bg-sky-500/25"
+                className="rounded-full border border-[var(--tlh-cyan)]/40 bg-[var(--tlh-sky)]/15 px-4 py-2.5 text-xs font-bold text-sky-200 transition-colors hover:bg-[var(--tlh-sky)]/25"
               >
                 + {t("createCategory")}
               </button>
               <button
                 onClick={() => setCreateCourseModal(true)}
-                className="rounded-full bg-gradient-to-r from-[#0066ff] to-[#0099ff] px-5 py-2.5 text-xs font-extrabold text-white shadow-md shadow-blue-500/25 transition-all hover:from-[#0052cc] hover:to-[#0088e6] hover:-translate-y-0.5"
+                className="rounded-full bg-gradient-to-r from-[var(--tlh-blue-primary)] to-[var(--tlh-sky)] px-5 py-2.5 text-xs font-extrabold text-white shadow-md shadow-blue-500/25 transition-all hover:from-[var(--tlh-blue-hover)] hover:to-[var(--tlh-sky)] hover:-translate-y-0.5"
               >
                 + {t("createCourse")}
               </button>
@@ -1797,7 +1711,7 @@ export function AdminDashboard({ user }) {
                           {app.documents?.cv?.key ? (
                             <a
                               href={`${API_BASE_URL}/api/admin/teacher-applications/${app._id}/documents/cv`}
-                              className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-bold text-blue-700 hover:bg-blue-50"
+                              className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-bold text-[var(--tlh-blue-hover)] hover:bg-blue-50"
                             >
                               Download CV: {app.documents.cv.filename}
                             </a>
@@ -1807,7 +1721,7 @@ export function AdminDashboard({ user }) {
                               <a
                                 key={document.key}
                                 href={`${API_BASE_URL}/api/admin/teacher-applications/${app._id}/documents/certificate-${index}`}
-                                className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-bold text-blue-700 hover:bg-blue-50"
+                                className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-bold text-[var(--tlh-blue-hover)] hover:bg-blue-50"
                               >
                                 Certificate: {document.filename}
                               </a>
@@ -1817,7 +1731,7 @@ export function AdminDashboard({ user }) {
                         <div className="flex gap-2 pt-2 border-t border-slate-100">
                           <button
                             onClick={() => handleTeacherApprove(app._id)}
-                            className="rounded-lg bg-[#0066ff] px-3.5 py-1.5 text-xs font-bold text-white hover:bg-[#0052cc] shadow-xs"
+                            className="rounded-lg bg-[var(--tlh-blue-primary)] px-3.5 py-1.5 text-xs font-bold text-white hover:bg-[var(--tlh-blue-hover)] shadow-xs"
                           >
                             ✓ {t("approve")}
                           </button>
@@ -1900,7 +1814,7 @@ export function AdminDashboard({ user }) {
                             });
                           }}
                           disabled={getPlacementClasses(stud._id).length === 0}
-                          className="rounded-xl bg-blue-600 px-3.5 py-2 text-xs font-bold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+                          className="rounded-xl bg-[var(--tlh-blue-primary)] px-3.5 py-2 text-xs font-bold text-white hover:bg-[var(--tlh-blue-hover)] disabled:cursor-not-allowed disabled:bg-slate-300"
                           title={
                             getPlacementClasses(stud._id).length === 0
                               ? "Create a class with available capacity first."
@@ -1944,7 +1858,7 @@ export function AdminDashboard({ user }) {
                       });
                       setCreateUserModal(true);
                     }}
-                    className="rounded-xl bg-gradient-to-r from-[#0066ff] to-[#0099ff] px-4 py-2 text-xs font-bold text-white shadow-sm shadow-blue-500/20 hover:from-[#0052cc] hover:to-[#0088e6]"
+                    className="rounded-xl bg-gradient-to-r from-[var(--tlh-blue-primary)] to-[var(--tlh-sky)] px-4 py-2 text-xs font-bold text-white shadow-sm shadow-blue-500/20 hover:from-[var(--tlh-blue-hover)] hover:to-[var(--tlh-sky)]"
                   >
                     + Add teacher
                   </button>
@@ -1986,7 +1900,7 @@ export function AdminDashboard({ user }) {
                         className={`rounded-lg px-3 py-1.5 text-xs font-bold ${
                           teach.accountStatus === "active"
                             ? "bg-rose-100 text-rose-700 hover:bg-rose-200"
-                            : "bg-sky-100 text-blue-700 hover:bg-sky-200"
+                            : "bg-sky-100 text-[var(--tlh-blue-hover)] hover:bg-sky-200"
                         }`}
                       >
                         {teach.accountStatus === "active"
@@ -2051,7 +1965,7 @@ export function AdminDashboard({ user }) {
                       });
                       setCreateUserModal(true);
                     }}
-                    className="rounded-xl bg-gradient-to-r from-[#0066ff] to-[#0099ff] px-4 py-2 text-xs font-bold text-white shadow-sm shadow-blue-500/20 hover:from-[#0052cc] hover:to-[#0088e6]"
+                    className="rounded-xl bg-gradient-to-r from-[var(--tlh-blue-primary)] to-[var(--tlh-sky)] px-4 py-2 text-xs font-bold text-white shadow-sm shadow-blue-500/20 hover:from-[var(--tlh-blue-hover)] hover:to-[var(--tlh-sky)]"
                   >
                     + Add learner
                   </button>
@@ -2099,7 +2013,7 @@ export function AdminDashboard({ user }) {
                         <button
                           type="button"
                           onClick={() => void handleVerifyUserEmail(stud)}
-                          className="mb-2 rounded-lg bg-emerald-100 text-emerald-800 hover:bg-emerald-200 px-3 py-1.5 text-xs font-bold shadow-sm"
+                          className="mb-2 rounded-lg bg-[var(--primary-light)] text-[var(--tlh-blue-primary)] hover:bg-blue-100 px-3 py-1.5 text-xs font-bold shadow-sm"
                         >
                           ✓ Verify email
                         </button>
@@ -2179,7 +2093,7 @@ export function AdminDashboard({ user }) {
                 <button
                   type="button"
                   onClick={() => setCreateAdministratorModal(true)}
-                  className="rounded-xl bg-gradient-to-r from-[#0066ff] to-[#0099ff] px-4 py-2 text-sm font-bold text-white shadow-md shadow-blue-500/25 hover:from-[#0052cc] hover:to-[#0088e6]"
+                  className="rounded-xl bg-gradient-to-r from-[var(--tlh-blue-primary)] to-[var(--tlh-sky)] px-4 py-2 text-sm font-bold text-white shadow-md shadow-blue-500/25 hover:from-[var(--tlh-blue-hover)] hover:to-[var(--tlh-sky)]"
                 >
                   + Add administrator
                 </button>
@@ -2298,7 +2212,7 @@ export function AdminDashboard({ user }) {
                       ? "Create a category first."
                       : undefined
                   }
-                  className="rounded-xl bg-blue-600 px-3.5 py-1.5 text-xs font-bold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="rounded-xl bg-[var(--tlh-blue-primary)] px-3.5 py-1.5 text-xs font-bold text-white hover:bg-[var(--tlh-blue-hover)] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   + {t("createCourse")}
                 </button>
@@ -2533,7 +2447,7 @@ export function AdminDashboard({ user }) {
               </h3>
               <button
                 onClick={() => setCreateClassModal(true)}
-                className="rounded-xl bg-cyan-600 px-3.5 py-1.5 text-xs font-bold text-white hover:bg-cyan-700"
+                className="rounded-xl bg-[var(--tlh-cyan)] px-3.5 py-1.5 text-xs font-bold text-white hover:bg-[var(--tlh-cyan)]"
               >
                 + {t("createClass")}
               </button>
@@ -2618,7 +2532,7 @@ export function AdminDashboard({ user }) {
                   </details>
                   <a
                     href={`${(import.meta.env.VITE_PUBLIC_URL || "").replace(/\/$/, "")}/workspace/${cls._id}?tab=tracking`}
-                    className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#0066ff] to-[#0099ff] px-4 py-2.5 text-xs font-black uppercase tracking-wider text-white shadow-md shadow-blue-500/25 transition hover:from-[#0052cc] hover:to-[#0088e6] active:scale-[0.99]"
+                    className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[var(--tlh-blue-primary)] to-[var(--tlh-sky)] px-4 py-2.5 text-xs font-black uppercase tracking-wider text-white shadow-md shadow-blue-500/25 transition hover:from-[var(--tlh-blue-hover)] hover:to-[var(--tlh-sky)] active:scale-[0.99]"
                   >
                     <span>🎓 Enter Learning Space & Track Cohort</span>
                     <span className="text-sm">→</span>
@@ -2633,7 +2547,7 @@ export function AdminDashboard({ user }) {
                         teacherId: cls.teacher?._id || "",
                       })
                     }
-                    className="w-full rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-bold text-blue-700 transition hover:bg-blue-100"
+                    className="w-full rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-bold text-[var(--tlh-blue-hover)] transition hover:bg-blue-100"
                   >
                     {cls.teacher ? "Change teacher" : "Assign teacher"}
                   </button>
@@ -2694,7 +2608,7 @@ export function AdminDashboard({ user }) {
                           });
                           setCreateSessionModal(true);
                         }}
-                        className="text-xs font-bold text-[#0066ff] hover:underline disabled:cursor-not-allowed disabled:opacity-40"
+                        className="text-xs font-bold text-[var(--tlh-blue-primary)] hover:underline disabled:cursor-not-allowed disabled:opacity-40"
                       >
                         + Schedule
                       </button>
@@ -2772,7 +2686,7 @@ export function AdminDashboard({ user }) {
                                     href={session.meetingUrl}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="rounded-md bg-cyan-700 px-2.5 py-1.5 text-[11px] font-bold text-white hover:bg-cyan-800"
+                                    className="rounded-md bg-[var(--tlh-cyan)] px-2.5 py-1.5 text-[11px] font-bold text-white hover:bg-cyan-800"
                                   >
                                     Open Meet
                                   </a>
@@ -2824,7 +2738,7 @@ export function AdminDashboard({ user }) {
                                           "completed",
                                         )
                                       }
-                                      className="rounded-md border border-sky-300 px-2 py-1 text-[11px] font-bold text-[#0066ff] hover:bg-sky-50 disabled:opacity-50"
+                                      className="rounded-md border border-sky-300 px-2 py-1 text-[11px] font-bold text-[var(--tlh-blue-primary)] hover:bg-sky-50 disabled:opacity-50"
                                     >
                                       Mark complete
                                     </button>
@@ -3074,7 +2988,7 @@ export function AdminDashboard({ user }) {
                   <button
                     type="submit"
                     disabled={Boolean(certificateBusyKey)}
-                    className="w-full rounded-xl bg-gradient-to-r from-[#0066ff] to-[#0099ff] px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-blue-500/25 hover:from-[#0052cc] hover:to-[#0088e6] disabled:opacity-60"
+                    className="w-full rounded-xl bg-gradient-to-r from-[var(--tlh-blue-primary)] to-[var(--tlh-sky)] px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-blue-500/25 hover:from-[var(--tlh-blue-hover)] hover:to-[var(--tlh-sky)] disabled:opacity-60"
                   >
                     Publish certificate
                   </button>
@@ -3203,7 +3117,7 @@ export function AdminDashboard({ user }) {
                                         "published",
                                       )
                                     }
-                                    className="rounded-lg bg-emerald-50 px-3 py-1.5 text-[11px] font-bold text-emerald-700 hover:bg-emerald-100 disabled:opacity-60"
+                                    className="rounded-lg bg-[var(--primary-light)] px-3 py-1.5 text-[11px] font-bold text-[var(--tlh-blue-primary)] hover:bg-blue-100 disabled:opacity-60"
                                   >
                                     Publish
                                   </button>
@@ -3221,7 +3135,7 @@ export function AdminDashboard({ user }) {
                                   }
                                   className={`rounded-lg px-3 py-1.5 text-[11px] font-bold disabled:opacity-60 ${
                                     cert.status === "revoked"
-                                      ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                                      ? "bg-[var(--primary-light)] text-[var(--tlh-blue-primary)] hover:bg-blue-100"
                                       : "bg-rose-50 text-rose-700 hover:bg-rose-100"
                                   }`}
                                 >
@@ -3281,7 +3195,7 @@ export function AdminDashboard({ user }) {
                         </p>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="rounded-xl bg-blue-50 px-3 py-1 text-sm font-black text-blue-700">
+                        <span className="rounded-xl bg-blue-50 px-3 py-1 text-sm font-black text-[var(--tlh-blue-hover)]">
                           {attempt.score ?? 0}/{attempt.maxScore ?? 100}
                         </span>
                         <button
@@ -3531,7 +3445,7 @@ export function AdminDashboard({ user }) {
                     !teacherAttendanceForm.sessionId
                   }
                   onClick={() => void handleRecordTeacherAttendance()}
-                  className="rounded-xl bg-gradient-to-r from-[#0066ff] to-[#0099ff] px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-blue-500/25 hover:from-[#0052cc] hover:to-[#0088e6] disabled:opacity-50"
+                  className="rounded-xl bg-gradient-to-r from-[var(--tlh-blue-primary)] to-[var(--tlh-sky)] px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-blue-500/25 hover:from-[var(--tlh-blue-hover)] hover:to-[var(--tlh-sky)] disabled:opacity-50"
                 >
                   {teacherAttendanceSaving ? "Recording…" : "Record"}
                 </button>
@@ -3740,7 +3654,7 @@ export function AdminDashboard({ user }) {
                           </p>
                         </div>
                         <span
-                          className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${sub.status === "graded" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}
+                          className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${sub.status === "graded" ? "bg-[var(--primary-light)] text-[var(--tlh-blue-primary)]" : "bg-amber-100 text-amber-700"}`}
                         >
                           {sub.status === "graded"
                             ? `Graded ${sub.score}/${sub.assignment?.maxScore ?? ""}`
@@ -3760,7 +3674,7 @@ export function AdminDashboard({ user }) {
                               href={link.url}
                               target="_blank"
                               rel="noreferrer"
-                              className="rounded-lg bg-blue-50 px-2 py-1 text-[11px] font-semibold text-blue-700 hover:bg-blue-100"
+                              className="rounded-lg bg-blue-50 px-2 py-1 text-[11px] font-semibold text-[var(--tlh-blue-hover)] hover:bg-blue-100"
                             >
                               🔗 {link.label || link.url}
                             </a>
@@ -3834,7 +3748,7 @@ export function AdminDashboard({ user }) {
                           </p>
                         </div>
                         <span
-                          className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${attempt.status === "reviewed" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}
+                          className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${attempt.status === "reviewed" ? "bg-[var(--primary-light)] text-[var(--tlh-blue-primary)]" : "bg-amber-100 text-amber-700"}`}
                         >
                           {attempt.status === "reviewed"
                             ? `Released ${attempt.score}/${attempt.maxScore}`
@@ -3854,7 +3768,7 @@ export function AdminDashboard({ user }) {
                               href={link.url}
                               target="_blank"
                               rel="noreferrer"
-                              className="rounded-lg bg-blue-50 px-2 py-1 text-[11px] font-semibold text-blue-700 hover:bg-blue-100"
+                              className="rounded-lg bg-blue-50 px-2 py-1 text-[11px] font-semibold text-[var(--tlh-blue-hover)] hover:bg-blue-100"
                             >
                               🔗 {link.label || link.url}
                             </a>
@@ -3999,7 +3913,7 @@ export function AdminDashboard({ user }) {
                   });
                   setCreateResourceModal(true);
                 }}
-                className="rounded-xl bg-gradient-to-r from-[#0066ff] to-[#0099ff] px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-blue-500/25 hover:from-[#0052cc] hover:to-[#0088e6]"
+                className="rounded-xl bg-gradient-to-r from-[var(--tlh-blue-primary)] to-[var(--tlh-sky)] px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-blue-500/25 hover:from-[var(--tlh-blue-hover)] hover:to-[var(--tlh-sky)]"
               >
                 + Add resource
               </button>
@@ -4109,7 +4023,7 @@ export function AdminDashboard({ user }) {
               </h3>
               <button
                 onClick={() => setCreateAnnouncementModal(true)}
-                className="rounded-xl bg-gradient-to-r from-[#0066ff] to-[#0099ff] px-3.5 py-1.5 text-xs font-bold text-white shadow-sm hover:from-[#0052cc] hover:to-[#0088e6]"
+                className="rounded-xl bg-gradient-to-r from-[var(--tlh-blue-primary)] to-[var(--tlh-sky)] px-3.5 py-1.5 text-xs font-bold text-white shadow-sm hover:from-[var(--tlh-blue-hover)] hover:to-[var(--tlh-sky)]"
               >
                 + New announcement
               </button>
@@ -4204,7 +4118,7 @@ export function AdminDashboard({ user }) {
                     });
                     setCreateFaqModal(true);
                   }}
-                  className="rounded-xl bg-gradient-to-r from-[#0066ff] to-[#0099ff] px-4 py-2 text-sm font-bold text-white shadow-md shadow-blue-500/25 hover:from-[#0052cc] hover:to-[#0088e6]"
+                  className="rounded-xl bg-gradient-to-r from-[var(--tlh-blue-primary)] to-[var(--tlh-sky)] px-4 py-2 text-sm font-bold text-white shadow-md shadow-blue-500/25 hover:from-[var(--tlh-blue-hover)] hover:to-[var(--tlh-sky)]"
                 >
                   + Add FAQ
                 </button>
@@ -4300,7 +4214,7 @@ export function AdminDashboard({ user }) {
                         <p className="mt-1 text-xs text-slate-500">
                           {inquiry.fullName} ·{" "}
                           <a
-                            className="text-blue-700 hover:underline"
+                            className="text-[var(--tlh-blue-hover)] hover:underline"
                             href={`mailto:${inquiry.email}`}
                           >
                             {inquiry.email}
@@ -4344,7 +4258,7 @@ export function AdminDashboard({ user }) {
                             onClick={() =>
                               void handleInquiryStatus(inquiry, "closed")
                             }
-                            className="rounded-lg bg-gradient-to-r from-[#0066ff] to-[#0099ff] px-3.5 py-1.5 text-xs font-bold text-white hover:from-[#0052cc] hover:to-[#0088e6]"
+                            className="rounded-lg bg-gradient-to-r from-[var(--tlh-blue-primary)] to-[var(--tlh-sky)] px-3.5 py-1.5 text-xs font-bold text-white hover:from-[var(--tlh-blue-hover)] hover:to-[var(--tlh-sky)]"
                           >
                             Close inquiry
                           </button>
@@ -4436,7 +4350,7 @@ export function AdminDashboard({ user }) {
                     type="button"
                     onClick={() => void loadAnalytics()}
                     disabled={isAnalyticsLoading}
-                    className="rounded-xl bg-gradient-to-r from-[#0066ff] to-[#0099ff] px-4 py-2 text-xs font-extrabold text-white shadow-sm transition-all hover:from-[#0052cc] hover:to-[#0088e6] disabled:cursor-wait disabled:opacity-60"
+                    className="rounded-xl bg-gradient-to-r from-[var(--tlh-blue-primary)] to-[var(--tlh-sky)] px-4 py-2 text-xs font-extrabold text-white shadow-sm transition-all hover:from-[var(--tlh-blue-hover)] hover:to-[var(--tlh-sky)] disabled:cursor-wait disabled:opacity-60"
                   >
                     {isAnalyticsLoading ? "Refreshing…" : "↻ Refresh"}
                   </button>
@@ -4549,7 +4463,7 @@ export function AdminDashboard({ user }) {
                         </div>
                         <div className="mt-1.5 h-2.5 w-full overflow-hidden rounded-full bg-slate-100">
                           <div
-                            className="h-full rounded-full bg-gradient-to-r from-[#0066ff] to-[#00d2ff]"
+                            className="h-full rounded-full bg-gradient-to-r from-[var(--tlh-blue-primary)] to-[var(--tlh-cyan)]"
                             style={{
                               width: `${Math.round((stage.count / analyticsFunnelBase) * 100)}%`,
                             }}
@@ -4917,7 +4831,7 @@ export function AdminDashboard({ user }) {
                           </p>
                         </div>
                         <div className="text-right">
-                          <span className="font-extrabold text-blue-600">
+                          <span className="font-extrabold text-[var(--tlh-blue-primary)]">
                             {c.enrolledCount} / {c.capacity}
                           </span>
                           <p className="text-[10px] text-slate-400">
@@ -5072,7 +4986,7 @@ export function AdminDashboard({ user }) {
                 </p>
                 <button
                   type="submit"
-                  className="w-full rounded-xl bg-gradient-to-r from-[#0066ff] to-[#0099ff] py-2.5 text-xs font-bold text-white hover:from-[#0052cc] hover:to-[#0088e6] shadow-sm"
+                  className="w-full rounded-xl bg-gradient-to-r from-[var(--tlh-blue-primary)] to-[var(--tlh-sky)] py-2.5 text-xs font-bold text-white hover:from-[var(--tlh-blue-hover)] hover:to-[var(--tlh-sky)] shadow-sm"
                 >
                   Save profile
                 </button>
@@ -5269,7 +5183,7 @@ export function AdminDashboard({ user }) {
                 disabled={
                   !placementModal.classId || placementClasses.length === 0
                 }
-                className="rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+                className="rounded-xl bg-[var(--tlh-blue-primary)] px-4 py-2 text-xs font-bold text-white hover:bg-[var(--tlh-blue-hover)] disabled:cursor-not-allowed disabled:bg-slate-300"
               >
                 Confirm placement
               </button>
@@ -5306,7 +5220,7 @@ export function AdminDashboard({ user }) {
                   });
                   setActiveTab("teachers");
                 }}
-                className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-bold text-white hover:bg-blue-700"
+                className="rounded-xl bg-[var(--tlh-blue-primary)] px-4 py-2 text-sm font-bold text-white hover:bg-[var(--tlh-blue-hover)]"
               >
                 View teachers
               </button>
@@ -5340,7 +5254,7 @@ export function AdminDashboard({ user }) {
               </select>
               <button
                 type="submit"
-                className="w-full rounded-xl bg-blue-600 py-2.5 text-sm font-bold text-white hover:bg-blue-700"
+                className="w-full rounded-xl bg-[var(--tlh-blue-primary)] py-2.5 text-sm font-bold text-white hover:bg-[var(--tlh-blue-hover)]"
               >
                 Save teacher assignment
               </button>
@@ -5473,7 +5387,7 @@ export function AdminDashboard({ user }) {
             </label>
             <button
               type="submit"
-              className="w-full rounded-xl bg-gradient-to-r from-[#0066ff] to-[#0099ff] py-3 text-sm font-bold text-white hover:from-[#0052cc] hover:to-[#0088e6] shadow-sm"
+              className="w-full rounded-xl bg-gradient-to-r from-[var(--tlh-blue-primary)] to-[var(--tlh-sky)] py-3 text-sm font-bold text-white hover:from-[var(--tlh-blue-hover)] hover:to-[var(--tlh-sky)] shadow-sm"
             >
               Create account
             </button>
@@ -5548,7 +5462,7 @@ export function AdminDashboard({ user }) {
             </label>
             <button
               type="submit"
-              className="w-full rounded-xl bg-gradient-to-r from-[#0066ff] to-[#0099ff] py-3 text-sm font-bold text-white hover:from-[#0052cc] hover:to-[#0088e6] shadow-sm"
+              className="w-full rounded-xl bg-gradient-to-r from-[var(--tlh-blue-primary)] to-[var(--tlh-sky)] py-3 text-sm font-bold text-white hover:from-[var(--tlh-blue-hover)] hover:to-[var(--tlh-sky)] shadow-sm"
             >
               Create administrator
             </button>
@@ -5626,7 +5540,7 @@ export function AdminDashboard({ user }) {
             </div>
             <button
               type="submit"
-              className="w-full rounded-xl bg-gradient-to-r from-[#0066ff] to-[#0099ff] py-3 text-sm font-bold text-white hover:from-[#0052cc] hover:to-[#0088e6] shadow-sm"
+              className="w-full rounded-xl bg-gradient-to-r from-[var(--tlh-blue-primary)] to-[var(--tlh-sky)] py-3 text-sm font-bold text-white hover:from-[var(--tlh-blue-hover)] hover:to-[var(--tlh-sky)] shadow-sm"
             >
               {editingFaqId ? "Save FAQ" : "Create FAQ"}
             </button>
@@ -5835,7 +5749,7 @@ export function AdminDashboard({ user }) {
             <button
               type="submit"
               disabled={categories.length === 0}
-              className="w-full rounded-xl bg-blue-600 py-2.5 text-xs font-bold text-white disabled:cursor-not-allowed disabled:bg-slate-300"
+              className="w-full rounded-xl bg-[var(--tlh-blue-primary)] py-2.5 text-xs font-bold text-white disabled:cursor-not-allowed disabled:bg-slate-300"
             >
               {editingCourseId ? "Save program" : t("createCourse")}
             </button>
@@ -5991,7 +5905,7 @@ export function AdminDashboard({ user }) {
             <button
               type="submit"
               disabled={courses.length === 0}
-              className="w-full rounded-xl bg-cyan-600 py-2.5 text-xs font-bold text-white disabled:cursor-not-allowed disabled:bg-slate-300"
+              className="w-full rounded-xl bg-[var(--tlh-cyan)] py-2.5 text-xs font-bold text-white disabled:cursor-not-allowed disabled:bg-slate-300"
             >
               {editingClassId ? "Save cohort" : t("createClass")}
             </button>
@@ -6042,7 +5956,7 @@ export function AdminDashboard({ user }) {
             </div>
             <button
               type="submit"
-              className="w-full rounded-xl bg-blue-600 py-2.5 text-xs font-bold text-white"
+              className="w-full rounded-xl bg-[var(--tlh-blue-primary)] py-2.5 text-xs font-bold text-white"
             >
               {editingCategoryId ? "Save category" : t("createCategory")}
             </button>
@@ -6246,7 +6160,7 @@ export function AdminDashboard({ user }) {
                     visibility: event.target.checked ? "public" : "class_only",
                   })
                 }
-                className="accent-[#0066ff]"
+                className="accent-[var(--tlh-blue-primary)]"
               />
               Make this resource public instead of cohort-only
             </label>
@@ -6258,7 +6172,7 @@ export function AdminDashboard({ user }) {
                   ? !resourceForm.base64Data
                   : !resourceForm.sourceUrl.trim())
               }
-              className="w-full rounded-xl bg-gradient-to-r from-[#0066ff] to-[#0099ff] py-3 text-sm font-bold text-white hover:from-[#0052cc] hover:to-[#0088e6] shadow-sm disabled:cursor-not-allowed disabled:bg-slate-300"
+              className="w-full rounded-xl bg-gradient-to-r from-[var(--tlh-blue-primary)] to-[var(--tlh-sky)] py-3 text-sm font-bold text-white hover:from-[var(--tlh-blue-hover)] hover:to-[var(--tlh-sky)] shadow-sm disabled:cursor-not-allowed disabled:bg-slate-300"
             >
               {isUploadingResource
                 ? "Saving…"
@@ -6647,7 +6561,7 @@ export function AdminDashboard({ user }) {
             )}
             <button
               type="submit"
-              className="w-full rounded-xl bg-gradient-to-r from-[#0066ff] to-[#0099ff] py-2.5 text-xs font-bold text-white shadow-sm hover:from-[#0052cc] hover:to-[#0088e6]"
+              className="w-full rounded-xl bg-gradient-to-r from-[var(--tlh-blue-primary)] to-[var(--tlh-sky)] py-2.5 text-xs font-bold text-white shadow-sm hover:from-[var(--tlh-blue-hover)] hover:to-[var(--tlh-sky)]"
             >
               {editingAnnouncementId
                 ? "Save announcement"

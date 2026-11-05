@@ -363,7 +363,7 @@ export function DashboardSettings({ user, sessions = [], onSaved, onNavigateTab 
                         {promoVideoFeedback && (
                             <div className={`rounded-xl px-4 py-3 text-sm font-medium ${
                                 promoVideoFeedback.startsWith("✅") || promoVideoFeedback.startsWith("🗑")
-                                    ? "bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200"
+                                    ? "bg-[var(--primary-light)] text-[var(--tlh-blue-primary)] ring-1 ring-[var(--tlh-blue-primary)]/20"
                                     : "bg-red-50 text-red-800 ring-1 ring-red-200"
                             }`}>
                                 {promoVideoFeedback}
@@ -374,7 +374,7 @@ export function DashboardSettings({ user, sessions = [], onSaved, onNavigateTab 
                         <div className="flex items-center gap-2 text-xs text-slate-500 pt-1">
                             {promoVideoSaved ? (
                                 <>
-                                    <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                                    <span className="h-2 w-2 rounded-full bg-[var(--tlh-cyan)] animate-pulse" />
                                     <span>Video is <strong className="text-slate-700">live</strong> on the homepage</span>
                                 </>
                             ) : (
@@ -405,7 +405,7 @@ export function DashboardSettings({ user, sessions = [], onSaved, onNavigateTab 
                                 disabled={savingLang}
                                 className={`flex items-center justify-center gap-2 rounded-xl border p-3 text-sm font-bold transition ${
                                     language === "am"
-                                        ? "border-emerald-700 bg-emerald-50 text-emerald-950 shadow-xs ring-2 ring-emerald-700/20"
+                                        ? "border-[var(--tlh-blue-primary)] bg-[var(--primary-light)] text-[var(--tlh-blue-primary)] shadow-xs ring-2 ring-[var(--tlh-blue-primary)]/20"
                                         : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
                                 }`}
                             >
@@ -418,7 +418,7 @@ export function DashboardSettings({ user, sessions = [], onSaved, onNavigateTab 
                                 disabled={savingLang}
                                 className={`flex items-center justify-center gap-2 rounded-xl border p-3 text-sm font-bold transition ${
                                     language === "en"
-                                        ? "border-emerald-700 bg-emerald-50 text-emerald-950 shadow-xs ring-2 ring-emerald-700/20"
+                                        ? "border-[var(--tlh-blue-primary)] bg-[var(--primary-light)] text-[var(--tlh-blue-primary)] shadow-xs ring-2 ring-[var(--tlh-blue-primary)]/20"
                                         : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
                                 }`}
                             >
@@ -439,7 +439,7 @@ export function DashboardSettings({ user, sessions = [], onSaved, onNavigateTab 
                         <select
                             value={timeZone}
                             onChange={(e) => handleTimeZoneChange(e.target.value)}
-                            className="mt-1 w-full rounded-xl border border-slate-200 bg-white p-2.5 text-xs text-slate-800 font-medium focus:border-emerald-700 focus:outline-none sm:max-w-md"
+                            className="mt-1 w-full rounded-xl border border-slate-200 bg-white p-2.5 text-xs text-slate-800 font-medium focus:border-[var(--tlh-blue-primary)] focus:outline-none sm:max-w-md"
                         >
                             {TIME_ZONES.map((tz) => (
                                 <option key={tz.value} value={tz.value}>
@@ -461,7 +461,7 @@ export function DashboardSettings({ user, sessions = [], onSaved, onNavigateTab 
                                     name="clockFormat"
                                     checked={clockFormat === "12h"}
                                     onChange={() => handleClockFormatChange("12h")}
-                                    className="accent-emerald-700"
+                                    className="accent-[var(--tlh-blue-primary)]"
                                 />
                                 12-hour (e.g. 2:30 PM / 8:30)
                             </label>
@@ -471,7 +471,7 @@ export function DashboardSettings({ user, sessions = [], onSaved, onNavigateTab 
                                     name="clockFormat"
                                     checked={clockFormat === "24h"}
                                     onChange={() => handleClockFormatChange("24h")}
-                                    className="accent-emerald-700"
+                                    className="accent-[var(--tlh-blue-primary)]"
                                 />
                                 24-hour (e.g. 14:30)
                             </label>
@@ -479,7 +479,7 @@ export function DashboardSettings({ user, sessions = [], onSaved, onNavigateTab 
                     </div>
 
                     {langFeedback && (
-                        <p role="status" className="rounded-lg bg-emerald-50 p-2.5 text-xs font-bold text-emerald-800">
+                        <p role="status" className="rounded-lg bg-[var(--primary-light)] p-2.5 text-xs font-bold text-[var(--tlh-blue-primary)]">
                             {langFeedback}
                         </p>
                     )}
@@ -502,7 +502,7 @@ export function DashboardSettings({ user, sessions = [], onSaved, onNavigateTab 
                                 </h4>
                                 <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
                                     notifPermission === "granted"
-                                        ? "bg-emerald-100 text-emerald-800"
+                                        ? "bg-[var(--primary-light)] text-[var(--tlh-blue-primary)]"
                                         : notifPermission === "denied"
                                             ? "bg-rose-100 text-rose-800"
                                             : "bg-amber-100 text-amber-800"
@@ -553,7 +553,7 @@ export function DashboardSettings({ user, sessions = [], onSaved, onNavigateTab 
                                 type="checkbox"
                                 checked={notifSettings.classReminders}
                                 onChange={(e) => setNotifSettings({ ...notifSettings, classReminders: e.target.checked })}
-                                className="h-4 w-4 rounded accent-emerald-700"
+                                className="h-4 w-4 rounded accent-[var(--tlh-blue-primary)]"
                             />
                         </label>
 
@@ -570,7 +570,7 @@ export function DashboardSettings({ user, sessions = [], onSaved, onNavigateTab 
                                 type="checkbox"
                                 checked={notifSettings.announcements}
                                 onChange={(e) => setNotifSettings({ ...notifSettings, announcements: e.target.checked })}
-                                className="h-4 w-4 rounded accent-emerald-700"
+                                className="h-4 w-4 rounded accent-[var(--tlh-blue-primary)]"
                             />
                         </label>
 
@@ -587,7 +587,7 @@ export function DashboardSettings({ user, sessions = [], onSaved, onNavigateTab 
                                 type="checkbox"
                                 checked={notifSettings.soundAlerts}
                                 onChange={(e) => setNotifSettings({ ...notifSettings, soundAlerts: e.target.checked })}
-                                className="h-4 w-4 rounded accent-emerald-700"
+                                className="h-4 w-4 rounded accent-[var(--tlh-blue-primary)]"
                             />
                         </label>
 
@@ -604,7 +604,7 @@ export function DashboardSettings({ user, sessions = [], onSaved, onNavigateTab 
                                 type="checkbox"
                                 checked={notifSettings.emailDigest}
                                 onChange={(e) => setNotifSettings({ ...notifSettings, emailDigest: e.target.checked })}
-                                className="h-4 w-4 rounded accent-emerald-700"
+                                className="h-4 w-4 rounded accent-[var(--tlh-blue-primary)]"
                             />
                         </label>
                     </div>
@@ -689,7 +689,7 @@ export function DashboardSettings({ user, sessions = [], onSaved, onNavigateTab 
                                     setAdminAutoRefresh(e.target.checked);
                                     localStorage.setItem("learnhub_admin_autorefresh", String(e.target.checked));
                                 }}
-                                className="h-4 w-4 rounded accent-emerald-700"
+                                className="h-4 w-4 rounded accent-[var(--tlh-blue-primary)]"
                             />
                         </label>
                     </div>
@@ -704,9 +704,9 @@ export function DashboardSettings({ user, sessions = [], onSaved, onNavigateTab 
                 <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-slate-200/80 bg-slate-50 p-4">
                     <div className="flex items-center gap-3">
                         {user.avatarUrl ? (
-                            <img src={user.avatarUrl} alt="" className="h-11 w-11 rounded-full object-cover ring-2 ring-emerald-700/20" />
+                            <img src={user.avatarUrl} alt="" className="h-11 w-11 rounded-full object-cover ring-2 ring-[var(--tlh-blue-primary)]/20" />
                         ) : (
-                            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-emerald-800 text-sm font-bold text-white">
+                            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-[var(--tlh-navy)] to-[var(--tlh-blue-primary)] text-sm font-bold text-white">
                                 {(user.fullName || user.email || "U").charAt(0).toUpperCase()}
                             </div>
                         )}
@@ -716,7 +716,7 @@ export function DashboardSettings({ user, sessions = [], onSaved, onNavigateTab 
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
-                        <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-emerald-800">
+                        <span className="rounded-full bg-[var(--primary-light)] px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-[var(--tlh-blue-primary)] border border-[var(--tlh-blue-primary)]/20">
                             {user.role}
                         </span>
                         <span className="rounded-full bg-blue-100 px-2.5 py-1 text-[11px] font-bold text-blue-800">

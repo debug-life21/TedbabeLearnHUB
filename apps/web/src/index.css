@@ -1,50 +1,133 @@
 @import "tailwindcss";
 @source ".";
 
+@custom-variant dark (&:where(.dark, [data-theme="dark"], .dark *, [data-theme="dark"] *));
+
+@theme {
+  --color-primary: var(--tlh-blue-primary);
+  --color-primary-hover: var(--tlh-blue-hover);
+  --color-primary-light: var(--primary-light);
+  --color-navy: var(--tlh-navy);
+  --color-navy-deep: var(--tlh-navy-deep);
+  --color-sky: var(--tlh-sky);
+  --color-cyan: var(--tlh-cyan);
+  --color-orange: var(--tlh-orange);
+  --color-surface-page: var(--surface-page);
+  --color-surface-card: var(--surface-card);
+  --color-surface-border: var(--surface-border);
+  --color-text-main: var(--text-main);
+  --color-text-secondary: var(--text-secondary);
+
+  /* Map old blue references to new primary */
+  --color-blue-50: var(--primary-light);
+  --color-blue-100: #dbeafe;
+  --color-blue-200: #bfdbfe;
+  --color-blue-300: #93c5fd;
+  --color-blue-400: #60a5fa;
+  --color-blue-500: var(--tlh-sky);
+  --color-blue-600: var(--tlh-blue-primary);
+  --color-blue-700: var(--tlh-blue-hover);
+  --color-blue-800: var(--tlh-navy-deep);
+  --color-blue-900: var(--tlh-navy);
+}
+
 /* ============================================================
    DESIGN TOKENS — TedbabeLearnHUB (TLH) Logo Brand System
    Logo Visual Identity:
-   • Deep Navy Blue (#001b44 / #0a192f) — "TedbabeLearn"
-   • Electric Sky Blue (#0099ff / #00a8ff) — "HUB" & "[ TLH ]" badge
-   • Royal Blue to Indigo Gradient (#0066ff → #6366f1) — Student & Book
-   • Cyan Glow (#00d2ff) — Accent highlights
-   • Crisp Modern Surface (#f8fafc / #ffffff) — Fresh, clean, open
+   • Primary Navy (#071B49) — "TedbabeLearn"
+   • Royal Blue (#1266E8) — "HUB" & "[ TLH ]" badge
+   • Royal Blue to Bright Blue Gradient (#1266E8 → #168BFF) — Student & Book
+   • Cyan Accent (#12BCEB) — Highlights
+   • Golden Orange (#FF9D00) — Calls to Action
+   • Crisp Modern Surface (#F5F8FE / #FFFFFF) — Fresh, clean, open
    ============================================================ */
 @layer base {
   :root {
-    /* Brand Navy & Electric Blues */
-    --tlh-navy: #001b44;
-    --tlh-navy-deep: #071329;
-    --tlh-blue-primary: #0066ff;
-    --tlh-blue-hover: #0052cc;
-    --tlh-sky: #0099ff;
-    --tlh-cyan: #00d2ff;
+    /* Brand Navy & Electric Blues - Primary Palette */
+    --tlh-navy: #071B49;
+    --tlh-navy-deep: #0B2D70;
+    --tlh-deep-blue: #0B2D70;
+    --tlh-blue-primary: #1266E8;
+    --tlh-blue-hover: #0B2D70;
+    --tlh-sky: #168BFF;
+    --tlh-cyan: #12BCEB;
+    --tlh-orange: #C59B27;
+    --tlh-gold: #C59B27;
+    --tlh-gold-hover: #A8741A;
     --tlh-indigo: #6366f1;
 
+    /* Backgrounds & Surfaces — Premium Pure White in Light Mode */
+    --surface-page: #FFFFFF;
+    --surface-card: #FFFFFF;
+    --surface-border: #E2E8F0;
+    --surface-muted: #F8FAFC;
+    --surface-overlay: rgba(7, 27, 73, 0.03);
+
+    /* Text Colors — Brand Deep Navy */
+    --text-main: #071B49;
+    --text-secondary: #334155;
+    --text-muted: #64748B;
+
     /* Semantic Primary */
-    --primary: var(--tlh-blue-primary);
-    --primary-hover: var(--tlh-blue-hover);
-    --primary-light: #eff6ff;
-    --primary-gradient: linear-gradient(135deg, #0066ff 0%, #0099ff 100%);
+    --primary: var(--tlh-navy);
+    --primary-hover: var(--tlh-deep-blue);
+    --primary-light: #F8FAFC;
+    --primary-gradient: linear-gradient(135deg, #071B49 0%, #0B2D70 100%);
 
-    /* Crisp Modern Surfaces */
-    --surface-page: #f8fafc;
-    --surface-card: #ffffff;
-    --surface-border: #e2e8f0;
-    --surface-muted: #f1f5f9;
+    /* Dashboard Specifics */
+    --dash-bg: #FFFFFF;
+    --dash-sidebar-bg: #FFFFFF;
+    --dash-card-bg: #FFFFFF;
+    --dash-border: #E2E8F0;
 
-    /* Dashboard */
-    --dash-bg: #f8fafc;
-    --dash-sidebar-bg: #ffffff;
-    --dash-card-bg: #ffffff;
-    --dash-border: #e2e8f0;
+    /* Design Tokens - Modern Consistency */
+    --radius-sm: 0.5rem;
+    --radius-md: 0.75rem;
+    --radius-lg: 1rem;
+    --radius-xl: 1.5rem;
+    --radius-2xl: 2rem;
+    --radius-3xl: 3rem;
+
+    --shadow-sm: 0 2px 8px rgba(7, 27, 73, 0.04);
+    --shadow-md: 0 10px 30px -10px rgba(7, 27, 73, 0.08);
+    --shadow-lg: 0 20px 50px -12px rgba(7, 27, 73, 0.12);
+    --shadow-glow: 0 0 20px rgba(18, 102, 232, 0.15);
+  }
+
+  /* Professional Dark Theme Palette — Refined Slate Charcoal with Warm Amber Accents */
+  html.dark,
+  html.bluedark,
+  [data-theme="dark"],
+  [data-theme="bluedark"] {
+    --surface-page: #090D16;
+    --surface-card: #111827;
+    --surface-border: #1E293B;
+    --surface-muted: #172033;
+    --surface-overlay: rgba(217, 119, 6, 0.04);
+
+    --text-main: #FFFFFF;
+    --text-secondary: #FFFFFF;
+    --text-muted: #E2E8F0;
+
+    --tlh-navy: #071B49;
+    --tlh-navy-deep: #050E24;
+    --tlh-deep-blue: #0B2D70;
+    --tlh-gold: #C59B27;
+    --tlh-gold-hover: #A8741A;
+
+    --primary-light: #172033;
+
+    --dash-bg: #090D16;
+    --dash-sidebar-bg: #0D1322;
+    --dash-card-bg: #111827;
+    --dash-border: #1E293B;
+    color-scheme: dark;
   }
 
   html {
     scroll-behavior: smooth;
     font-family:
       "Inter",
-      "Plus Jakarta Sans",
       "Noto Sans Ethiopic",
       system-ui,
       -apple-system,
@@ -56,18 +139,12 @@
 
   html[lang="am"] {
     font-family: "Noto Sans Ethiopic", "Abyssinica SIL", sans-serif;
-    letter-spacing: 1;
-  }
-
-  html[lang="en"] .editorial-display {
-    font-family: "Noto Sans Ethiopic", "Inter", sans-serif;
-    letter-spacing: 0;
-    line-height: 1.4;
+    letter-spacing: 0.02em;
   }
 
   body {
     background-color: var(--surface-page);
-    color: #0f172a;
+    color: var(--text-main);
     min-height: 100vh;
     margin: 0;
     padding: 0;
@@ -147,13 +224,13 @@
 
 .editorial-page {
   background: var(--surface-page);
-  color: #0f172a;
+  color: var(--text-main);
 }
 
 .editorial-page [class*="rounded-3xl"][class*="bg-white"] {
   background-color: var(--surface-card);
   --tw-ring-color: var(--surface-border);
-  box-shadow: 0 10px 30px -10px rgba(0, 30, 80, 0.05);
+  box-shadow: 0 10px 30px -10px rgba(7, 27, 73, 0.05);
 }
 
 .editorial-page [class*="border-slate-200"] {
@@ -163,30 +240,30 @@
 /* Harmonize green tokens to the Logo Navy & Electric Blue Palette */
 .editorial-page [class*="text-emerald-600"],
 .editorial-page [class*="text-emerald-700"] {
-  color: #0066ff !important;
+  color: #1266E8 !important;
 }
 .editorial-page [class*="text-emerald-800"],
 .editorial-page [class*="text-emerald-900"],
 .editorial-page [class*="text-emerald-950"] {
-  color: #001b44 !important;
+  color: #071B49 !important;
 }
 
 .editorial-page [class*="bg-emerald-600"],
 .editorial-page [class*="bg-emerald-700"] {
-  background: linear-gradient(135deg, #0066ff 0%, #0099ff 100%) !important;
+  background: linear-gradient(135deg, #1266E8 0%, #168BFF 100%) !important;
   color: #ffffff !important;
 }
 
 .editorial-page [class*="bg-emerald-800"],
 .editorial-page [class*="bg-emerald-900"] {
-  background-color: #001b44 !important;
+  background-color: #071B49 !important;
   color: #ffffff !important;
 }
 
 .editorial-page [class*="bg-emerald-50"],
 .editorial-page [class*="bg-emerald-100"] {
-  background-color: #eff6ff !important;
-  color: #0066ff !important;
+  background-color: #F5F8FE !important;
+  color: #1266E8 !important;
 }
 
 .editorial-page [class*="border-emerald-"],
@@ -204,7 +281,7 @@
   background:
     radial-gradient(
       ellipse at 85% 10%,
-      rgba(0, 153, 255, 0.12),
+      rgba(18, 102, 232, 0.12),
       transparent 35rem
     ),
     radial-gradient(
@@ -212,7 +289,7 @@
       rgba(99, 102, 241, 0.08),
       transparent 30rem
     ),
-    linear-gradient(135deg, #f8fafc 0%, #edf4ff 100%);
+    linear-gradient(135deg, #F5F8FE 0%, #edf4ff 100%);
 }
 
 .editorial-hero h1 {
@@ -224,12 +301,26 @@
 
 /* Badge styled exactly like the [ TLH ] badge in the logo */
 .public-heading-badge {
-  border: 1px solid rgba(0, 153, 255, 0.35);
-  background: #eff6ff;
-  color: #0066ff;
+  border: 1px solid rgba(7, 27, 73, 0.2);
+  background: #F0F6FF;
+  color: #071B49;
   font-weight: 800;
   letter-spacing: 0.08em;
-  box-shadow: 0 2px 8px rgba(0, 153, 255, 0.12);
+  box-shadow: 0 2px 6px rgba(7, 27, 73, 0.06);
+}
+
+html.dark .public-heading-badge,
+[data-theme="dark"] .public-heading-badge {
+  background: rgba(18, 102, 232, 0.2) !important;
+  background-color: rgba(18, 102, 232, 0.2) !important;
+  border-color: rgba(18, 188, 235, 0.45) !important;
+  color: #38BDF8 !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4) !important;
+}
+
+html.dark .public-heading-badge *,
+[data-theme="dark"] .public-heading-badge * {
+  color: #38BDF8 !important;
 }
 
 @keyframes public-heading-in {
@@ -250,7 +341,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.65rem;
-  color: #0066ff;
+  color: #1266E8;
   font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 0.16em;
@@ -276,29 +367,47 @@
 }
 
 .editorial-button {
-  background: linear-gradient(135deg, #0066ff 0%, #0099ff 100%);
-  color: #ffffff;
-  box-shadow: 0 4px 16px rgba(0, 102, 255, 0.3);
+  border-radius: 9999px !important;
+  background: #071B49 !important;
+  background-color: #071B49 !important;
+  color: #FFFFFF !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.03em !important;
+  text-transform: uppercase !important;
+  border: 1px solid rgba(7, 27, 73, 0.25) !important;
+  outline: none !important;
+  opacity: 1 !important;
+  box-shadow: 0 4px 14px rgba(7, 27, 73, 0.18) !important;
+  transition: all 180ms ease-in-out !important;
 }
 
 .editorial-button:hover {
-  transform: translateY(-2px);
-  background: linear-gradient(135deg, #0052cc 0%, #0088e6 100%);
-  box-shadow: 0 8px 24px rgba(0, 102, 255, 0.4);
+  transform: translateY(-1px) !important;
+  background: #0B2D70 !important;
+  background-color: #0B2D70 !important;
+  box-shadow: 0 6px 18px rgba(7, 27, 73, 0.26) !important;
+  color: #FFFFFF !important;
+}
+
+.editorial-button:active {
+  transform: translateY(0) scale(0.98) !important;
+  background: #050E24 !important;
+  box-shadow: 0 2px 6px rgba(7, 27, 73, 0.15) !important;
 }
 
 .editorial-button-secondary {
+  border-radius: 9999px !important;
   border: 1px solid var(--surface-border);
-  background: #ffffff;
-  color: #1e293b;
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+  background: var(--surface-card);
+  color: var(--text-main);
+  box-shadow: 0 2px 8px rgba(23, 36, 59, 0.04);
 }
 
 .editorial-button-secondary:hover {
-  border-color: #93c5fd;
-  color: #0066ff;
-  background: #f0f7ff;
-  transform: translateY(-2px);
+  border-color: #C59B27 !important;
+  color: #C59B27 !important;
+  box-shadow: 0 2px 8px rgba(197, 155, 39, 0.2) !important;
+  transform: translateY(-1px);
 }
 
 /* ============================================================
@@ -308,14 +417,14 @@
   border: 1px solid var(--surface-border);
   border-radius: 1.35rem;
   background: var(--surface-card);
-  box-shadow: 0 10px 30px -10px rgba(0, 30, 80, 0.05);
+  box-shadow: 0 10px 30px -10px rgba(7, 27, 73, 0.05);
   transition:
     box-shadow 200ms ease,
     transform 200ms ease,
     border-color 200ms ease;
 }
 .editorial-card:hover {
-  box-shadow: 0 20px 40px -12px rgba(0, 102, 255, 0.14);
+  box-shadow: 0 20px 40px -12px rgba(18, 102, 232, 0.14);
   border-color: #93c5fd;
   transform: translateY(-2px);
 }
@@ -334,12 +443,12 @@
 .editorial-category:hover {
   transform: translateY(-3px);
   border-color: #60a5fa;
-  box-shadow: 0 16px 36px rgba(0, 102, 255, 0.1);
+  box-shadow: 0 16px 36px rgba(18, 102, 232, 0.1);
 }
 
 .editorial-category-number {
   margin-bottom: 1.75rem;
-  color: #0077e6;
+  color: #1266E8;
   font-size: 0.75rem;
   font-weight: 800;
   letter-spacing: 0.14em;
@@ -352,13 +461,13 @@
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  color: #0066ff;
+  color: #1266E8;
   font-size: 0.875rem;
   font-weight: 800;
   transition: color 150ms ease;
 }
 .editorial-text-link:hover {
-  color: #004dc7;
+  color: #0B2D70;
 }
 
 /* ============================================================
@@ -374,7 +483,7 @@
   background:
     radial-gradient(
       ellipse at 100% 0%,
-      rgba(0, 153, 255, 0.28),
+      rgba(18, 164, 255, 0.28),
       transparent 32rem
     ),
     radial-gradient(
@@ -382,10 +491,10 @@
       rgba(99, 102, 241, 0.2),
       transparent 28rem
     ),
-    #071329;
+    #071B49;
   border: 1px solid #1a2b4c;
   padding: 2rem;
-  box-shadow: 0 20px 50px rgba(7, 19, 41, 0.45);
+  box-shadow: 0 20px 50px rgba(7, 27, 73, 0.45);
 }
 
 @media (min-width: 768px) {
@@ -407,13 +516,13 @@
   border-color: var(--dash-border);
   background-color: var(--dash-card-bg);
   --tw-ring-color: var(--dash-border);
-  box-shadow: 0 10px 30px -10px rgba(0, 30, 80, 0.05);
+  box-shadow: 0 10px 30px -10px rgba(7, 27, 73, 0.05);
 }
 
 .admin-workspace [role="tab"][aria-selected="true"] {
-  background: linear-gradient(135deg, #0066ff 0%, #0099ff 100%);
+  background: linear-gradient(135deg, #1266E8 0%, #168BFF 100%);
   color: #ffffff;
-  box-shadow: 0 4px 14px rgba(0, 102, 255, 0.25);
+  box-shadow: 0 4px 14px rgba(18, 102, 232, 0.25);
 }
 
 .admin-workspace [role="tab"]:not([aria-selected="true"]) {
@@ -422,20 +531,20 @@
 }
 
 .admin-workspace [role="tab"]:not([aria-selected="true"]):hover {
-  background: #eff6ff;
-  color: #0066ff;
+  background: #F5F8FE;
+  color: #1266E8;
 }
 
 .admin-workspace .admin-welcome {
   border: 1px solid #e2e8f0;
   border-radius: 1.5rem;
   background: var(--dash-card-bg);
-  color: #0f172a;
-  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.04);
+  color: var(--text-main);
+  box-shadow: 0 12px 32px rgba(23, 36, 59, 0.04);
 }
 
 .admin-workspace .admin-welcome .admin-eyebrow {
-  color: #0066ff;
+  color: #1266E8;
 }
 .admin-workspace .admin-welcome p {
   color: #64748b;
@@ -449,7 +558,7 @@
   border-radius: 1rem;
   background: rgba(255, 255, 255, 0.95);
   padding: 0.5rem;
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+  box-shadow: 0 8px 24px rgba(23, 36, 59, 0.05);
   backdrop-filter: blur(12px);
 }
 
@@ -465,7 +574,7 @@
   background:
     radial-gradient(
       ellipse at 80% 15%,
-      rgba(0, 153, 255, 0.12),
+      rgba(18, 164, 255, 0.12),
       transparent 30rem
     ),
     radial-gradient(
@@ -482,9 +591,706 @@
 .editorial-nav {
   border-color: rgba(226, 232, 240, 0.85);
   background: rgba(255, 255, 255, 0.95);
-  box-shadow: 0 4px 20px rgba(7, 19, 41, 0.04);
+  box-shadow: 0 4px 20px rgba(7, 27, 73, 0.04);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
+}
+
+html.dark .editorial-nav,
+html.bluedark .editorial-nav,
+[data-theme="dark"] .editorial-nav,
+[data-theme="bluedark"] .editorial-nav {
+  border-color: #1E293B !important;
+  background: rgba(11, 15, 25, 0.95) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* ============================================================
+   PROFESSIONAL DARK MODE ARCHITECTURE (FLUID, BALANCED, EYE-FRIENDLY)
+   ============================================================ */
+/* Global Canvas and Role Workspace Backgrounds */
+html.dark body,
+html.bluedark body,
+[data-theme="dark"] body,
+[data-theme="bluedark"] body,
+html.dark .editorial-page,
+[data-theme="dark"] .editorial-page,
+html.dark .admin-workspace,
+[data-theme="dark"] .admin-workspace,
+html.dark .teacher-workspace,
+[data-theme="dark"] .teacher-workspace,
+html.dark .student-workspace,
+[data-theme="dark"] .student-workspace,
+html.dark .learning-workspace,
+[data-theme="dark"] .learning-workspace {
+  background-color: var(--surface-page) !important;
+  color: var(--text-main);
+}
+
+/* Containers, Panels and Cards: Invert light surfaces to luxury dark slate */
+html.dark .bg-white,
+html.bluedark .bg-white,
+[data-theme="dark"] .bg-white,
+[data-theme="bluedark"] .bg-white,
+html.dark [class*="bg-white/9"],
+html.dark [class*="bg-white/8"],
+html.dark [class*="bg-white/7"],
+html.dark [class*="bg-white/6"],
+[data-theme="dark"] [class*="bg-white/9"],
+[data-theme="dark"] [class*="bg-white/8"] {
+  background-color: #111827 !important;
+}
+
+/* Subtle Inset Panels & Muted Backgrounds */
+html.dark .bg-slate-50,
+html.bluedark .bg-slate-50,
+html.dark .bg-slate-100,
+html.bluedark .bg-slate-100,
+html.dark .bg-gray-50,
+html.dark .bg-gray-100,
+html.dark .bg-stone-50,
+html.dark .bg-stone-100,
+html.dark [class*="bg-slate-50/"],
+html.dark [class*="bg-slate-100/"],
+[data-theme="dark"] .bg-slate-50,
+[data-theme="dark"] .bg-slate-100,
+[data-theme="dark"] .bg-gray-50,
+[data-theme="dark"] .bg-gray-100 {
+  background-color: #172033 !important;
+}
+
+/* Prevent bright or white gradients from showing in dark mode */
+html.dark [class*="to-white"],
+html.dark [class*="to-sky-50"],
+html.dark [class*="to-blue-50"],
+html.dark [class*="to-indigo-50"],
+html.dark [class*="to-slate-50"],
+html.dark [class*="to-slate-100"],
+html.dark [class*="to-stone-50"],
+html.dark [class*="to-stone-100"],
+html.dark [class*="to-gray-50"],
+html.dark [class*="to-gray-100"],
+[data-theme="dark"] [class*="to-white"],
+[data-theme="dark"] [class*="to-sky-50"],
+[data-theme="dark"] [class*="to-blue-50"],
+[data-theme="dark"] [class*="to-indigo-50"],
+[data-theme="dark"] [class*="to-slate-100"] {
+  --tw-gradient-to: #0F172A var(--tw-gradient-to-position, 100%) !important;
+}
+
+html.dark [class*="via-white"],
+html.dark [class*="via-sky-50"],
+html.dark [class*="via-blue-50"],
+html.dark [class*="via-slate-50"],
+html.dark [class*="via-stone-50"],
+html.dark [class*="via-gray-50"],
+[data-theme="dark"] [class*="via-white"],
+[data-theme="dark"] [class*="via-sky-50"],
+[data-theme="dark"] [class*="via-blue-50"],
+[data-theme="dark"] [class*="via-slate-50"] {
+  --tw-gradient-via: #172033 var(--tw-gradient-via-position, 50%) !important;
+}
+
+html.dark [class*="from-white"],
+html.dark [class*="from-sky-50"],
+html.dark [class*="from-blue-50"],
+html.dark [class*="from-slate-50"],
+html.dark [class*="from-stone-50"],
+html.dark [class*="from-gray-50"],
+[data-theme="dark"] [class*="from-white"],
+[data-theme="dark"] [class*="from-sky-50"],
+[data-theme="dark"] [class*="from-blue-50"],
+[data-theme="dark"] [class*="from-slate-50"] {
+  --tw-gradient-from: #111827 var(--tw-gradient-from-position, 0%) !important;
+}
+
+/* Specifically invert any light pastel gradient cards to dark slate */
+html.dark [class*="from-sky-50"]:not([class*="bg-clip-text"]),
+html.dark [class*="from-white"]:not([class*="bg-clip-text"]):not([class*="text-transparent"]),
+[data-theme="dark"] [class*="from-sky-50"]:not([class*="bg-clip-text"]),
+[data-theme="dark"] [class*="from-white"]:not([class*="bg-clip-text"]):not([class*="text-transparent"]) {
+  background-image: linear-gradient(135deg, #111827 0%, #172033 50%, #0F172A 100%) !important;
+  border-color: #1E293B !important;
+}
+
+/* Explicit Hero Title Styling — Maximum Visibility in Light & Dark Mode */
+.hero-main-title,
+.hero-main-title span,
+.editorial-hero h1,
+.editorial-hero h1 span,
+html.dark .hero-main-title,
+html.dark .hero-main-title span,
+html.dark .editorial-hero h1,
+html.dark .editorial-hero h1 span,
+[data-theme="dark"] .hero-main-title,
+[data-theme="dark"] .hero-main-title span,
+[data-theme="dark"] .editorial-hero h1,
+[data-theme="dark"] .editorial-hero h1 span {
+  color: #FFFFFF !important;
+  -webkit-text-fill-color: #FFFFFF !important;
+  background: none !important;
+  background-image: none !important;
+  text-shadow: 0 4px 24px rgba(0, 0, 0, 0.95), 0 2px 8px rgba(0, 0, 0, 0.8) !important;
+  opacity: 1 !important;
+}
+
+/* Light buttons / pills in dark mode: Ensure they NEVER render with light background */
+html.dark [class*="bg-cyan-50"],
+html.dark [class*="bg-cyan-100"],
+[data-theme="dark"] [class*="bg-cyan-50"],
+[data-theme="dark"] [class*="bg-cyan-100"] {
+  background-color: rgba(18, 188, 235, 0.18) !important;
+  background: rgba(18, 188, 235, 0.18) !important;
+  border-color: rgba(18, 188, 235, 0.4) !important;
+  color: #38BDF8 !important;
+}
+html.dark [class*="bg-cyan-50"] *,
+html.dark [class*="bg-cyan-100"] *,
+[data-theme="dark"] [class*="bg-cyan-50"] *,
+[data-theme="dark"] [class*="bg-cyan-100"] * {
+  color: #38BDF8 !important;
+}
+
+html.dark [class*="bg-sky-50"],
+html.dark [class*="bg-sky-100"],
+html.dark [class*="bg-blue-50"],
+html.dark [class*="bg-blue-100"],
+[data-theme="dark"] [class*="bg-sky-50"],
+[data-theme="dark"] [class*="bg-sky-100"],
+[data-theme="dark"] [class*="bg-blue-50"],
+[data-theme="dark"] [class*="bg-blue-100"] {
+  background-color: rgba(18, 102, 232, 0.2) !important;
+  background: rgba(18, 102, 232, 0.2) !important;
+  border-color: rgba(18, 188, 235, 0.4) !important;
+  color: #38BDF8 !important;
+}
+html.dark [class*="bg-sky-50"] *,
+html.dark [class*="bg-sky-100"] *,
+html.dark [class*="bg-blue-50"] *,
+html.dark [class*="bg-blue-100"] *,
+[data-theme="dark"] [class*="bg-sky-50"] *,
+[data-theme="dark"] [class*="bg-blue-50"] * {
+  color: #38BDF8 !important;
+}
+
+html.dark [class*="bg-amber-50"],
+html.dark [class*="bg-amber-100"],
+[data-theme="dark"] [class*="bg-amber-50"],
+[data-theme="dark"] [class*="bg-amber-100"] {
+  background-color: rgba(197, 155, 39, 0.18) !important;
+  background: rgba(197, 155, 39, 0.18) !important;
+  border-color: rgba(197, 155, 39, 0.4) !important;
+  color: #FBBF24 !important;
+}
+html.dark [class*="bg-amber-50"] *,
+html.dark [class*="bg-amber-100"] *,
+[data-theme="dark"] [class*="bg-amber-50"] *,
+[data-theme="dark"] [class*="bg-amber-100"] * {
+  color: #FBBF24 !important;
+}
+
+html.dark [class*="bg-emerald-50"],
+html.dark [class*="bg-emerald-100"],
+html.dark [class*="bg-green-50"],
+html.dark [class*="bg-teal-50"],
+[data-theme="dark"] [class*="bg-emerald-50"],
+[data-theme="dark"] [class*="bg-green-50"],
+[data-theme="dark"] [class*="bg-teal-50"] {
+  background-color: rgba(16, 185, 129, 0.2) !important;
+  background: rgba(16, 185, 129, 0.2) !important;
+  border-color: rgba(16, 185, 129, 0.4) !important;
+  color: #34D399 !important;
+}
+html.dark [class*="bg-emerald-50"] *,
+html.dark [class*="bg-emerald-100"] *,
+[data-theme="dark"] [class*="bg-emerald-50"] * {
+  color: #34D399 !important;
+}
+
+html.dark [class*="bg-rose-50"],
+html.dark [class*="bg-rose-100"],
+html.dark [class*="bg-red-50"],
+[data-theme="dark"] [class*="bg-rose-50"],
+[data-theme="dark"] [class*="bg-red-50"] {
+  background-color: rgba(244, 63, 94, 0.2) !important;
+  background: rgba(244, 63, 94, 0.2) !important;
+  border-color: rgba(244, 63, 94, 0.4) !important;
+  color: #FB7185 !important;
+}
+html.dark [class*="bg-rose-50"] *,
+[data-theme="dark"] [class*="bg-rose-50"] * {
+  color: #FB7185 !important;
+}
+
+html.dark [class*="bg-indigo-50"],
+html.dark [class*="bg-purple-50"],
+[data-theme="dark"] [class*="bg-indigo-50"],
+[data-theme="dark"] [class*="bg-purple-50"] {
+  background-color: rgba(99, 102, 241, 0.2) !important;
+  background: rgba(99, 102, 241, 0.2) !important;
+  border-color: rgba(99, 102, 241, 0.4) !important;
+  color: #A5B4FC !important;
+}
+html.dark [class*="bg-indigo-50"] *,
+[data-theme="dark"] [class*="bg-indigo-50"] * {
+  color: #A5B4FC !important;
+}
+
+/* Secondary filter buttons in dark mode (e.g. All Tracks, Web Dev) */
+html.dark button[class*="bg-slate-100"],
+html.dark button[class*="bg-slate-200"],
+[data-theme="dark"] button[class*="bg-slate-100"],
+[data-theme="dark"] button[class*="bg-slate-200"] {
+  background-color: #172033 !important;
+  background: #172033 !important;
+  border-color: #1E293B !important;
+  color: #FFFFFF !important;
+}
+
+/* Borders and Rings in dark mode */
+html.dark .border-slate-100,
+html.dark .border-slate-200,
+html.dark .border-slate-300,
+html.dark .border-gray-100,
+html.dark .border-gray-200,
+html.dark .border-stone-100,
+html.dark .border-stone-200,
+html.dark [class*="border-sky-200"],
+html.dark [class*="border-sky-300"],
+html.dark [class*="border-slate-200/"],
+html.dark [class*="border-stone-200/"],
+html.dark [class*="ring-slate-200"],
+html.dark [class*="ring-stone-200"],
+html.dark .divide-slate-100,
+html.dark .divide-slate-200,
+[data-theme="dark"] .border-slate-100,
+[data-theme="dark"] .border-slate-200,
+[data-theme="dark"] .border-gray-200,
+[data-theme="dark"] [class*="border-sky-200"],
+[data-theme="dark"] [class*="border-sky-300"],
+[data-theme="dark"] [class*="border-stone-200"],
+[data-theme="dark"] .divide-slate-200 {
+  border-color: #1E293B !important;
+  --tw-ring-color: #1E293B !important;
+}
+
+/* ============================================================
+   ALL TEXT IN DARK MODE MUST BE COLOR #FFFFFF
+   ============================================================ */
+html.dark,
+html.dark body,
+html.dark p,
+html.dark h1,
+html.dark h2,
+html.dark h3,
+html.dark h4,
+html.dark h5,
+html.dark h6,
+html.dark label,
+html.dark th,
+html.dark td,
+html.dark li,
+html.dark dt,
+html.dark dd,
+html.dark strong,
+html.dark b,
+html.dark input:not([type="submit"]):not([type="button"]),
+html.dark select,
+html.dark textarea,
+[data-theme="dark"],
+[data-theme="dark"] body,
+[data-theme="dark"] p,
+[data-theme="dark"] h1,
+[data-theme="dark"] h2,
+[data-theme="dark"] h3,
+[data-theme="dark"] h4,
+[data-theme="dark"] h5,
+[data-theme="dark"] h6,
+[data-theme="dark"] label,
+[data-theme="dark"] th,
+[data-theme="dark"] td,
+[data-theme="dark"] li,
+[data-theme="dark"] dt,
+[data-theme="dark"] dd,
+[data-theme="dark"] strong,
+[data-theme="dark"] b,
+[data-theme="dark"] input:not([type="submit"]):not([type="button"]),
+[data-theme="dark"] select,
+[data-theme="dark"] textarea {
+  color: #FFFFFF !important;
+}
+
+html.dark span:not(.golden-btn *):not(.btn-gold *):not([class*="golden-btn"] *):not([class*="badge-"]):not([class*="text-emerald-"]):not([class*="text-rose-"]):not([class*="text-amber-"]):not([class*="text-cyan-"]):not([class*="text-sky-"]):not([class*="bg-gradient"]):not([class*="bg-cyan"]):not([class*="bg-amber"]):not([class*="bg-sky"]):not([class*="bg-emerald"]):not([class*="bg-rose"]):not([class*="bg-indigo"]):not([class*="bg-purple"]):not([class*="public-heading-badge"]):not([class*="public-heading-badge"] *),
+[data-theme="dark"] span:not(.golden-btn *):not(.btn-gold *):not([class*="golden-btn"] *):not([class*="badge-"]):not([class*="text-emerald-"]):not([class*="text-rose-"]):not([class*="text-amber-"]):not([class*="text-cyan-"]):not([class*="text-sky-"]):not([class*="bg-gradient"]):not([class*="bg-cyan"]):not([class*="bg-amber"]):not([class*="bg-sky"]):not([class*="bg-emerald"]):not([class*="bg-rose"]):not([class*="bg-indigo"]):not([class*="bg-purple"]):not([class*="public-heading-badge"]):not([class*="public-heading-badge"] *) {
+  color: #FFFFFF !important;
+}
+
+html.dark a:not(.golden-btn):not([class*="golden-btn"]):not([class*="bg-"]):not([class*="text-cyan-"]):not([class*="text-sky-"]):not([class*="text-emerald-"]):not([class*="text-amber-"]),
+[data-theme="dark"] a:not(.golden-btn):not([class*="golden-btn"]):not([class*="bg-"]):not([class*="text-cyan-"]):not([class*="text-sky-"]):not([class*="text-emerald-"]):not([class*="text-amber-"]) {
+  color: #FFFFFF !important;
+}
+
+/* Comprehensive text utility mapping in dark mode to #FFFFFF */
+html.dark .text-slate-950,
+html.dark .text-slate-900,
+html.dark .text-slate-800,
+html.dark .text-slate-700,
+html.dark .text-slate-600,
+html.dark .text-slate-500,
+html.dark .text-slate-400,
+html.dark .text-slate-300,
+html.dark .text-slate-200,
+html.dark .text-slate-100,
+html.dark .text-gray-950,
+html.dark .text-gray-900,
+html.dark .text-gray-800,
+html.dark .text-gray-700,
+html.dark .text-gray-600,
+html.dark .text-gray-500,
+html.dark .text-gray-400,
+html.dark .text-stone-900,
+html.dark .text-stone-800,
+html.dark .text-stone-700,
+html.dark .text-stone-600,
+html.dark .text-stone-500,
+html.dark .text-stone-400,
+html.dark .text-zinc-900,
+html.dark .text-zinc-800,
+html.dark .text-zinc-700,
+html.dark .text-zinc-600,
+html.dark .text-zinc-500,
+html.dark .text-neutral-900,
+html.dark .text-neutral-800,
+html.dark .text-neutral-700,
+html.dark [class*="text-[var(--tlh-navy)]"],
+html.dark [class*="text-[var(--text-main)]"],
+html.dark [class*="text-[var(--text-secondary)]"],
+html.dark [class*="text-[var(--text-muted)]"],
+[data-theme="dark"] .text-slate-950,
+[data-theme="dark"] .text-slate-900,
+[data-theme="dark"] .text-slate-800,
+[data-theme="dark"] .text-slate-700,
+[data-theme="dark"] .text-slate-600,
+[data-theme="dark"] .text-slate-500,
+[data-theme="dark"] .text-slate-400,
+[data-theme="dark"] .text-gray-950,
+[data-theme="dark"] .text-gray-900,
+[data-theme="dark"] .text-gray-800,
+[data-theme="dark"] .text-stone-900,
+[data-theme="dark"] .text-stone-800,
+[data-theme="dark"] .text-stone-700,
+[data-theme="dark"] .text-stone-600,
+[data-theme="dark"] .text-stone-500,
+[data-theme="dark"] [class*="text-[var(--tlh-navy)]"],
+[data-theme="dark"] [class*="text-[var(--text-main)]"],
+[data-theme="dark"] [class*="text-[var(--text-secondary)]"] {
+  color: #FFFFFF !important;
+}
+
+/* Form Controls in Dark Mode */
+html.dark input:not([type="submit"]):not([type="button"]):not([type="checkbox"]):not([type="radio"]),
+html.dark select,
+html.dark textarea,
+[data-theme="dark"] input:not([type="submit"]):not([type="button"]):not([type="checkbox"]):not([type="radio"]),
+[data-theme="dark"] select,
+[data-theme="dark"] textarea {
+  background-color: #111827 !important;
+  color: #FFFFFF !important;
+  border-color: #1E293B !important;
+}
+
+html.dark input::placeholder,
+html.dark textarea::placeholder,
+[data-theme="dark"] input::placeholder,
+[data-theme="dark"] textarea::placeholder {
+  color: rgba(255, 255, 255, 0.45) !important;
+}
+
+/* Tables in Dark Mode */
+html.dark table th,
+[data-theme="dark"] table th {
+  background-color: #172033 !important;
+  color: #FFFFFF !important;
+  border-color: #1E293B !important;
+}
+
+html.dark table td,
+[data-theme="dark"] table td {
+  color: #FFFFFF !important;
+  border-color: #1E293B !important;
+}
+
+html.dark table tbody tr:hover,
+[data-theme="dark"] table tbody tr:hover {
+  background-color: rgba(23, 32, 51, 0.7) !important;
+}
+
+/* Hero Central Card (Crystal Clear Presentation, Never Milky White) */
+.hero-content-card,
+.editorial-page .hero-content-card,
+html.dark .hero-content-card,
+[data-theme="dark"] .hero-content-card {
+  background-color: rgba(7, 27, 73, 0.85) !important;
+  background: rgba(7, 27, 73, 0.85) !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  box-shadow: 0 24px 60px -12px rgba(0, 0, 0, 0.75) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+}
+
+/* Floating HUD badges in Hero Section */
+.hero-hud-card,
+html.dark .hero-hud-card,
+[data-theme="dark"] .hero-hud-card {
+  background-color: rgba(7, 27, 73, 0.9) !important;
+  background: rgba(7, 27, 73, 0.9) !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+}
+
+/* Live Session locked badge in dark mode */
+html.dark [id^="live-session-locked-"],
+[data-theme="dark"] [id^="live-session-locked-"] {
+  background: rgba(197, 155, 39, 0.14) !important;
+  background-color: rgba(197, 155, 39, 0.14) !important;
+  border-color: rgba(197, 155, 39, 0.35) !important;
+  color: #FBBF24 !important;
+}
+html.dark [id^="live-session-locked-"] *,
+[data-theme="dark"] [id^="live-session-locked-"] * {
+  color: #FBBF24 !important;
+}
+
+/* Auth Aside in Dark Mode (Fix for White/Cyan Gradient) */
+html.dark .auth-page aside,
+[data-theme="dark"] .auth-page aside {
+  background: linear-gradient(135deg, #071B49 0%, #0B2D70 50%, #071B49 100%) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+html.dark .editorial-hero,
+html.bluedark .editorial-hero,
+[data-theme="dark"] .editorial-hero,
+[data-theme="bluedark"] .editorial-hero {
+  background:
+    radial-gradient(
+      ellipse at 85% 10%,
+      rgba(217, 119, 6, 0.08),
+      transparent 35rem
+    ),
+    radial-gradient(
+      ellipse at 20% 90%,
+      rgba(18, 102, 232, 0.15),
+      transparent 30rem
+    ),
+    linear-gradient(135deg, #070B14 0%, #0F172A 100%) !important;
+}
+
+/* ============================================================
+   PRIMARY ACTION BUTTONS — ADAPTIVE LIGHT/DARK PALETTE
+   • Light Mode: Luxury TLH Dark Blue (#071B49 base, #0B2D70 hover)
+   • Dark Mode:  Refined Eye-Friendly Gold (#C59B27 base, #A8741A hover) - Zero Neon Glare
+   ============================================================ */
+.golden-btn,
+.btn-gold,
+.btn-theme-action,
+.dashboard-btn-gold,
+.card-enroll-btn,
+.editorial-button,
+button[class*="from-[var(--tlh-blue-primary)]"],
+a[class*="from-[var(--tlh-blue-primary)]"],
+button[class*="from-blue-600"],
+a[class*="from-blue-600"],
+.admin-workspace button[type="submit"],
+.teacher-workspace button[type="submit"],
+.student-workspace button[type="submit"],
+.learning-workspace button[type="submit"] {
+  border-radius: 9999px !important;
+  background: #071B49 !important;
+  background-color: #071B49 !important;
+  color: #FFFFFF !important;
+  font-weight: 700 !important;
+  letter-spacing: normal !important;
+  text-transform: none !important;
+  border: 1px solid rgba(7, 27, 73, 0.25) !important;
+  outline: none !important;
+  opacity: 1 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  text-shadow: none !important;
+  box-shadow: 0 4px 14px rgba(7, 27, 73, 0.18), 0 2px 4px rgba(7, 27, 73, 0.1) !important;
+  transition: all 180ms cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.golden-btn *,
+.btn-gold *,
+.btn-theme-action *,
+.dashboard-btn-gold *,
+.card-enroll-btn *,
+.editorial-button *,
+button[class*="from-[var(--tlh-blue-primary)]"] *,
+a[class*="from-[var(--tlh-blue-primary)]"] *,
+button[class*="from-blue-600"] *,
+a[class*="from-blue-600"] *,
+.admin-workspace button[type="submit"] *,
+.teacher-workspace button[type="submit"] *,
+.student-workspace button[type="submit"] *,
+.learning-workspace button[type="submit"] * {
+  color: #FFFFFF !important;
+}
+
+.golden-btn:hover,
+.btn-gold:hover,
+.btn-theme-action:hover,
+.dashboard-btn-gold:hover,
+.card-enroll-btn:hover,
+.editorial-button:hover,
+button[class*="from-[var(--tlh-blue-primary)]"]:hover,
+a[class*="from-[var(--tlh-blue-primary)]"]:hover,
+button[class*="from-blue-600"]:hover,
+a[class*="from-blue-600"]:hover,
+.admin-workspace button[type="submit"]:hover,
+.teacher-workspace button[type="submit"]:hover,
+.student-workspace button[type="submit"]:hover,
+.learning-workspace button[type="submit"]:hover {
+  transform: translateY(-1px) !important;
+  background: #0B2D70 !important;
+  background-color: #0B2D70 !important;
+  box-shadow: 0 6px 20px rgba(7, 27, 73, 0.25), 0 3px 6px rgba(7, 27, 73, 0.15) !important;
+  color: #FFFFFF !important;
+  opacity: 1 !important;
+}
+
+.golden-btn:active,
+.btn-gold:active,
+.btn-theme-action:active,
+.dashboard-btn-gold:active,
+.card-enroll-btn:active,
+.editorial-button:active,
+button[class*="from-[var(--tlh-blue-primary)]"]:active,
+a[class*="from-[var(--tlh-blue-primary)]"]:active,
+button[class*="from-blue-600"]:active,
+a[class*="from-blue-600"]:active,
+.admin-workspace button[type="submit"]:active,
+.teacher-workspace button[type="submit"]:active,
+.student-workspace button[type="submit"]:active,
+.learning-workspace button[type="submit"]:active {
+  transform: translateY(0) scale(0.98) !important;
+  background: #050E24 !important;
+  background-color: #050E24 !important;
+  box-shadow: 0 2px 6px rgba(7, 27, 73, 0.15) !important;
+}
+
+/* ============================================================
+   DARK MODE OVERRIDE FOR ALL ACTION BUTTONS -> REFINED EYE-FRIENDLY GOLD
+   • Hue: Refined Antique Warm Gold (#C59B27 base, #A8741A hover)
+   • 100% Solid, Non-Translucent, Zero Neon Glare, Eye-Calming
+   • Crisp Bold White Text (#FFFFFF)
+   ============================================================ */
+html.dark .golden-btn,
+html.dark .btn-gold,
+html.dark .btn-theme-action,
+html.dark .dashboard-btn-gold,
+html.dark .card-enroll-btn,
+html.dark .editorial-button,
+html.dark button[class*="from-[var(--tlh-blue-primary)]"],
+html.dark a[class*="from-[var(--tlh-blue-primary)]"],
+html.dark button[class*="from-blue-600"],
+html.dark a[class*="from-blue-600"],
+html.dark .admin-workspace button[type="submit"],
+html.dark .teacher-workspace button[type="submit"],
+html.dark .student-workspace button[type="submit"],
+html.dark .learning-workspace button[type="submit"],
+[data-theme="dark"] .golden-btn,
+[data-theme="dark"] .btn-gold,
+[data-theme="dark"] .btn-theme-action,
+[data-theme="dark"] .dashboard-btn-gold,
+[data-theme="dark"] .card-enroll-btn,
+[data-theme="dark"] .editorial-button,
+[data-theme="dark"] button[class*="from-[var(--tlh-blue-primary)]"],
+[data-theme="dark"] a[class*="from-[var(--tlh-blue-primary)]"],
+[data-theme="dark"] button[class*="from-blue-600"],
+[data-theme="dark"] a[class*="from-blue-600"],
+[data-theme="dark"] .admin-workspace button[type="submit"],
+[data-theme="dark"] .teacher-workspace button[type="submit"],
+[data-theme="dark"] .student-workspace button[type="submit"],
+[data-theme="dark"] .learning-workspace button[type="submit"] {
+  border-radius: 9999px !important;
+  background: #C59B27 !important;
+  background-color: #C59B27 !important;
+  color: #FFFFFF !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35) !important;
+}
+
+html.dark .golden-btn:hover,
+html.dark .btn-gold:hover,
+html.dark .btn-theme-action:hover,
+html.dark .dashboard-btn-gold:hover,
+html.dark .card-enroll-btn:hover,
+html.dark .editorial-button:hover,
+html.dark button[class*="from-[var(--tlh-blue-primary)]"]:hover,
+html.dark a[class*="from-[var(--tlh-blue-primary)]"]:hover,
+html.dark button[class*="from-blue-600"]:hover,
+html.dark a[class*="from-blue-600"]:hover,
+html.dark .admin-workspace button[type="submit"]:hover,
+html.dark .teacher-workspace button[type="submit"]:hover,
+html.dark .student-workspace button[type="submit"]:hover,
+html.dark .learning-workspace button[type="submit"]:hover,
+[data-theme="dark"] .golden-btn:hover,
+[data-theme="dark"] .btn-gold:hover,
+[data-theme="dark"] .btn-theme-action:hover,
+[data-theme="dark"] .dashboard-btn-gold:hover,
+[data-theme="dark"] .card-enroll-btn:hover,
+[data-theme="dark"] .editorial-button:hover,
+[data-theme="dark"] button[class*="from-[var(--tlh-blue-primary)]"]:hover,
+[data-theme="dark"] a[class*="from-[var(--tlh-blue-primary)]"]:hover,
+[data-theme="dark"] button[class*="from-blue-600"]:hover,
+[data-theme="dark"] a[class*="from-blue-600"]:hover,
+[data-theme="dark"] .admin-workspace button[type="submit"]:hover,
+[data-theme="dark"] .teacher-workspace button[type="submit"]:hover,
+[data-theme="dark"] .student-workspace button[type="submit"]:hover,
+[data-theme="dark"] .learning-workspace button[type="submit"]:hover {
+  transform: translateY(-1px) !important;
+  background: #A8741A !important;
+  background-color: #A8741A !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35) !important;
+  color: #FFFFFF !important;
+}
+
+html.dark .golden-btn:active,
+html.dark .btn-gold:active,
+html.dark .btn-theme-action:active,
+html.dark .dashboard-btn-gold:active,
+html.dark .card-enroll-btn:active,
+html.dark .editorial-button:active,
+html.dark button[class*="from-[var(--tlh-blue-primary)]"]:active,
+html.dark a[class*="from-[var(--tlh-blue-primary)]"]:active,
+html.dark button[class*="from-blue-600"]:active,
+html.dark a[class*="from-blue-600"]:active,
+html.dark .admin-workspace button[type="submit"]:active,
+html.dark .teacher-workspace button[type="submit"]:active,
+html.dark .student-workspace button[type="submit"]:active,
+html.dark .learning-workspace button[type="submit"]:active,
+[data-theme="dark"] .golden-btn:active,
+[data-theme="dark"] .btn-gold:active,
+[data-theme="dark"] .btn-theme-action:active,
+[data-theme="dark"] .dashboard-btn-gold:active,
+[data-theme="dark"] .card-enroll-btn:active,
+[data-theme="dark"] .editorial-button:active,
+[data-theme="dark"] button[class*="from-[var(--tlh-blue-primary)]"]:active,
+[data-theme="dark"] a[class*="from-[var(--tlh-blue-primary)]"]:active,
+[data-theme="dark"] button[class*="from-blue-600"]:active,
+[data-theme="dark"] a[class*="from-blue-600"]:active,
+[data-theme="dark"] .admin-workspace button[type="submit"]:active,
+[data-theme="dark"] .teacher-workspace button[type="submit"]:active,
+[data-theme="dark"] .student-workspace button[type="submit"]:active,
+[data-theme="dark"] .learning-workspace button[type="submit"]:active {
+  transform: translateY(0) scale(0.98) !important;
+  background: #8C5F10 !important;
+  background-color: #8C5F10 !important;
 }
 
 /* ============================================================
@@ -492,7 +1298,7 @@
    ============================================================ */
 .editorial-footer {
   border-color: #172a4d;
-  background: #071329;
+  background: #071B49;
   color: #94a3b8;
 }
 
@@ -538,13 +1344,13 @@
 }
 .dashboard-sidebar-nav-item[aria-current="page"],
 .dashboard-sidebar-nav-item.active {
-  background: linear-gradient(135deg, #0066ff 0%, #0099ff 100%);
+  background: linear-gradient(135deg, #1266E8 0%, #168BFF 100%);
   color: #ffffff;
-  box-shadow: 0 2px 10px rgba(0, 102, 255, 0.3);
+  box-shadow: 0 2px 10px rgba(18, 102, 232, 0.3);
 }
 .dashboard-sidebar-nav-item:not([aria-current="page"]):not(.active):hover {
-  background: #eff6ff;
-  color: #0066ff;
+  background: #F5F8FE;
+  color: #1266E8;
 }
 
 /* ============================================================
@@ -555,7 +1361,7 @@
   inset-x: 0;
   bottom: 0;
   height: 3px;
-  background: linear-gradient(90deg, #0066ff, #00d2ff);
+  background: linear-gradient(90deg, #1266E8, #12BCEB);
   opacity: 0;
   transition: opacity 200ms ease;
   border-radius: 0 0 1.5rem 1.5rem;

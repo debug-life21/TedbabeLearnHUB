@@ -18,7 +18,7 @@ export function PricingPage() {
       ],
       buttonText: t("pricingExploreButton"),
       buttonLink: "/courses",
-      buttonStyle: "bg-slate-900 text-white hover:bg-slate-800 shadow-sm",
+      buttonStyle: "golden-btn bg-[#C59B27] text-white hover:bg-[#A8741A] shadow-sm hover:shadow-md",
     },
     {
       name: t("pricingCohortTitle"),
@@ -35,7 +35,7 @@ export function PricingPage() {
       buttonText: t("pricingCohortButton"),
       buttonLink: "/register/student",
       buttonStyle:
-        "bg-gradient-to-r from-[#0066ff] to-[#0099ff] text-white hover:from-[#0052cc] hover:to-[#0088e6] shadow-md shadow-blue-500/25",
+        "golden-btn bg-[#C59B27] text-white hover:bg-[#A8741A] shadow-sm hover:shadow-md",
     },
     {
       name: t("pricingPlanTitle"),
@@ -51,7 +51,7 @@ export function PricingPage() {
       ],
       buttonText: t("pricingPlanButton"),
       buttonLink: "/register/student",
-      buttonStyle: "bg-slate-900 text-white hover:bg-slate-800 shadow-sm",
+      buttonStyle: "golden-btn bg-[#C59B27] text-white hover:bg-[#A8741A] shadow-sm hover:shadow-md",
     },
   ];
 
@@ -85,7 +85,7 @@ export function PricingPage() {
               }`}
             >
               {plan.badge && (
-                <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-[#0066ff] to-[#0099ff] px-4 py-1 text-[10px] font-black uppercase tracking-wider text-white shadow-md shadow-blue-500/25">
+                <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full bg-[#C59B27] px-4 py-1 text-[10px] font-black uppercase tracking-wider text-white shadow-sm">
                   {plan.badge}
                 </span>
               )}

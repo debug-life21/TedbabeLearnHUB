@@ -92,7 +92,7 @@ export function SocialLinks() {
   return (
     <nav
       aria-label="TedbabeLearnHUB social media"
-      className="fixed bottom-4 right-4 z-40 flex max-w-[calc(100vw-2rem)] items-center gap-1.5 rounded-full border border-sky-500/20 bg-[#071329]/90 p-2 shadow-xl shadow-slate-950/20 backdrop-blur-md print:hidden sm:bottom-6 sm:right-6 sm:gap-2 sm:p-2.5"
+      className="fixed bottom-4 right-4 z-40 flex max-w-[calc(100vw-2rem)] items-center gap-1.5 rounded-full border border-sky-500/20 bg-[var(--tlh-navy-deep)]/90 p-2 shadow-xl shadow-slate-950/20 backdrop-blur-md print:hidden sm:bottom-6 sm:right-6 sm:gap-2 sm:p-2.5"
     >
       {socialLinks.map(({ name, url, icon }) => {
         const className =

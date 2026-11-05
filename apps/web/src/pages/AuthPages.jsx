@@ -9,14 +9,14 @@ import { BrandLogo } from "../components/BrandLogo";
 
 function AuthShell({ title, subtitle, children }) {
     return (
-        <div className="editorial-page auth-page mx-auto max-w-lg px-4 py-12 sm:px-6 sm:py-16">
-            <div className="rounded-3xl bg-white p-7 shadow-xl ring-1 ring-slate-200/90 sm:p-10">
-                <div className="mb-7 text-center">
-                    <Link to="/" className="inline-flex justify-center transition hover:opacity-90">
+        <div className="editorial-page auth-page mx-auto max-w-lg px-4 py-12 sm:px-6 sm:py-20">
+            <div className="rounded-[var(--radius-3xl)] bg-[var(--surface-card)] p-8 shadow-[var(--shadow-xl)] ring-1 ring-[var(--surface-border)]/50 sm:p-12">
+                <div className="mb-10 text-center">
+                    <Link to="/" className="inline-flex justify-center transition hover:scale-105">
                         <BrandLogo size="md" />
                     </Link>
-                    <h1 className="mt-5 text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">{title}</h1>
-                    <p className="mt-1.5 text-sm font-medium text-slate-500">{subtitle}</p>
+                    <h1 className="mt-8 text-3xl font-black tracking-tight text-[var(--text-main)] sm:text-4xl">{title}</h1>
+                    <p className="mt-3 text-[15px] font-medium text-[var(--text-muted)] leading-relaxed">{subtitle}</p>
                 </div>
                 {children}
             </div>
@@ -27,25 +27,82 @@ function AuthShell({ title, subtitle, children }) {
 function Feedback({ children }) {
     if (!children) return null;
     const success = children.startsWith("A new code has been sent") || children.toLowerCase().includes("successful");
-    return <div role={success ? "status" : "alert"} className={`mb-5 rounded-2xl p-3.5 text-sm font-semibold ring-1 ${success ? "bg-sky-50 text-sky-800 ring-sky-200" : "bg-rose-50 text-rose-700 ring-rose-200"}`}>{children}</div>;
+    return (
+        <div 
+            role={success ? "status" : "alert"} 
+            className={`mb-6 rounded-[var(--radius-2xl)] p-4 text-sm font-semibold ring-1 ${
+                success 
+                    ? "bg-[var(--tlh-cyan)]/10 text-[var(--tlh-cyan)] ring-[var(--tlh-cyan)]/20" 
+                    : "bg-rose-50 text-rose-700 ring-rose-200"
+            }`}
+        >
+            <div className="flex items-center gap-2">
+                {success ? "✓" : "⚠️"}
+                {children}
+            </div>
+        </div>
+    );
 }
 
 function GoogleSignIn({ onCredential, disabled }) {
-    if (!import.meta.env.VITE_GOOGLE_CLIENT_ID) {
-        return <p className="mb-5 text-center text-xs text-slate-500">Google sign-in is not configured.</p>;
-    }
+    const [gsiError, setGsiError] = useState(false);
+    const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+
+    const handleCustomClick = () => {
+        if (!googleClientId) {
+            setGsiError(true);
+            return;
+        }
+        const gsiBtn = document.querySelector(".gsi-hidden-wrapper div[role='button']");
+        if (gsiBtn) {
+            gsiBtn.click();
+        } else {
+            setGsiError(true);
+        }
+    };
+
     return (
-        <div className={`mb-5 flex justify-center ${disabled ? "pointer-events-none opacity-60" : ""}`}>
-            <GoogleLogin
-                onSuccess={(response) => {
-                    if (response.credential) onCredential(response.credential);
-                }}
-                onError={() => onCredential(null)}
-                text="continue_with"
-                shape="pill"
-                width="360"
-                useOneTap={false}
-            />
+        <div className="mb-6 w-full">
+            <div className={`relative flex w-full justify-center ${disabled ? "pointer-events-none opacity-60" : ""}`}>
+                {/* 1. Always-visible luxury branded Google button */}
+                <button
+                    type="button"
+                    onClick={handleCustomClick}
+                    disabled={disabled}
+                    className="group relative flex w-full items-center justify-center gap-3 rounded-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 py-3.5 px-6 text-[13px] font-bold text-slate-800 dark:text-white shadow-sm hover:bg-slate-50 dark:hover:bg-slate-800 hover:shadow-md active:scale-[0.99] transition-all"
+                >
+                    <svg className="h-5 w-5 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
+                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+                    </svg>
+                    <span>Continue with Google</span>
+                </button>
+
+                {/* 2. Official Google GSI component transparently layered over it */}
+                {googleClientId ? (
+                    <div className="gsi-hidden-wrapper absolute inset-0 opacity-0 overflow-hidden flex items-center justify-center pointer-events-auto cursor-pointer">
+                        <GoogleLogin
+                            onSuccess={(response) => {
+                                if (response.credential) onCredential(response.credential);
+                            }}
+                            onError={() => {
+                                setGsiError(true);
+                            }}
+                            text="continue_with"
+                            shape="pill"
+                            width="380"
+                            useOneTap={false}
+                        />
+                    </div>
+                ) : null}
+            </div>
+            {gsiError && (
+                <p className="mt-2 text-center text-xs text-amber-600 dark:text-amber-400 font-medium">
+                    Google sign-in popup was blocked or restricted. Please continue with email registration below.
+                </p>
+            )}
         </div>
     );
 }
@@ -132,43 +189,69 @@ export function SignInPage() {
         <AuthShell title={t("signIn")} subtitle="Access your TedbabeLearnHUB (TLH) learning and management portal">
             <Feedback>{feedback}</Feedback>
             {feedback && feedback.toLowerCase().includes("admin") && (
-                <div className="mb-5">
+                <div className="mb-6">
                     <a
                         href={typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
                             ? "http://localhost:5174"
                             : "https://tedbabelearnhub-admin.vercel.app"}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#0c234b] to-[#061124] py-3 text-xs font-bold text-white shadow-sm hover:from-[#091b3b] hover:to-[#040b17] transition"
+                        className="flex w-full items-center justify-center gap-2 rounded-[var(--radius-2xl)] bg-gradient-to-r from-[var(--tlh-navy)] to-[var(--tlh-deep-blue)] py-4 text-xs font-black uppercase tracking-wider text-white shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-md)] transition-all hover:-translate-y-0.5"
                     >
                         Go to Admin Dashboard ↗
                     </a>
                 </div>
             )}
             <GoogleSignIn onCredential={continueWithGoogle} disabled={loading} />
-            <div className="mb-5 flex items-center gap-3 text-xs font-semibold text-slate-400">
-                <span className="h-px flex-1 bg-slate-200" />OR CONTINUE WITH EMAIL<span className="h-px flex-1 bg-slate-200" />
+            <div className="mb-6 flex items-center gap-4 text-[11px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)]/60">
+                <span className="h-px flex-1 bg-[var(--surface-border)]" />
+                <span>Or email sign in</span>
+                <span className="h-px flex-1 bg-[var(--surface-border)]" />
             </div>
-            <form onSubmit={handleSubmit} className="space-y-4">
-                <label className="block text-xs font-bold text-slate-700">
-                    {t("email")}
-                    <input required autoComplete="email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} className="mt-1.5 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm font-medium normal-case outline-none transition focus:border-[#0066ff] focus:ring-4 focus:ring-blue-500/10" placeholder="name@example.com" />
-                </label>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
-                    <div className="flex items-center justify-between">
-                        <span>{t("password")}</span>
-                        <Link to="/forgot-password" className="text-[11px] font-semibold text-[#0066ff] hover:text-[#0052cc] hover:underline lowercase first-letter:uppercase">
+            <form onSubmit={handleSubmit} className="space-y-6">
+                <div>
+                    <label className="block text-[11px] font-black uppercase tracking-[0.15em] text-[var(--text-muted)] mb-2">
+                        {t("email")}
+                    </label>
+                    <input 
+                        required 
+                        autoComplete="email" 
+                        type="email" 
+                        value={email} 
+                        onChange={(event) => setEmail(event.target.value)} 
+                        className="w-full rounded-[var(--radius-2xl)] border border-[var(--surface-border)] bg-[var(--surface-page)] px-5 py-4 text-sm font-semibold text-[var(--text-main)] outline-none transition-all placeholder:text-[var(--text-muted)]/50 focus:border-[var(--tlh-blue-primary)] focus:bg-white focus:ring-4 focus:ring-[var(--tlh-blue-primary)]/5" 
+                        placeholder="name@example.com" 
+                    />
+                </div>
+                <div>
+                    <div className="flex items-center justify-between mb-2">
+                        <label className="text-[11px] font-black uppercase tracking-[0.15em] text-[var(--text-muted)]">
+                            {t("password")}
+                        </label>
+                        <Link to="/forgot-password" name="forgot_password_link" className="text-[11px] font-bold text-[var(--tlh-blue-primary)] hover:text-[var(--tlh-blue-hover)] hover:underline">
                             Forgot password?
                         </Link>
                     </div>
-                    <input required autoComplete="current-password" type="password" value={password} onChange={(event) => setPassword(event.target.value)} className="mt-1.5 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm font-medium normal-case outline-none transition focus:border-[#0066ff] focus:ring-4 focus:ring-blue-500/10" placeholder="Your password" />
-                </label>
-                <button disabled={loading} type="submit" className="w-full rounded-2xl bg-gradient-to-r from-[#0066ff] to-[#0099ff] py-3.5 text-xs font-black uppercase tracking-wider text-white shadow-md shadow-blue-500/25 transition hover:from-[#0052cc] hover:to-[#0088e6] disabled:cursor-wait disabled:opacity-50">
-                    {loading ? t("loading") : "Continue"}
+                    <input 
+                        required 
+                        autoComplete="current-password" 
+                        type="password" 
+                        value={password} 
+                        onChange={(event) => setPassword(event.target.value)} 
+                        className="w-full rounded-[var(--radius-2xl)] border border-[var(--surface-border)] bg-[var(--surface-page)] px-5 py-4 text-sm font-semibold text-[var(--text-main)] outline-none transition-all placeholder:text-[var(--text-muted)]/50 focus:border-[var(--tlh-blue-primary)] focus:bg-white focus:ring-4 focus:ring-[var(--tlh-blue-primary)]/5" 
+                        placeholder="••••••••" 
+                    />
+                </div>
+                <button 
+                    disabled={loading} 
+                    type="submit" 
+                    className="golden-btn w-full rounded-full py-4 text-xs font-bold text-white shadow-sm hover:shadow-md transition-all active:scale-95 disabled:cursor-wait disabled:opacity-50"
+                >
+                    {loading ? t("loading") : "Sign In to Portal"}
                 </button>
             </form>
-            <p className="mt-6 border-t border-slate-100 pt-5 text-center text-sm text-slate-600">
-                New to TedbabeLearnHUB? <Link to="/signup" className="font-bold text-[#0066ff] hover:text-[#0052cc] hover:underline">Create an account</Link>
+            <p className="mt-8 border-t border-[var(--surface-border)]/50 pt-8 text-center text-[13px] font-medium text-[var(--text-muted)]">
+                New to TedbabeLearnHUB? <Link to="/signup" className="font-black text-[var(--tlh-blue-primary)] hover:text-[var(--tlh-blue-hover)] hover:underline">Create an account</Link>
             </p>
         </AuthShell>
     );
@@ -371,112 +454,133 @@ export function SignupPage({ initialRole = "student" }) {
         }
     };
 
-    const fieldClass = "mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium normal-case outline-none transition focus:border-[#0066ff] focus:ring-4 focus:ring-blue-500/10";
+    const fieldClass = "mt-2 w-full rounded-[var(--radius-xl)] border border-[var(--surface-border)] bg-[var(--surface-page)] px-5 py-4 text-sm font-semibold text-[var(--text-main)] outline-none transition-all placeholder:text-[var(--text-muted)]/50 focus:border-[var(--tlh-blue-primary)] focus:bg-white focus:ring-4 focus:ring-[var(--tlh-blue-primary)]/5";
     return (
-        <div className="editorial-page auth-page mx-auto w-full px-4 py-8 sm:px-6 sm:py-12">
-            <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[0.85fr_1.15fr] lg:items-start">
-                <aside className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0c234b] via-[#091b3b] to-[#061124] p-7 text-white shadow-xl sm:p-9 lg:sticky lg:top-24 border border-sky-500/20">
-                    <div aria-hidden="true" className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-sky-500/15 blur-3xl" />
-                    <div aria-hidden="true" className="pointer-events-none absolute -left-16 -bottom-16 h-48 w-48 rounded-full bg-blue-600/10 blur-2xl" />
+        <div className="editorial-page auth-page mx-auto w-full px-4 py-12 sm:px-6 sm:py-20">
+            <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[0.85fr_1.15fr] lg:items-start">
+                <aside className="relative overflow-hidden rounded-[var(--radius-3xl)] bg-gradient-to-br from-[#071B49] via-[#0B2D70] to-[#071B49] dark:from-[#050E24] dark:via-[#0B1E4A] dark:to-[#050E24] p-8 text-white shadow-[var(--shadow-xl)] sm:p-10 lg:sticky lg:top-24 border border-white/10">
+                    <div aria-hidden="true" className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-[var(--tlh-sky)]/10 blur-3xl" />
+                    <div aria-hidden="true" className="pointer-events-none absolute -left-16 -bottom-16 h-48 w-48 rounded-full bg-[var(--tlh-blue-primary)]/10 blur-2xl" />
                     <div className="relative">
-                        <Link to="/" className="inline-flex items-center gap-2">
+                        <Link to="/" className="inline-flex items-center gap-2 transition hover:scale-105">
                             <BrandLogo appearance="dark" size="sm" />
                         </Link>
-                        <p className="mt-8 text-xs font-bold uppercase tracking-[0.2em] text-sky-300">{role === "student" ? "Your learning journey" : "Teach with TedbabeLearnHUB"}</p>
-                        <h1 className="mt-3 text-3xl font-black leading-tight sm:text-4xl text-white">
+                        <p className="mt-10 text-[11px] font-black uppercase tracking-[0.25em] text-[var(--tlh-sky)]">{role === "student" ? "Your learning journey" : "Teach with TedbabeLearnHUB"}</p>
+                        <h1 className="mt-4 text-3xl font-black leading-[1.15] sm:text-4xl text-white">
                             {role === "student" ? "Build skills for what comes next." : "Help learners move forward."}
                         </h1>
-                        <p className="mt-4 max-w-md text-sm leading-6 text-slate-300">
+                        <p className="mt-6 max-w-md text-[15px] font-medium leading-relaxed text-white/70">
                             {role === "student"
-                                ? "Create your account in a few seconds. After verifying your email, you can complete your learning profile from your dashboard so we can match you with the right cohort."
+                                ? "Create your account in a few seconds. After verifying your email, you can complete your learning profile from your dashboard."
                                 : "Share your teaching background, expertise, and availability. Our team reviews every application before approval."}
                         </p>
-                        <div className="mt-8 space-y-3">
+                        <div className="mt-10 space-y-4">
                             {(role === "student"
-                                ? [["01", "Create your account"], ["02", "Verify your email"], ["03", "Complete your learning profile"]]
-                                : [["01", "Add your teaching profile"], ["02", "Upload your CV and credentials"], ["03", "Verify email; admin reviews your application"]]
+                                ? [["01", "Create your account"], ["02", "Verify your email"], ["03", "Complete your profile"]]
+                                : [["01", "Add your profile"], ["02", "Upload credentials"], ["03", "Verification & Review"]]
                             ).map(([number, text]) => (
-                                <div key={number} className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.06] p-3 backdrop-blur-sm">
-                                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-gradient-to-r from-[#0066ff] to-[#0099ff] text-xs font-black text-white shadow-sm shadow-blue-500/25">{number}</span>
-                                    <span className="text-xs font-semibold text-white/90">{text}</span>
+                                <div key={number} className="flex items-center gap-4 rounded-[var(--radius-2xl)] border border-white/10 bg-white/5 p-4 backdrop-blur-md transition hover:bg-white/10">
+                                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[var(--radius-xl)] bg-gradient-to-r from-[var(--tlh-blue-primary)] to-[var(--tlh-sky)] text-xs font-black text-white shadow-lg shadow-[var(--tlh-blue-primary)]/20">{number}</span>
+                                    <span className="text-[13px] font-bold text-white/90">{text}</span>
                                 </div>
                             ))}
                         </div>
-                        <div className="mt-8 rounded-2xl border border-white/10 bg-black/20 p-4 text-xs leading-5 text-slate-300">
+                        <div className="mt-10 rounded-[var(--radius-2xl)] border border-white/10 bg-black/20 p-5 text-[12px] font-medium leading-relaxed text-white/50">
                             Your information is used to set up your TedbabeLearnHUB account and support your learning or teaching application.
                         </div>
                     </div>
                 </aside>
 
-                <main className="rounded-3xl border border-slate-200/80 bg-white p-5 shadow-[0_24px_70px_rgba(0,102,255,0.06)] sm:p-8">
-                    <div className="mb-7">
-                        <p className="text-xs font-black uppercase tracking-[0.18em] text-[#0066ff]">[ Create account ]</p>
-                        <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">Let’s get started.</h2>
-                        <p className="mt-2 text-sm text-slate-500">First choose how you want to use TedbabeLearnHUB, then complete your account details.</p>
+                <main className="rounded-[var(--radius-3xl)] border border-[var(--surface-border)]/60 bg-[var(--surface-card)] p-6 shadow-[var(--shadow-xl)] sm:p-10">
+                    <div className="mb-10">
+                        <p className="text-[11px] font-black uppercase tracking-[0.2em] text-[var(--tlh-blue-primary)]">[ Create account ]</p>
+                        <h2 className="mt-3 text-3xl font-black tracking-tight text-[var(--text-main)] sm:text-4xl">Let’s get started.</h2>
+                        <p className="mt-3 text-[15px] font-medium text-[var(--text-muted)]">First choose how you want to use TedbabeLearnHUB, then complete your account details.</p>
                     </div>
                     <Feedback>{feedback}</Feedback>
                     {role === "student" ? <GoogleSignIn onCredential={continueWithGoogle} disabled={loading} /> : (
-                        <p className="mb-5 rounded-2xl border border-amber-200 bg-amber-50 p-3.5 text-sm leading-5 text-amber-950">
+                        <p className="mb-8 rounded-[var(--radius-2xl)] border border-[var(--tlh-gold)]/20 bg-[var(--tlh-gold)]/5 p-5 text-sm font-semibold leading-relaxed text-[var(--tlh-gold)]">
+                            <span className="mr-2">💡</span>
                             Teacher applications require a CV and teaching details, so please register with email.
                         </p>
                     )}
                     {role === "student" && (
-                        <div className="mb-5 flex items-center gap-3 text-xs font-semibold text-slate-400">
-                            <span className="h-px flex-1 bg-slate-200" />OR CONTINUE WITH EMAIL<span className="h-px flex-1 bg-slate-200" />
+                        <div className="mb-8 flex items-center gap-4 text-[11px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)]/60">
+                            <span className="h-px flex-1 bg-[var(--surface-border)]" />
+                            <span>Or email registration</span>
+                            <span className="h-px flex-1 bg-[var(--surface-border)]" />
                         </div>
                     )}
-                    <form onSubmit={handleSubmit} className="space-y-6">
+                    <form onSubmit={handleSubmit} className="space-y-8">
                         <fieldset>
-                            <legend className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-600">I want to join as</legend>
-                            <div className="grid grid-cols-2 gap-3">
+                            <legend className="mb-4 text-[11px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)]">I want to join as</legend>
+                            <div className="grid grid-cols-2 gap-4">
                                 {[
                                     { value: "student", title: "Student", description: "Learn new skills", icon: "🎓" },
                                     { value: "teacher", title: "Teacher", description: "Apply to teach", icon: "👩‍🏫" },
                                 ].map((option) => (
-                                    <button key={option.value} type="button" onClick={() => setRole(option.value)} aria-pressed={role === option.value}
-                                        className={`flex items-center gap-3 rounded-2xl border p-3.5 text-left transition ${role === option.value ? "border-[#0066ff] bg-sky-50/80 ring-2 ring-blue-500/15" : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"
-                                            }`}>
-                                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-xl shadow-sm">{option.icon}</span>
+                                    <button 
+                                        key={option.value} 
+                                        type="button" 
+                                        onClick={() => setRole(option.value)} 
+                                        aria-pressed={role === option.value}
+                                        className={`flex items-center gap-4 rounded-[var(--radius-2xl)] border p-5 text-left transition-all ${
+                                            role === option.value 
+                                                ? "border-[var(--tlh-blue-primary)] bg-[var(--tlh-blue-primary)]/5 ring-4 ring-[var(--tlh-blue-primary)]/10" 
+                                                : "border-[var(--surface-border)] bg-[var(--surface-page)] hover:border-[var(--tlh-blue-primary)]/40 hover:bg-white"
+                                        }`}
+                                    >
+                                        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[var(--radius-xl)] bg-white text-2xl shadow-sm border border-[var(--surface-border)]/50">{option.icon}</span>
                                         <span>
-                                            <span className="block text-sm font-bold text-slate-900">{option.title}</span>
-                                            <span className="mt-0.5 block text-[11px] text-slate-500">{option.description}</span>
+                                            <span className={`block text-sm font-black ${role === option.value ? "text-[var(--tlh-blue-primary)]" : "text-[var(--text-main)]"}`}>{option.title}</span>
+                                            <span className="mt-1 block text-[11px] font-bold text-[var(--text-muted)]">{option.description}</span>
                                         </span>
                                     </button>
                                 ))}
                             </div>
                         </fieldset>
 
-                        <section className="space-y-4 rounded-2xl border border-slate-200 bg-slate-50/70 p-4 sm:p-5">
+                        <section className="space-y-6 rounded-[var(--radius-2xl)] border border-[var(--surface-border)]/60 bg-[var(--surface-page)]/50 p-6 sm:p-8">
                             <div>
-                                <h3 className="text-sm font-extrabold text-slate-900">Account details</h3>
-                                <p className="mt-1 text-xs text-slate-500">Use an email address you can access to verify your account.</p>
+                                <h3 className="text-[15px] font-black text-[var(--text-main)]">Account details</h3>
+                                <p className="mt-1.5 text-[13px] font-medium text-[var(--text-muted)]">Use an email address you can access to verify your account.</p>
                             </div>
-                            <div className="grid gap-4 sm:grid-cols-2">
-                                <label className="block text-xs font-bold text-slate-700">
-                                    {t("fullName")}
+                            <div className="grid gap-6 sm:grid-cols-2">
+                                <div>
+                                    <label className="block text-[11px] font-black uppercase tracking-[0.15em] text-[var(--text-muted)] mb-2">
+                                        {t("fullName")}
+                                    </label>
                                     <input required minLength={2} maxLength={100} autoComplete="name" value={name} onChange={(event) => setName(event.target.value)} className={fieldClass} placeholder="Your name" />
-                                </label>
-                                <label className="block text-xs font-bold text-slate-700">
-                                    {t("email")}
+                                </div>
+                                <div>
+                                    <label className="block text-[11px] font-black uppercase tracking-[0.15em] text-[var(--text-muted)] mb-2">
+                                        {t("email")}
+                                    </label>
                                     <input required autoComplete="email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} className={fieldClass} placeholder="name@example.com" />
-                                </label>
-                                <label className="block text-xs font-bold text-slate-700 sm:col-span-2">
-                                    {t("password")}
+                                </div>
+                                <div className="sm:col-span-2">
+                                    <label className="block text-[11px] font-black uppercase tracking-[0.15em] text-[var(--text-muted)] mb-2">
+                                        {t("password")}
+                                    </label>
                                     <input required minLength={8} maxLength={128} autoComplete="new-password" type="password" value={password} onChange={(event) => setPassword(event.target.value)} className={fieldClass} placeholder="At least 8 characters" />
-                                </label>
-                                <label className="block text-xs font-bold text-slate-700 sm:col-span-2">
-                                    Country <span className="text-rose-500">*</span>
+                                </div>
+                                <div className="sm:col-span-2">
+                                    <label className="block text-[11px] font-black uppercase tracking-[0.15em] text-[var(--text-muted)] mb-2">
+                                        Country <span className="text-rose-500">*</span>
+                                    </label>
                                     <select required value={country} onChange={(event) => { setCountry(event.target.value); setPhoneError(""); }} className={fieldClass}>
                                         {COUNTRIES.map((c) => (
                                             <option key={c.code} value={c.code}>{c.flag} {c.name} {c.dial ? `(${c.dial})` : ""}</option>
                                         ))}
                                     </select>
-                                </label>
-                                <label className="block text-xs font-bold text-slate-700 sm:col-span-2">
-                                    Phone number <span className="text-rose-500">*</span>
-                                    <div className="mt-1.5 flex items-stretch rounded-xl border border-slate-200 bg-white transition focus-within:border-[#0066ff] focus-within:ring-4 focus-within:ring-blue-500/10">
-                                        <span className="flex shrink-0 items-center gap-1.5 border-r border-slate-200 bg-slate-50 px-3 text-sm font-semibold text-slate-600 rounded-l-xl">
-                                            <span className="text-base">{selectedCountry.flag}</span> {selectedCountry.dial || "—"}
+                                </div>
+                                <div className="sm:col-span-2">
+                                    <label className="block text-[11px] font-black uppercase tracking-[0.15em] text-[var(--text-muted)] mb-2">
+                                        Phone number <span className="text-rose-500">*</span>
+                                    </label>
+                                    <div className="flex items-stretch rounded-[var(--radius-xl)] border border-[var(--surface-border)] bg-white transition-all focus-within:border-[var(--tlh-blue-primary)] focus-within:ring-4 focus-within:ring-[var(--tlh-blue-primary)]/5">
+                                        <span className="flex shrink-0 items-center gap-2 border-r border-[var(--surface-border)] bg-[var(--surface-page)] px-4 text-sm font-bold text-[var(--text-main)] rounded-l-[var(--radius-xl)]">
+                                            <span className="text-lg">{selectedCountry.flag}</span> {selectedCountry.dial || "—"}
                                         </span>
                                         <input
                                             required
@@ -492,47 +596,57 @@ export function SignupPage({ initialRole = "student" }) {
                                             onBlur={() => {
                                                 if (contactPhone) setPhoneError(validatePhone(contactPhone, country));
                                             }}
-                                            className="w-full rounded-r-xl px-4 py-3 text-sm font-medium outline-none"
+                                            className="w-full rounded-r-[var(--radius-xl)] px-5 py-4 text-sm font-semibold text-[var(--text-main)] outline-none placeholder:text-[var(--text-muted)]/50"
                                             placeholder={selectedCountry.example || "Phone number"}
                                         />
                                     </div>
-                                    {phoneError && <p className="mt-1.5 text-xs font-semibold text-rose-600">{phoneError}</p>}
-                                </label>
+                                    {phoneError && <p className="mt-2 text-[12px] font-bold text-rose-600 flex items-center gap-1.5"><span className="text-sm">⚠️</span>{phoneError}</p>}
+                                </div>
                             </div>
                         </section>
                         {role === "student" ? (
-                            <div className="rounded-2xl border border-sky-200 bg-gradient-to-br from-sky-50/80 to-white p-4 sm:p-5">
-                                <h2 className="text-sm font-black text-slate-900">Almost there</h2>
-                                <p className="mt-1 text-xs leading-5 text-slate-600">
+                            <div className="rounded-[var(--radius-2xl)] border border-[var(--tlh-blue-primary)]/20 bg-gradient-to-br from-[var(--tlh-blue-primary)]/5 to-white p-6">
+                                <h2 className="text-[15px] font-black text-[var(--text-main)]">Almost there</h2>
+                                <p className="mt-2 text-[13px] font-medium leading-relaxed text-[var(--text-muted)]">
                                     That's all we need to get you started. After you verify your email, you can complete your
                                     learning profile — preferred courses, goals, and study schedule — from your dashboard.
                                 </p>
                             </div>
                         ) : (
-                            <div className="space-y-4 rounded-2xl border border-amber-200 bg-gradient-to-br from-amber-50/80 to-white p-4 sm:p-5">
+                            <div className="space-y-6 rounded-[var(--radius-2xl)] border border-[var(--tlh-gold)]/20 bg-gradient-to-br from-[var(--tlh-gold)]/5 to-white p-6 sm:p-8">
                                 <div>
-                                    <h2 className="text-sm font-black text-slate-900">Teaching application</h2>
-                                    <p className="mt-1 text-xs text-slate-500">Share your experience and supporting documents for administrator review.</p>
+                                    <h2 className="text-[15px] font-black text-[var(--text-main)]">Teaching application</h2>
+                                    <p className="mt-1.5 text-[13px] font-medium text-[var(--text-muted)]">Share your experience and supporting documents for administrator review.</p>
                                 </div>
-                                <label className="block text-xs font-bold text-slate-700">
-                                    Qualifications / education
-                                    <textarea required minLength={2} maxLength={1000} value={teacherForm.qualifications} onChange={(event) => setTeacherForm({ ...teacherForm, qualifications: event.target.value })} rows={2} className={fieldClass} placeholder="Degrees, certifications, and relevant training" />
-                                </label>
-                                <label className="block text-xs font-bold text-slate-700">
-                                    Teaching experience
+                                <div>
+                                    <label className="block text-[11px] font-black uppercase tracking-[0.15em] text-[var(--text-muted)] mb-2">
+                                        Qualifications / education
+                                    </label>
+                                    <textarea required minLength={2} maxLength={1000} value={teacherForm.qualifications} onChange={(event) => setTeacherForm({ ...teacherForm, qualifications: event.target.value })} rows={3} className={fieldClass} placeholder="Degrees, certifications, and relevant training" />
+                                </div>
+                                <div>
+                                    <label className="block text-[11px] font-black uppercase tracking-[0.15em] text-[var(--text-muted)] mb-2">
+                                        Teaching experience
+                                    </label>
                                     <textarea required minLength={10} maxLength={3000} value={teacherForm.experience} onChange={(event) => setTeacherForm({ ...teacherForm, experience: event.target.value })} rows={4} className={fieldClass} placeholder="Describe your teaching experience and accomplishments" />
-                                </label>
-                                <label className="block text-xs font-bold text-slate-700">
-                                    Years of teaching experience
+                                </div>
+                                <div>
+                                    <label className="block text-[11px] font-black uppercase tracking-[0.15em] text-[var(--text-muted)] mb-2">
+                                        Years of teaching experience
+                                    </label>
                                     <input required type="number" min="0" max="60" value={teacherForm.experienceYears} onChange={(event) => setTeacherForm({ ...teacherForm, experienceYears: event.target.value })} className={fieldClass} />
-                                </label>
-                                <label className="block text-xs font-bold text-slate-700">
-                                    Subjects you can teach (comma-separated)
+                                </div>
+                                <div>
+                                    <label className="block text-[11px] font-black uppercase tracking-[0.15em] text-[var(--text-muted)] mb-2">
+                                        Subjects you can teach (comma-separated)
+                                    </label>
                                     <input required value={teacherForm.teachingCategories} onChange={(event) => setTeacherForm({ ...teacherForm, teachingCategories: event.target.value })} className={fieldClass} placeholder="Mathematics, English, Web Development" />
-                                </label>
-                                <div className="block text-xs font-bold text-slate-700">
-                                    Teaching modes (select at least one)
-                                    <div className="mt-1.5 flex flex-wrap gap-2">
+                                </div>
+                                <div>
+                                    <label className="block text-[11px] font-black uppercase tracking-[0.15em] text-[var(--text-muted)] mb-3">
+                                        Teaching modes (select at least one)
+                                    </label>
+                                    <div className="flex flex-wrap gap-3">
                                         {[
                                             { value: "live", label: "Live cohort classes" },
                                             { value: "self_paced", label: "Self-paced" },
@@ -540,61 +654,117 @@ export function SignupPage({ initialRole = "student" }) {
                                         ].map((mode) => {
                                             const active = teacherForm.teachingModes.includes(mode.value);
                                             return (
-                                                <button key={mode.value} type="button" aria-pressed={active} onClick={() => setTeacherForm((form) => ({
-                                                    ...form,
-                                                    teachingModes: active
-                                                        ? form.teachingModes.filter((item) => item !== mode.value)
-                                                        : [...form.teachingModes, mode.value],
-                                                }))} className={`rounded-xl border px-3 py-1.5 text-xs font-semibold transition ${active ? "border-[#0066ff] bg-sky-50 text-blue-800" : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"}`}>
+                                                <button 
+                                                    key={mode.value} 
+                                                    type="button" 
+                                                    aria-pressed={active} 
+                                                    onClick={() => setTeacherForm((form) => ({
+                                                        ...form,
+                                                        teachingModes: active
+                                                            ? form.teachingModes.filter((item) => item !== mode.value)
+                                                            : [...form.teachingModes, mode.value],
+                                                    }))} 
+                                                    className={`rounded-[var(--radius-xl)] border px-4 py-2 text-[13px] font-black transition-all ${
+                                                        active 
+                                                            ? "border-[var(--tlh-blue-primary)] bg-[var(--tlh-blue-primary)] text-[var(--tlh-blue-primary)] bg-white ring-4 ring-[var(--tlh-blue-primary)]/10" 
+                                                            : "border-[var(--surface-border)] bg-white text-[var(--text-muted)] hover:border-[var(--tlh-blue-primary)]/40 hover:text-[var(--text-main)]"
+                                                    }`}
+                                                >
                                                     {mode.label}
                                                 </button>
                                             );
                                         })}
                                     </div>
                                 </div>
-                                <label className="block text-xs font-bold text-slate-700">
-                                    Teaching languages (comma-separated)
+                                <div>
+                                    <label className="block text-[11px] font-black uppercase tracking-[0.15em] text-[var(--text-muted)] mb-2">
+                                        Teaching languages (comma-separated)
+                                    </label>
                                     <input required value={teacherForm.teachingLanguages} onChange={(event) => setTeacherForm({ ...teacherForm, teachingLanguages: event.target.value })} className={fieldClass} placeholder="English, Amharic" />
-                                </label>
-                                <label className="block text-xs font-bold text-slate-700">
-                                    Teaching availability
-                                    <textarea required minLength={2} maxLength={500} value={teacherForm.availability} onChange={(event) => setTeacherForm({ ...teacherForm, availability: event.target.value })} rows={2} className={fieldClass} placeholder="Days, times, and time zone" />
-                                </label>
-                                <div className="grid gap-4 sm:grid-cols-2">
-                                    <label className="block text-xs font-bold text-slate-700">
-                                        Portfolio / website (optional)
-                                        <input type="url" value={teacherForm.portfolioUrl} onChange={(event) => setTeacherForm({ ...teacherForm, portfolioUrl: event.target.value })} className={fieldClass} placeholder="https://your-site.com" />
-                                    </label>
-                                    <label className="block text-xs font-bold text-slate-700">
-                                        LinkedIn profile (optional)
-                                        <input type="url" value={teacherForm.linkedInUrl} onChange={(event) => setTeacherForm({ ...teacherForm, linkedInUrl: event.target.value })} className={fieldClass} placeholder="https://linkedin.com/in/you" />
-                                    </label>
                                 </div>
-                                <label className="block text-xs font-bold text-slate-700">
-                                    Why do you want to teach with TedbabeLearnHUB?
-                                    <textarea required minLength={20} maxLength={1000} value={teacherForm.teachingStatement} onChange={(event) => setTeacherForm({ ...teacherForm, teachingStatement: event.target.value })} rows={3} className={fieldClass} placeholder="Describe how you support learners and what you would bring to TedbabeLearnHUB." />
-                                </label>
-                                <label className="block text-xs font-bold text-slate-700">
-                                    CV / Resume (required, PDF, Word, or image; max 5MB)
-                                    <input required type="file" name="cv" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp" onChange={handleTeacherDocuments} className="mt-2 block w-full rounded-xl border border-dashed border-slate-300 bg-white p-3 text-xs file:mr-3 file:rounded-lg file:border-0 file:bg-gradient-to-r file:from-[#0066ff] file:to-[#0099ff] file:px-3 file:py-2 file:text-xs file:font-bold file:text-white file:shadow-sm" />
-                                    {teacherForm.cv ? <span className="mt-1 block font-normal text-[#0066ff]">{teacherForm.cv.originalFilename}</span> : null}
-                                </label>
-                                <label className="block text-xs font-bold text-slate-700">
-                                    Certificates / qualification documents (optional, up to 5 files)
-                                    <input type="file" name="certificates" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp" onChange={handleTeacherDocuments} className="mt-2 block w-full rounded-xl border border-dashed border-slate-300 bg-white p-3 text-xs file:mr-3 file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-2 file:text-xs file:font-bold file:text-slate-700" />
-                                    {teacherForm.certificates.map((certificate) => <span key={certificate.originalFilename} className="mt-1 block font-normal text-slate-600">{certificate.originalFilename}</span>)}
-                                </label>
-                                <p className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs leading-5 text-amber-950">After you verify your email, an administrator will review your application before teacher access is enabled.</p>
+                                <div>
+                                    <label className="block text-[11px] font-black uppercase tracking-[0.15em] text-[var(--text-muted)] mb-2">
+                                        Teaching availability
+                                    </label>
+                                    <textarea required minLength={2} maxLength={500} value={teacherForm.availability} onChange={(event) => setTeacherForm({ ...teacherForm, availability: event.target.value })} rows={3} className={fieldClass} placeholder="Days, times, and time zone" />
+                                </div>
+                                <div className="grid gap-6 sm:grid-cols-2">
+                                    <div>
+                                        <label className="block text-[11px] font-black uppercase tracking-[0.15em] text-[var(--text-muted)] mb-2">
+                                            Portfolio / website (optional)
+                                        </label>
+                                        <input type="url" value={teacherForm.portfolioUrl} onChange={(event) => setTeacherForm({ ...teacherForm, portfolioUrl: event.target.value })} className={fieldClass} placeholder="https://your-site.com" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[11px] font-black uppercase tracking-[0.15em] text-[var(--text-muted)] mb-2">
+                                            LinkedIn profile (optional)
+                                        </label>
+                                        <input type="url" value={teacherForm.linkedInUrl} onChange={(event) => setTeacherForm({ ...teacherForm, linkedInUrl: event.target.value })} className={fieldClass} placeholder="https://linkedin.com/in/you" />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-[11px] font-black uppercase tracking-[0.15em] text-[var(--text-muted)] mb-2">
+                                        Why do you want to teach with TedbabeLearnHUB?
+                                    </label>
+                                    <textarea required minLength={20} maxLength={1000} value={teacherForm.teachingStatement} onChange={(event) => setTeacherForm({ ...teacherForm, teachingStatement: event.target.value })} rows={4} className={fieldClass} placeholder="Describe how you support learners and what you would bring to TedbabeLearnHUB." />
+                                </div>
+                                <div>
+                                    <label className="block text-[11px] font-black uppercase tracking-[0.15em] text-[var(--text-muted)] mb-3">
+                                        CV / Resume (required, max 5MB)
+                                    </label>
+                                    <div className="relative">
+                                        <input required type="file" name="cv" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp" onChange={handleTeacherDocuments} className="peer absolute inset-0 z-10 w-full opacity-0 cursor-pointer" />
+                                        <div className="flex flex-col items-center justify-center rounded-[var(--radius-xl)] border-2 border-dashed border-[var(--surface-border)] bg-[var(--surface-page)] p-8 transition-all peer-hover:border-[var(--tlh-blue-primary)] peer-hover:bg-[var(--tlh-blue-primary)]/5">
+                                            <span className="text-3xl mb-3">📄</span>
+                                            <span className="text-sm font-bold text-[var(--text-main)]">Click to upload or drag & drop</span>
+                                            <span className="mt-1 text-xs font-medium text-[var(--text-muted)]">PDF, Word, or images up to 5MB</span>
+                                        </div>
+                                    </div>
+                                    {teacherForm.cv ? <div className="mt-3 flex items-center gap-2 rounded-[var(--radius-lg)] bg-[var(--tlh-blue-primary)]/5 px-3 py-2 text-xs font-bold text-[var(--tlh-blue-primary)]"><span className="text-sm">✓</span> {teacherForm.cv.originalFilename}</div> : null}
+                                </div>
+                                <div>
+                                    <label className="block text-[11px] font-black uppercase tracking-[0.15em] text-[var(--text-muted)] mb-3">
+                                        Certificates / credentials (optional)
+                                    </label>
+                                    <div className="relative">
+                                        <input type="file" name="certificates" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp" onChange={handleTeacherDocuments} className="peer absolute inset-0 z-10 w-full opacity-0 cursor-pointer" />
+                                        <div className="flex flex-col items-center justify-center rounded-[var(--radius-xl)] border-2 border-dashed border-[var(--surface-border)] bg-[var(--surface-page)] p-8 transition-all peer-hover:border-[var(--tlh-blue-primary)] peer-hover:bg-[var(--tlh-blue-primary)]/5">
+                                            <span className="text-3xl mb-3">🎓</span>
+                                            <span className="text-sm font-bold text-[var(--text-main)]">Upload credentials</span>
+                                            <span className="mt-1 text-xs font-medium text-[var(--text-muted)]">Up to 5 additional files</span>
+                                        </div>
+                                    </div>
+                                    {teacherForm.certificates.length > 0 && (
+                                        <div className="mt-3 space-y-2">
+                                            {teacherForm.certificates.map((cert) => (
+                                                <div key={cert.originalFilename} className="flex items-center gap-2 rounded-[var(--radius-lg)] bg-[var(--surface-page)] px-3 py-2 text-xs font-bold text-[var(--text-muted)]">
+                                                    <span className="text-sm">📎</span> {cert.originalFilename}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                                <p className="rounded-[var(--radius-xl)] border border-[var(--tlh-gold)]/20 bg-[var(--tlh-gold)]/5 p-4 text-[12px] font-bold leading-relaxed text-[var(--tlh-gold)]">
+                                    <span className="mr-1.5">🕒</span> After you verify your email, an administrator will review your application before teacher access is enabled.
+                                </p>
                             </div>
                         )}
-                        <button disabled={loading} type="submit" className="w-full rounded-xl bg-gradient-to-r from-[#0066ff] to-[#0099ff] py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-500/25 transition hover:-translate-y-0.5 hover:from-[#0052cc] hover:to-[#0088e6] disabled:cursor-wait disabled:opacity-50">
-                            {loading ? t("loading") : role === "teacher" ? "Submit teacher application" : "Create student account"}
+                        <button 
+                            disabled={loading} 
+                            type="submit" 
+                            className="golden-btn w-full rounded-full py-4.5 text-xs font-bold text-white shadow-sm hover:shadow-md transition-all active:scale-95 disabled:cursor-wait disabled:opacity-50"
+                        >
+                            {loading ? t("loading") : role === "teacher" ? "Submit Teacher Application" : "Create My Student Account"}
                         </button>
                     </form>
-                    <p className="mt-6 border-t border-slate-100 pt-5 text-center text-sm text-slate-600">
-                        Already have an account? <Link to="/sign-in" className="font-bold text-[#0066ff] hover:text-[#0052cc] hover:underline">Sign in</Link>
+                    <p className="mt-10 border-t border-[var(--surface-border)]/50 pt-10 text-center text-[13px] font-medium text-[var(--text-muted)]">
+                        Already have an account? <Link to="/sign-in" className="font-black text-[var(--tlh-blue-primary)] hover:text-[var(--tlh-blue-hover)] hover:underline">Sign in</Link>
                     </p>
-                    <p className="mt-3 text-center text-xs text-slate-400">By continuing, you agree to TedbabeLearnHUB&apos;s <Link to="/terms" className="font-semibold text-slate-600 hover:underline">Terms</Link> and <Link to="/privacy" className="font-semibold text-slate-600 hover:underline">Privacy Policy</Link>.</p>
+                    <p className="mt-5 text-center text-[11px] font-bold text-[var(--text-muted)] leading-relaxed">
+                        By continuing, you agree to TedbabeLearnHUB&apos;s 
+                        <Link to="/terms" className="text-[var(--text-main)] hover:underline mx-1">Terms</Link> and 
+                        <Link to="/privacy" className="text-[var(--text-main)] hover:underline mx-1">Privacy Policy</Link>.
+                    </p>
                 </main>
             </div>
         </div>
@@ -690,51 +860,77 @@ export function VerifyCodePage() {
         >
             <Feedback>{feedback}</Feedback>
             {!emailDelivered && fallbackCode ? (
-                <div className="mb-4 rounded-2xl border border-amber-300 bg-amber-500/10 p-4 text-xs leading-relaxed shadow-sm">
-                    <div className="flex items-center gap-2 font-bold text-amber-500 mb-1">
-                        <span className="text-base">⚠️</span> Cloud Network Email Notice
+                <div className="mb-6 rounded-[var(--radius-2xl)] border border-[var(--tlh-gold)]/30 bg-[var(--tlh-gold)]/5 p-5 text-sm leading-relaxed shadow-sm">
+                    <div className="flex items-center gap-2 font-black text-[var(--tlh-gold)] mb-2">
+                        <span className="text-lg">⚠️</span> Cloud Network Notice
                     </div>
-                    <p className="text-slate-700">
-                        Outbound SMTP ports (465/587) were blocked by the cloud server network firewall. Your 6-digit verification code is:
-                        <span className="block mt-2 font-mono text-xl font-black text-amber-600 tracking-[0.25em] bg-white py-2 px-3 rounded-xl border border-amber-200 text-center select-all">
+                    <p className="text-[var(--text-main)] font-medium">
+                        Outbound SMTP ports were blocked by the server firewall. Your 6-digit verification code is:
+                        <span className="block mt-3 font-mono text-2xl font-black text-[var(--tlh-gold)] tracking-[0.25em] bg-white py-3 px-4 rounded-[var(--radius-xl)] border border-[var(--tlh-gold)]/20 text-center select-all shadow-inner">
                             {fallbackCode}
                         </span>
                     </p>
                 </div>
             ) : (
-                <div className="mb-4 rounded-xl border border-sky-100 bg-sky-50/70 p-3 text-xs text-slate-800 leading-relaxed">
-                    Verification code sent to <strong className="font-bold text-[#0066ff]">{email || "your email"}</strong>. If you don't see it within a minute, check your <span className="font-bold underline">Spam / Junk</span> folder.
+                <div className="mb-6 rounded-[var(--radius-xl)] border border-[var(--tlh-blue-primary)]/10 bg-[var(--tlh-blue-primary)]/5 p-4 text-[13px] text-[var(--text-main)] font-medium leading-relaxed">
+                    <span className="mr-1.5">📧</span>
+                    Verification code sent to <strong className="font-black text-[var(--tlh-blue-primary)]">{email || "your email"}</strong>. If you don't see it, check your <span className="font-black underline decoration-[var(--tlh-blue-primary)]/30">Spam / Junk</span> folder.
                 </div>
             )}
-            <form onSubmit={handleSubmit} className="space-y-4">
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
-                    {t("email")}
-                    <input required type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} className="mt-1.5 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm font-medium normal-case outline-none transition focus:border-[#0066ff] focus:ring-4 focus:ring-blue-500/10" />
-                </label>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
-                    Verification code
-                    <input required minLength={6} maxLength={6} pattern="[0-9]{6}" inputMode="numeric" autoComplete="one-time-code" value={code} onChange={(event) => setCode(event.target.value.replace(/\D/g, "").slice(0, 6))} className="mt-1.5 w-full rounded-2xl border border-slate-200 px-4 py-4 text-center font-mono text-2xl font-black tracking-[0.5em] outline-none transition focus:border-[#0066ff] focus:ring-4 focus:ring-blue-500/10 text-slate-900" placeholder="000000" aria-label="6-digit verification code" />
-                </label>
+            <form onSubmit={handleSubmit} className="space-y-6">
+                <div>
+                    <label className="block text-[11px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)] mb-2">
+                        {t("email")}
+                    </label>
+                    <input required type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} className="w-full rounded-[var(--radius-2xl)] border border-[var(--surface-border)] bg-[var(--surface-page)] px-5 py-4 text-sm font-semibold text-[var(--text-main)] outline-none transition-all focus:border-[var(--tlh-blue-primary)] focus:bg-white focus:ring-4 focus:ring-[var(--tlh-blue-primary)]/5" />
+                </div>
+                <div>
+                    <label className="block text-[11px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)] mb-2">
+                        Verification code
+                    </label>
+                    <input 
+                        required 
+                        minLength={6} 
+                        maxLength={6} 
+                        pattern="[0-9]{6}" 
+                        inputMode="numeric" 
+                        autoComplete="one-time-code" 
+                        value={code} 
+                        onChange={(event) => setCode(event.target.value.replace(/\D/g, "").slice(0, 6))} 
+                        className="w-full rounded-[var(--radius-2xl)] border border-[var(--surface-border)] bg-[var(--surface-page)] px-5 py-5 text-center font-mono text-3xl font-black tracking-[0.5em] text-[var(--text-main)] outline-none transition-all focus:border-[var(--tlh-blue-primary)] focus:bg-white focus:ring-4 focus:ring-[var(--tlh-blue-primary)]/5" 
+                        placeholder="000000" 
+                        aria-label="6-digit verification code" 
+                    />
+                </div>
                 {isNewDeviceLogin && (
-                    <label className="flex items-start gap-2.5 rounded-2xl border border-slate-200 bg-slate-50/70 p-3 text-xs font-medium normal-case text-slate-700">
+                    <label className="flex items-start gap-3 rounded-[var(--radius-2xl)] border border-[var(--surface-border)] bg-[var(--surface-page)]/50 p-4 text-[13px] font-bold text-[var(--text-muted)] cursor-pointer hover:bg-white transition-all">
                         <input
                             type="checkbox"
                             checked={rememberDevice}
                             onChange={(event) => setRememberDevice(event.target.checked)}
-                            className="mt-0.5 h-4 w-4 rounded border-slate-300 text-[#0066ff] focus:ring-blue-500/30"
+                            className="mt-1 h-4 w-4 rounded border-[var(--surface-border)] text-[var(--tlh-blue-primary)] focus:ring-[var(--tlh-blue-primary)]/30 cursor-pointer"
                         />
                         <span>Remember this device for 30 days and skip this code next time.</span>
                     </label>
                 )}
-                <button disabled={loading || code.length !== 6} type="submit" className="w-full rounded-2xl bg-gradient-to-r from-[#0066ff] to-[#0099ff] py-3.5 text-xs font-black uppercase tracking-wider text-white shadow-md shadow-blue-500/25 transition hover:from-[#0052cc] hover:to-[#0088e6] disabled:cursor-wait disabled:opacity-50">
+                <button 
+                    disabled={loading || code.length !== 6} 
+                    type="submit" 
+                    className="golden-btn w-full rounded-full py-4 text-xs font-bold text-white shadow-sm hover:shadow-md transition-all active:scale-95 disabled:cursor-wait disabled:opacity-50"
+                >
                     {loading ? t("loading") : isNewDeviceLogin ? "Confirm and sign in" : "Verify and continue"}
                 </button>
             </form>
-            <div className="mt-5 flex flex-col items-center gap-3 text-sm text-slate-600">
-                <button type="button" disabled={loading || secondsLeft > 0 || !email} onClick={handleResend} className="font-bold text-[#0066ff] hover:text-[#0052cc] hover:underline disabled:cursor-not-allowed disabled:text-slate-400 disabled:no-underline">
+            <div className="mt-8 flex flex-col items-center gap-4">
+                <button 
+                    type="button" 
+                    disabled={loading || secondsLeft > 0 || !email} 
+                    onClick={handleResend} 
+                    className="text-[13px] font-black text-[var(--tlh-blue-primary)] hover:text-[var(--tlh-blue-hover)] hover:underline disabled:cursor-not-allowed disabled:text-[var(--text-muted)]/50 disabled:no-underline"
+                >
                     {secondsLeft > 0 ? `Resend code in ${secondsLeft}s` : "Resend code"}
                 </button>
-                <Link to="/sign-in" className="font-semibold text-slate-500 hover:text-slate-800">Back to sign in</Link>
+                <Link to="/sign-in" className="text-[13px] font-bold text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors">Back to sign in</Link>
             </div>
         </AuthShell>
     );
@@ -766,51 +962,53 @@ export function ForgotPasswordPage() {
     };
 
     return (
-        <AuthShell title="Reset your password" subtitle="Enter your email to receive recovery instructions">
+        <AuthShell title="Reset password" subtitle="Enter your email to receive recovery instructions">
             <Feedback>{feedback}</Feedback>
             {submitted ? (
-                <div className="space-y-5 text-center">
-                    <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-100 to-blue-50 text-xl text-[#0066ff] ring-1 ring-sky-200">
+                <div className="space-y-6 text-center">
+                    <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-[var(--radius-2xl)] bg-gradient-to-br from-[var(--tlh-blue-primary)]/10 to-transparent text-2xl text-[var(--tlh-blue-primary)] ring-1 ring-[var(--tlh-blue-primary)]/20 shadow-inner">
                         ✓
                     </div>
-                    <p className="text-sm text-slate-600">
+                    <p className="text-[15px] font-medium text-[var(--text-muted)] leading-relaxed">
                         Check your email inbox for the reset link and 6-digit code.
                     </p>
-                    <div className="flex flex-col gap-2 pt-2">
+                    <div className="flex flex-col gap-3 pt-4">
                         <Link
                             to={`/reset-password?email=${encodeURIComponent(email)}`}
-                            className="w-full rounded-2xl bg-gradient-to-r from-[#0066ff] to-[#0099ff] py-3 text-xs font-black uppercase tracking-wider text-white hover:from-[#0052cc] hover:to-[#0088e6] transition shadow-md shadow-blue-500/25"
+                            className="golden-btn w-full text-center rounded-full py-3.5 text-xs font-bold text-white shadow-sm hover:shadow-md transition-all active:scale-95"
                         >
                             Enter Reset Code
                         </Link>
-                        <Link to="/sign-in" className="text-xs font-bold text-slate-500 hover:text-slate-800">
+                        <Link to="/sign-in" className="text-[13px] font-bold text-[var(--text-muted)] hover:text-[var(--text-main)]">
                             Back to sign in
                         </Link>
                     </div>
                 </div>
             ) : (
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
-                        {t("email")}
+                <form onSubmit={handleSubmit} className="space-y-6">
+                    <div>
+                        <label className="block text-[11px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)] mb-2">
+                            {t("email")}
+                        </label>
                         <input
                             required
                             type="email"
                             autoComplete="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className="mt-1.5 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm font-medium normal-case outline-none transition focus:border-[#0066ff] focus:ring-4 focus:ring-blue-500/10"
+                            className="w-full rounded-[var(--radius-2xl)] border border-[var(--surface-border)] bg-[var(--surface-page)] px-5 py-4 text-sm font-semibold text-[var(--text-main)] outline-none transition-all placeholder:text-[var(--text-muted)]/50 focus:border-[var(--tlh-blue-primary)] focus:bg-white focus:ring-4 focus:ring-[var(--tlh-blue-primary)]/5"
                             placeholder="name@example.com"
                         />
-                    </label>
+                    </div>
                     <button
                         disabled={loading || !email}
                         type="submit"
-                        className="w-full rounded-2xl bg-gradient-to-r from-[#0066ff] to-[#0099ff] py-3.5 text-xs font-black uppercase tracking-wider text-white shadow-md shadow-blue-500/25 transition hover:from-[#0052cc] hover:to-[#0088e6] disabled:cursor-wait disabled:opacity-50"
+                        className="golden-btn w-full rounded-full py-4 text-xs font-bold text-white shadow-sm hover:shadow-md transition-all active:scale-95 disabled:cursor-wait disabled:opacity-50"
                     >
                         {loading ? t("loading") : "Send Reset Instructions"}
                     </button>
-                    <div className="pt-2 text-center text-xs">
-                        <Link to="/sign-in" className="font-bold text-slate-600 hover:text-[#0066ff]">
+                    <div className="pt-4 text-center">
+                        <Link to="/sign-in" className="text-[13px] font-bold text-[var(--text-muted)] hover:text-[var(--tlh-blue-primary)] transition-colors">
                             ← Return to sign in
                         </Link>
                     </div>
@@ -865,38 +1063,44 @@ export function ResetPasswordPage() {
         <AuthShell title="Set new password" subtitle="Choose a strong password for your TedbabeLearnHUB account">
             <Feedback>{feedback}</Feedback>
             {success ? (
-                <div className="space-y-4 text-center">
-                    <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-100 to-blue-50 text-2xl text-[#0066ff] ring-1 ring-sky-200">
+                <div className="space-y-6 text-center">
+                    <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-[var(--radius-2xl)] bg-gradient-to-br from-[var(--tlh-blue-primary)]/10 to-transparent text-2xl text-[var(--tlh-blue-primary)] ring-1 ring-[var(--tlh-blue-primary)]/20 shadow-inner">
                         ✓
                     </div>
-                    <h2 className="text-lg font-bold text-slate-900">Password Changed!</h2>
-                    <p className="text-xs text-slate-600">Redirecting to sign-in page…</p>
+                    <h2 className="text-xl font-black text-[var(--text-main)]">Password Changed!</h2>
+                    <p className="text-[13px] font-medium text-[var(--text-muted)]">Redirecting to sign-in page…</p>
                 </div>
             ) : (
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
-                        {t("email")}
+                <form onSubmit={handleSubmit} className="space-y-6">
+                    <div>
+                        <label className="block text-[11px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)] mb-2">
+                            {t("email")}
+                        </label>
                         <input
                             required
                             type="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className="mt-1.5 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm font-medium normal-case outline-none transition focus:border-[#0066ff] focus:ring-4 focus:ring-blue-500/10"
+                            className="w-full rounded-[var(--radius-2xl)] border border-[var(--surface-border)] bg-[var(--surface-page)] px-5 py-4 text-sm font-semibold text-[var(--text-main)] outline-none transition-all focus:border-[var(--tlh-blue-primary)] focus:bg-white focus:ring-4 focus:ring-[var(--tlh-blue-primary)]/5"
                         />
-                    </label>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
-                        Reset Code or Token
+                    </div>
+                    <div>
+                        <label className="block text-[11px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)] mb-2">
+                            Reset Code or Token
+                        </label>
                         <input
                             required
                             type="text"
                             value={tokenOrCode}
                             onChange={(e) => setTokenOrCode(e.target.value)}
-                            className="mt-1.5 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm font-mono tracking-wider normal-case outline-none transition focus:border-[#0066ff] focus:ring-4 focus:ring-blue-500/10"
+                            className="w-full rounded-[var(--radius-2xl)] border border-[var(--surface-border)] bg-[var(--surface-page)] px-5 py-4 text-sm font-mono font-bold tracking-wider text-[var(--text-main)] outline-none transition-all focus:border-[var(--tlh-blue-primary)] focus:bg-white focus:ring-4 focus:ring-[var(--tlh-blue-primary)]/5"
                             placeholder="6-digit code or link token"
                         />
-                    </label>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
-                        New Password
+                    </div>
+                    <div>
+                        <label className="block text-[11px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)] mb-2">
+                            New Password
+                        </label>
                         <input
                             required
                             minLength={8}
@@ -904,12 +1108,14 @@ export function ResetPasswordPage() {
                             type="password"
                             value={newPassword}
                             onChange={(e) => setNewPassword(e.target.value)}
-                            className="mt-1.5 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm font-medium normal-case outline-none transition focus:border-[#0066ff] focus:ring-4 focus:ring-blue-500/10"
+                            className="w-full rounded-[var(--radius-2xl)] border border-[var(--surface-border)] bg-[var(--surface-page)] px-5 py-4 text-sm font-semibold text-[var(--text-main)] outline-none transition-all placeholder:text-[var(--text-muted)]/50 focus:border-[var(--tlh-blue-primary)] focus:bg-white focus:ring-4 focus:ring-[var(--tlh-blue-primary)]/5"
                             placeholder="At least 8 characters"
                         />
-                    </label>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
-                        Confirm New Password
+                    </div>
+                    <div>
+                        <label className="block text-[11px] font-black uppercase tracking-[0.2em] text-[var(--text-muted)] mb-2">
+                            Confirm New Password
+                        </label>
                         <input
                             required
                             minLength={8}
@@ -917,19 +1123,19 @@ export function ResetPasswordPage() {
                             type="password"
                             value={confirmPassword}
                             onChange={(e) => setConfirmPassword(e.target.value)}
-                            className="mt-1.5 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm font-medium normal-case outline-none transition focus:border-[#0066ff] focus:ring-4 focus:ring-blue-500/10"
+                            className="w-full rounded-[var(--radius-2xl)] border border-[var(--surface-border)] bg-[var(--surface-page)] px-5 py-4 text-sm font-semibold text-[var(--text-main)] outline-none transition-all placeholder:text-[var(--text-muted)]/50 focus:border-[var(--tlh-blue-primary)] focus:bg-white focus:ring-4 focus:ring-[var(--tlh-blue-primary)]/5"
                             placeholder="Re-enter password"
                         />
-                    </label>
+                    </div>
                     <button
                         disabled={loading || !newPassword || !confirmPassword || !tokenOrCode}
                         type="submit"
-                        className="w-full rounded-2xl bg-gradient-to-r from-[#0066ff] to-[#0099ff] py-3.5 text-xs font-black uppercase tracking-wider text-white shadow-md shadow-blue-500/25 transition hover:from-[#0052cc] hover:to-[#0088e6] disabled:cursor-wait disabled:opacity-50"
+                        className="golden-btn w-full rounded-full py-4 text-xs font-bold text-white shadow-sm hover:shadow-md transition-all active:scale-95 disabled:cursor-wait disabled:opacity-50"
                     >
                         {loading ? t("loading") : "Update Password"}
                     </button>
-                    <div className="pt-2 text-center text-xs">
-                        <Link to="/sign-in" className="font-bold text-slate-600 hover:text-[#0066ff]">
+                    <div className="pt-4 text-center">
+                        <Link to="/sign-in" className="text-[13px] font-bold text-[var(--text-muted)] hover:text-[var(--tlh-blue-primary)] transition-colors">
                             ← Return to sign in
                         </Link>
                     </div>

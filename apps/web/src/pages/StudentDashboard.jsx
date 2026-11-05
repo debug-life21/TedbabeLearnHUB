@@ -451,7 +451,7 @@ export function StudentDashboard({ user }) {
     { id: "security", label: "Account security", icon: "🔒" },
   ];
   return (
-    <div className="min-h-screen space-y-8 px-4 py-6 sm:px-6 lg:pl-72 lg:pr-8">
+    <div className="student-workspace min-h-screen space-y-8 px-4 py-6 sm:px-6 lg:pl-72 lg:pr-8">
       <DashboardSidebar
         title="Student workspace"
         user={{
@@ -465,82 +465,99 @@ export function StudentDashboard({ user }) {
       />
       {/* Next Lesson Banner */}
       {nextSession ? (
-        <div className="rounded-3xl bg-gradient-to-r from-blue-900 via-slate-900 to-cyan-950 p-6 sm:p-8 text-white shadow-xl flex flex-wrap items-center justify-between gap-6 border border-cyan-500/30">
-          <div className="space-y-1.5">
-            <div className="inline-flex items-center gap-2 rounded-full bg-cyan-500/20 px-3 py-1 text-xs font-bold text-cyan-300 border border-cyan-500/30">
-              <span className="h-2 w-2 rounded-full bg-cyan-400 animate-ping"></span>
+        <div className="rounded-[var(--radius-3xl)] bg-gradient-to-br from-[var(--tlh-navy)] via-[var(--tlh-deep-blue)] to-[var(--tlh-navy)] p-8 text-white shadow-[var(--shadow-xl)] flex flex-wrap items-center justify-between gap-8 border border-white/5 relative overflow-hidden group">
+          <div aria-hidden="true" className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-[var(--tlh-cyan)]/10 blur-3xl transition-all group-hover:bg-[var(--tlh-cyan)]/15" />
+          
+          <div className="relative space-y-3">
+            <div className="inline-flex items-center gap-2.5 rounded-full bg-[var(--tlh-cyan)]/10 px-4 py-1.5 text-[11px] font-black uppercase tracking-[0.2em] text-[var(--tlh-cyan)] border border-[var(--tlh-cyan)]/20 shadow-sm">
+              <span className="h-2 w-2 rounded-full bg-[var(--tlh-cyan)] animate-pulse shadow-[0_0_8px_var(--tlh-cyan)]"></span>
               <span>Next live session</span>
             </div>
-            <h2 className="text-2xl font-black text-white">
+            <h2 className="text-3xl font-black text-white leading-tight">
               {nextSession.title}
             </h2>
-            <div className="flex flex-wrap items-center gap-4 text-xs text-slate-300">
-              <p>
-                📅 {formatSessionTime(nextSession.startsAt)} —{" "}
-                {formatSessionTime(nextSession.endsAt)}
-              </p>
-              <span className="text-amber-300 font-medium">
-                🔒 Meeting link activates 10 minutes prior
-              </span>
+            <div className="flex flex-wrap items-center gap-6 text-[13px] font-medium text-white/70">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">📅</span>
+                <span>
+                  {formatSessionTime(nextSession.startsAt)} —{" "}
+                  {formatSessionTime(nextSession.endsAt)}
+                </span>
+              </div>
+              <div className="flex items-center gap-2 text-[var(--tlh-gold)]">
+                <span className="text-lg">🔒</span>
+                <span className="font-bold">Link activates 10 mins prior</span>
+              </div>
             </div>
           </div>
-          {nextSession.meetingUrl ? (
-            <LiveSessionButton session={nextSession} />
-          ) : null}
+          <div className="relative shrink-0">
+            {nextSession.meetingUrl ? (
+              <LiveSessionButton session={nextSession} />
+            ) : (
+              <div className="rounded-[var(--radius-2xl)] bg-white/5 px-6 py-4 backdrop-blur-md border border-white/10 text-center">
+                <p className="text-[11px] font-black uppercase tracking-wider text-white/50 mb-1">Status</p>
+                <p className="text-sm font-bold text-white">Pending activation</p>
+              </div>
+            )}
+          </div>
         </div>
       ) : null}
 
       {/* Verification notice if email not yet verified */}
       {!user.isVerified && !user.emailVerified ? (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-sky-200 bg-sky-50/90 p-4 text-xs font-medium text-slate-800">
-          <div className="flex items-center gap-2.5">
-            <span className="text-xl">✉️</span>
+        <div className="flex flex-wrap items-center justify-between gap-6 rounded-[var(--radius-2xl)] border border-[var(--tlh-cyan)]/20 bg-[var(--tlh-cyan)]/5 p-6 shadow-[var(--shadow-sm)]">
+          <div className="flex items-center gap-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-[var(--radius-xl)] bg-white text-2xl shadow-sm border border-[var(--tlh-cyan)]/10">✉️</div>
             <div>
-              <p className="font-bold text-slate-900">
+              <p className="text-sm font-black text-[var(--text-main)]">
                 Email verification pending
               </p>
-              <p className="text-slate-600">
+              <p className="mt-1 text-[13px] font-medium text-[var(--text-muted)] leading-relaxed">
                 A 6-digit code was sent to{" "}
-                <strong className="text-[#0066ff]">{user.email}</strong>. You
-                have full access to select your courses and prepare below.
+                <strong className="text-[var(--tlh-blue-primary)]">{user.email}</strong>. 
+                Verify your account to unlock all platform features.
               </p>
             </div>
           </div>
           <Link
             to="/verify-code"
             state={{ email: user.email, purpose: "signup" }}
-            className="rounded-xl bg-[#0066ff] px-4 py-2 text-xs font-bold text-white hover:bg-[#0052cc] transition shadow-sm"
+            className="rounded-[var(--radius-xl)] bg-[var(--tlh-blue-primary)] px-6 py-3 text-xs font-black uppercase tracking-wider text-white shadow-lg shadow-[var(--tlh-blue-primary)]/20 hover:shadow-xl transition-all hover:-translate-y-0.5"
           >
-            Enter code
+            Verify Now
           </Link>
         </div>
       ) : null}
 
       {/* Student Welcome Card */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0c234b] via-[#091b3b] to-[#061124] p-6 sm:p-8 text-white border border-sky-500/25 shadow-xl flex flex-wrap items-center justify-between gap-6">
+      <div className="relative overflow-hidden rounded-[var(--radius-3xl)] bg-gradient-to-br from-[var(--tlh-navy)] via-[var(--tlh-deep-blue)] to-[var(--tlh-navy)] p-8 text-white border border-white/5 shadow-[var(--shadow-xl)] flex flex-wrap items-center justify-between gap-8 group">
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute -right-20 -top-24 h-64 w-64 rounded-full bg-blue-500/10 blur-3xl"
+          className="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full bg-[var(--tlh-blue-primary)]/10 blur-3xl transition-all group-hover:bg-[var(--tlh-blue-primary)]/15"
         />
-        <div className="relative">
-          <span className="text-xs font-extrabold uppercase tracking-[0.16em] text-sky-400">
-            TedbabeLearnHUB · {t("studentOverview")}
-          </span>
-          <div className="mt-2 flex items-center gap-4">
-            {personalForm.avatarUrl ? (
-              <img
-                src={personalForm.avatarUrl}
-                alt=""
-                className="h-14 w-14 rounded-full object-cover ring-2 ring-white/30"
-              />
-            ) : null}
-            <h1 className="text-3xl font-black text-white sm:text-4xl">
+        <div className="relative flex items-center gap-6">
+          {personalForm.avatarUrl ? (
+            <img
+              src={personalForm.avatarUrl}
+              alt=""
+              className="h-20 w-20 rounded-[var(--radius-2xl)] object-cover ring-4 ring-white/10 shadow-2xl"
+            />
+          ) : (
+            <div className="h-20 w-20 rounded-[var(--radius-2xl)] bg-gradient-to-br from-[var(--tlh-blue-primary)] to-[var(--tlh-sky)] flex items-center justify-center text-3xl font-black text-white shadow-2xl">
+              {personalForm.fullName?.charAt(0)}
+            </div>
+          )}
+          <div>
+            <span className="text-[11px] font-black uppercase tracking-[0.25em] text-[var(--tlh-cyan)]">
+              Welcome back, {t("studentOverview")}
+            </span>
+            <h1 className="mt-2 text-4xl font-black text-white tracking-tight leading-none">
               {personalForm.fullName}
             </h1>
+            <p className="mt-2 text-sm font-medium text-white/50">{user.email}</p>
           </div>
-          <p className="mt-1 text-sm text-slate-300">{user.email}</p>
         </div>
-        <div className="relative flex items-center gap-3">
+        <div className="relative">
           <Badge
             variant={
               user.studentProfile?.placementStatus === "assigned"
@@ -557,26 +574,32 @@ export function StudentDashboard({ user }) {
 
       {!profileForm.preferredCourseIds.length ||
       !profileForm.preferredSchedule ? (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
-          <p>
-            Complete your course choices and preferred study times so the
-            TedbabeLearnHUB team can place you in a suitable cohort.
-          </p>
+        <div className="flex flex-wrap items-center justify-between gap-6 rounded-[var(--radius-2xl)] border border-[var(--tlh-gold)]/20 bg-[var(--tlh-gold)]/5 p-6 shadow-[var(--shadow-sm)]">
+          <div className="flex items-center gap-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-[var(--radius-xl)] bg-white text-2xl shadow-sm border border-[var(--tlh-gold)]/10">🎯</div>
+            <p className="text-[13px] font-medium text-[var(--text-main)] leading-relaxed max-w-2xl">
+              Complete your course choices and preferred study times so the
+              TedbabeLearnHUB team can place you in a suitable cohort.
+            </p>
+          </div>
           <button
             onClick={() => setActiveTab("courses")}
-            className="rounded-xl bg-amber-800 px-4 py-2 text-xs font-bold text-white hover:bg-amber-900 shadow-sm"
+            className="rounded-[var(--radius-xl)] bg-[var(--tlh-gold)] px-6 py-3 text-xs font-black uppercase tracking-wider text-white shadow-lg shadow-[var(--tlh-gold)]/20 hover:shadow-xl transition-all hover:-translate-y-0.5"
           >
-            Choose courses now
+            Choose Courses
           </button>
         </div>
       ) : null}
 
       {feedback ? (
-        <div className="rounded-2xl bg-blue-50 p-4 text-sm font-semibold text-blue-900 ring-1 ring-blue-200 flex justify-between items-center">
-          <span>{feedback}</span>
+        <div className="rounded-[var(--radius-2xl)] bg-[var(--tlh-blue-primary)]/5 p-5 text-[13px] font-bold text-[var(--tlh-blue-primary)] ring-1 ring-[var(--tlh-blue-primary)]/10 flex justify-between items-center shadow-sm">
+          <div className="flex items-center gap-3">
+            <span className="text-lg">ℹ️</span>
+            <span>{feedback}</span>
+          </div>
           <button
             onClick={() => setFeedback("")}
-            className="text-blue-500 hover:text-blue-800"
+            className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-[var(--tlh-blue-primary)]/10 transition-colors"
           >
             ✕
           </button>
@@ -585,113 +608,114 @@ export function StudentDashboard({ user }) {
 
       {/* 1. OVERVIEW */}
       {activeTab === "overview" ? (
-        <div className="space-y-8">
+        <div className="space-y-10">
           {(!profileForm.preferredCourseIds ||
             profileForm.preferredCourseIds.length === 0) &&
             classes.length === 0 && (
-              <div className="rounded-3xl border-2 border-blue-400/80 bg-gradient-to-r from-blue-50 via-indigo-50 to-sky-50 p-6 shadow-sm">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xl">🎯</span>
-                      <h3 className="text-base font-bold text-blue-950">
-                        Next Step: Select your courses
+              <div className="rounded-[var(--radius-3xl)] border border-[var(--tlh-blue-primary)]/20 bg-gradient-to-br from-[var(--tlh-blue-primary)]/5 to-white p-8 shadow-[var(--shadow-md)] relative overflow-hidden">
+                <div aria-hidden="true" className="absolute -right-10 -top-10 text-8xl opacity-[0.03] select-none">🎯</div>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-8 relative">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">🚀</span>
+                      <h3 className="text-xl font-black text-[var(--text-main)]">
+                        Ready to start your journey?
                       </h3>
                     </div>
-                    <p className="text-xs text-blue-800 leading-relaxed max-w-xl">
-                      You can select the courses you want to study right now.
-                      Once submitted, our academic team will match you with the
-                      appropriate cohort and schedule.
+                    <p className="text-[15px] font-medium text-[var(--text-muted)] leading-relaxed max-w-2xl">
+                      Select the courses you want to study right now. Once submitted, 
+                      our academic team will match you with the appropriate cohort and schedule.
                     </p>
                   </div>
                   <button
                     type="button"
                     onClick={() => setActiveTab("courses")}
-                    className="shrink-0 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-2.5 text-xs font-bold text-white shadow-md shadow-blue-500/20 hover:from-blue-700 hover:to-indigo-700 transition"
+                    className="golden-btn shrink-0 rounded-full px-8 py-4 text-[13px] font-bold text-white shadow-sm hover:shadow-md transition-all active:scale-95"
                   >
-                    Choose courses now →
+                    Select Courses Now →
                   </button>
                 </div>
               </div>
             )}
 
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <MetricCard label="My cohorts" value={classes.length} icon="📚" />
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            <MetricCard label="My Cohorts" value={classes.length} icon="🏫" />
             <MetricCard
-              label="Upcoming sessions"
+              label="Live Sessions"
               value={upcomingLessons.length}
               icon="📹"
             />
             <MetricCard
-              label="Published progress"
+              label="Overall Grade"
               value={
                 progressData?.overallScore != null
                   ? `${progressData.overallScore}%`
-                  : "Not published"
+                  : "Pending"
               }
               icon="📈"
             />
             <MetricCard
-              label="Published attendance"
+              label="Attendance"
               value={
                 progressData?.components?.find(
                   (component) => component.category === "attendance",
                 )?.score != null
                   ? `${progressData.components.find((component) => component.category === "attendance").score}%`
-                  : "Not published"
+                  : "Pending"
               }
               icon="✅"
             />
           </div>
 
           <div className="grid gap-8 lg:grid-cols-2">
-            <DashboardCard title="My cohorts">
+            <DashboardCard title="My Active Cohorts">
               <div className="space-y-4">
                 {classes.length === 0 ? (
                   <EmptyState
-                    title="No cohort assigned yet."
-                    description="Our team is reviewing your profile and will match you with a cohort soon."
+                    title="No active cohorts"
+                    description="Our team is matching you with a cohort based on your course selection."
                   />
                 ) : (
                   classes.map((c) => (
                     <div
                       key={c._id}
-                      className="rounded-2xl border border-slate-200 p-4 space-y-2"
+                      className="group rounded-[var(--radius-2xl)] border border-[var(--surface-border)]/60 bg-[var(--surface-page)] p-5 transition-all hover:border-[var(--tlh-blue-primary)]/40 hover:bg-white hover:shadow-[var(--shadow-md)]"
                     >
-                      <div className="flex items-center justify-between">
-                        <h4 className="font-bold text-slate-900">{c.title}</h4>
+                      <div className="flex items-center justify-between mb-3">
+                        <h4 className="font-black text-[var(--text-main)] text-[15px]">{c.title}</h4>
                         <Badge variant="blue">
-                          {c.course?.title || "General"}
+                          {c.course?.title || "Program"}
                         </Badge>
                       </div>
-                      <p className="text-xs text-slate-600">
-                        👨‍🏫 Instructor:{" "}
-                        <strong>
-                          {c.teacher?.fullName || "To be assigned"}
-                        </strong>{" "}
-                        ({c.teacher?.email || ""})
-                      </p>
+                      <div className="flex items-center gap-3 text-[13px] font-medium text-[var(--text-muted)]">
+                        <span className="flex h-8 w-8 items-center justify-center rounded-[var(--radius-lg)] bg-white text-lg shadow-sm">👨‍🏫</span>
+                        <div>
+                          <p className="text-[var(--text-main)] font-bold">{c.teacher?.fullName || "To be assigned"}</p>
+                          <p className="text-[11px] opacity-60">{c.teacher?.email || "Academic Team"}</p>
+                        </div>
+                      </div>
                     </div>
                   ))
                 )}
               </div>
             </DashboardCard>
 
-            <DashboardCard title="Recent notifications">
-              <div className="space-y-3">
+            <DashboardCard title="Recent Activity">
+              <div className="space-y-4">
                 {notifications.length === 0 ? (
-                  <EmptyState title="No new notifications." />
+                  <EmptyState title="No recent activity" />
                 ) : (
-                  notifications.slice(0, 10).map((n) => (
+                  notifications.slice(0, 5).map((n) => (
                     <div
                       key={n._id}
-                      className="rounded-xl bg-slate-50 p-3 text-xs"
+                      className="relative rounded-[var(--radius-xl)] bg-[var(--surface-page)] p-4 text-[13px] border border-[var(--surface-border)]/40 transition-all hover:border-[var(--tlh-blue-primary)]/20"
                     >
-                      <p className="font-bold text-slate-900">{n.title}</p>
-                      <p className="mt-1 text-slate-600">{n.message}</p>
-                      <span className="mt-1 block text-[10px] text-slate-400">
-                        {new Date(n.createdAt).toLocaleDateString()}
-                      </span>
+                      <p className="font-black text-[var(--text-main)]">{n.title}</p>
+                      <p className="mt-1 font-medium text-[var(--text-muted)] leading-relaxed">{n.message}</p>
+                      <div className="mt-3 flex items-center justify-between text-[10px] font-black uppercase tracking-wider text-[var(--text-muted)]/50">
+                        <span>{new Date(n.createdAt).toLocaleDateString()}</span>
+                        <span className="h-1.5 w-1.5 rounded-full bg-[var(--tlh-blue-primary)]/40"></span>
+                      </div>
                     </div>
                   ))
                 )}
@@ -700,21 +724,24 @@ export function StudentDashboard({ user }) {
           </div>
 
           {announcements.length > 0 && (
-            <div className="rounded-3xl border border-sky-200 bg-sky-50/60 p-6 space-y-4">
-              <div className="flex items-center gap-2">
-                <span className="text-lg">📢</span>
-                <h3 className="font-bold text-slate-900 text-base">
-                  Announcements & Updates
-                </h3>
+            <div className="rounded-[var(--radius-3xl)] border border-[var(--tlh-blue-primary)]/10 bg-[var(--tlh-blue-primary)]/5 p-8 space-y-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">📢</span>
+                  <h3 className="text-xl font-black text-[var(--text-main)]">
+                    Academy Announcements
+                  </h3>
+                </div>
+                <Badge variant="blue">{announcements.length} New</Badge>
               </div>
-              <div className="grid gap-3 md:grid-cols-2">
+              <div className="grid gap-6 md:grid-cols-2">
                 {announcements.slice(0, 4).map((ann) => (
                   <div
                     key={ann._id}
-                    className="rounded-2xl bg-white p-4 shadow-sm border border-sky-100/80 space-y-2"
+                    className="group rounded-[var(--radius-2xl)] bg-white p-6 shadow-[var(--shadow-sm)] border border-[var(--surface-border)]/60 transition-all hover:shadow-[var(--shadow-md)] hover:border-[var(--tlh-blue-primary)]/20"
                   >
-                    <div className="flex items-center justify-between gap-2">
-                      <h4 className="font-bold text-slate-900 text-sm">
+                    <div className="flex items-center justify-between gap-4 mb-3">
+                      <h4 className="font-black text-[var(--text-main)] text-[15px] group-hover:text-[var(--tlh-blue-primary)] transition-colors">
                         {ann.title}
                       </h4>
                       <Badge
@@ -729,20 +756,16 @@ export function StudentDashboard({ user }) {
                         {ann.priority}
                       </Badge>
                     </div>
-                    <p className="text-xs text-slate-600 leading-relaxed">
+                    <p className="text-[13px] font-medium text-[var(--text-muted)] leading-relaxed mb-4">
                       {ann.content}
                     </p>
-                    <div className="flex items-center gap-2 text-[10px] text-slate-400 pt-1 border-t border-slate-50">
-                      <span>
-                        {ann.author?.fullName
-                          ? `By ${ann.author.fullName}`
-                          : "Academy"}
-                      </span>
-                      {ann.classroom ? (
-                        <span>• Cohort: {ann.classroom.title}</span>
-                      ) : null}
-                      <span>
-                        • {new Date(ann.createdAt).toLocaleDateString()}
+                    <div className="flex items-center justify-between pt-4 border-t border-[var(--surface-border)]/50">
+                      <div className="flex items-center gap-2 text-[11px] font-bold text-[var(--text-muted)]">
+                        <span>👤</span>
+                        <span>{ann.author?.fullName || "Academy Admin"}</span>
+                      </div>
+                      <span className="text-[11px] font-black text-[var(--text-muted)]/50 uppercase tracking-tighter">
+                        {new Date(ann.createdAt).toLocaleDateString()}
                       </span>
                     </div>
                   </div>
@@ -755,43 +778,49 @@ export function StudentDashboard({ user }) {
 
       {/* 2. CLASSES */}
       {activeTab === "classes" ? (
-        <div className="space-y-6">
-          <div className="grid gap-6 md:grid-cols-2">
+        <div className="space-y-8">
+          <div className="grid gap-8 md:grid-cols-2">
             {classes.map((cls) => (
               <div
                 key={cls._id}
-                className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200 space-y-4"
+                className="group relative rounded-[var(--radius-3xl)] bg-[var(--surface-card)] p-8 shadow-[var(--shadow-md)] border border-[var(--surface-border)]/60 transition-all hover:shadow-[var(--shadow-xl)] hover:border-[var(--tlh-blue-primary)]/20"
               >
-                <div className="flex items-center justify-between">
-                  <h4 className="text-xl font-bold text-slate-900">
-                    {cls.title}
-                  </h4>
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-4">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-[var(--radius-2xl)] bg-[var(--tlh-blue-primary)]/5 text-3xl shadow-sm border border-[var(--tlh-blue-primary)]/10 transition-transform group-hover:scale-110">🏫</div>
+                    <div>
+                      <h4 className="text-2xl font-black text-[var(--text-main)] group-hover:text-[var(--tlh-blue-primary)] transition-colors">
+                        {cls.title}
+                      </h4>
+                      <p className="text-[13px] font-bold text-[var(--tlh-blue-primary)]">{cls.course?.title || "Academic Program"}</p>
+                    </div>
+                  </div>
                   <Badge variant="emerald">{cls.status}</Badge>
                 </div>
-                <p className="text-xs text-slate-600 leading-relaxed">
+                
+                <p className="text-[15px] font-medium text-[var(--text-muted)] leading-relaxed mb-8">
                   {cls.description ||
-                    "Live sessions and practical learning with your cohort."}
+                    "Live sessions and practical learning with your cohort. Access your curriculum, sessions, and community."}
                 </p>
-                <div className="border-t border-slate-100 pt-3 space-y-1.5 text-xs text-slate-600">
-                  <p>
-                    <strong>Program:</strong> {cls.course?.title}
-                  </p>
-                  <p>
-                    <strong>Instructor:</strong>{" "}
-                    {cls.teacher?.fullName || "Not assigned"}
-                  </p>
-                  <p>
-                    <strong>Time zone:</strong> {cls.timeZone}
-                  </p>
+                
+                <div className="grid grid-cols-2 gap-4 py-6 border-y border-[var(--surface-border)]/50 mb-8">
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-black uppercase tracking-[0.15em] text-[var(--text-muted)]/60">Instructor</p>
+                    <p className="text-[13px] font-bold text-[var(--text-main)]">{cls.teacher?.fullName || "Not assigned"}</p>
+                  </div>
+                  <div className="space-y-1 text-right">
+                    <p className="text-[10px] font-black uppercase tracking-[0.15em] text-[var(--text-muted)]/60">Time Zone</p>
+                    <p className="text-[13px] font-bold text-[var(--text-main)]">{cls.timeZone}</p>
+                  </div>
                 </div>
-                <div className="pt-2 border-t border-slate-100">
-                  <Link
-                    to={`/workspace/${cls._id}`}
-                    className="block w-full text-center rounded-2xl bg-gradient-to-r from-[#0066ff] to-[#0099ff] py-2.5 text-xs font-bold text-white shadow-md shadow-blue-500/25 transition hover:from-[#0052cc] hover:to-[#0088e6]"
-                  >
-                    Enter Learning Workspace →
-                  </Link>
-                </div>
+
+                <Link
+                  to={`/workspace/${cls._id}`}
+                  className="golden-btn flex items-center justify-center gap-3 w-full rounded-full py-4 text-[13px] font-bold text-white shadow-sm hover:shadow-md transition-all active:scale-95"
+                >
+                  Enter Learning Workspace
+                  <span className="text-lg">→</span>
+                </Link>
               </div>
             ))}
           </div>
@@ -800,38 +829,34 @@ export function StudentDashboard({ user }) {
 
       {/* 2b. COURSES SELECTION */}
       {activeTab === "courses" ? (
-        <div className="max-w-3xl mx-auto space-y-6">
+        <div className="max-w-4xl mx-auto space-y-8">
           <DashboardCard
-            title="Choose your courses"
-            subtitle="Select the courses you want to study. Our academic coordinators will assign you to the right cohort."
+            title="Design Your Learning Path"
+            subtitle="Select the courses you want to study. Our coordinators will review your preferences and assign you to the best cohort."
           >
-            <form onSubmit={handleSaveProfile} className="space-y-6">
-              <div className="rounded-2xl bg-blue-50/70 p-4 border border-blue-100 flex items-start gap-3">
-                <span className="text-xl">💡</span>
-                <div className="text-xs text-blue-900 leading-relaxed">
-                  <strong>How course placement works:</strong> Pick one or more
-                  courses below. After submitting, your request is reviewed by
-                  the academic team and you will be added to your cohort
-                  learning workspace.
+            <form onSubmit={handleSaveProfile} className="space-y-10">
+              <div className="rounded-[var(--radius-2xl)] bg-[var(--tlh-blue-primary)]/5 p-6 border border-[var(--tlh-blue-primary)]/10 flex items-start gap-4">
+                <span className="text-2xl">💡</span>
+                <div className="text-[13px] text-[var(--text-main)] font-medium leading-relaxed">
+                  <strong className="font-black text-[var(--tlh-blue-primary)]">Placement Process:</strong> Pick one or more
+                  courses below. Our academic team will match you with the 
+                  appropriate cohort, schedule, and instructor.
                 </div>
               </div>
 
               {profileForm.preferredCourseIds.length > 0 ? (
-                <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-4">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-900">
-                      Your selection summary
+                <div className="rounded-[var(--radius-2xl)] border border-emerald-200/50 bg-emerald-50/30 p-6">
+                  <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+                    <h4 className="text-[11px] font-black uppercase tracking-[0.15em] text-emerald-900/60">
+                      Current Selection
                     </h4>
                     {profileForm.courseSelectionUpdatedAt ? (
-                      <span className="text-[11px] font-semibold text-emerald-700">
-                        Last updated{" "}
-                        {new Date(
-                          profileForm.courseSelectionUpdatedAt,
-                        ).toLocaleString()}
+                      <span className="text-[11px] font-bold text-emerald-600/80">
+                        Updated {new Date(profileForm.courseSelectionUpdatedAt).toLocaleDateString()}
                       </span>
                     ) : null}
                   </div>
-                  <div className="mt-2 flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-3">
                     {profileForm.preferredCourseIds.map((courseId) => {
                       const course = courses.find(
                         (item) => String(item._id) === String(courseId),
@@ -839,9 +864,10 @@ export function StudentDashboard({ user }) {
                       return (
                         <span
                           key={courseId}
-                          className="rounded-full border border-emerald-200 bg-white px-3 py-1 text-[11px] font-bold text-emerald-800"
+                          className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-white px-4 py-2 text-[13px] font-black text-emerald-700 shadow-sm"
                         >
-                          {course?.title || "Selected course"}
+                          <span className="text-emerald-400">✓</span>
+                          {course?.title || "Program"}
                         </span>
                       );
                     })}
@@ -849,14 +875,14 @@ export function StudentDashboard({ user }) {
                 </div>
               ) : null}
 
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <label className="text-xs font-bold text-slate-800">
-                    Available courses by category
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <label className="text-[15px] font-black text-[var(--text-main)]">
+                    Browse Academic Programs
                   </label>
-                  <span className="text-[11px] font-semibold text-blue-600 bg-blue-50 px-2.5 py-0.5 rounded-full border border-blue-200">
+                  <Badge variant="blue">
                     {profileForm.preferredCourseIds?.length || 0} selected
-                  </span>
+                  </Badge>
                 </div>
                 <CategoryCoursePicker
                   courses={courses}
@@ -867,14 +893,17 @@ export function StudentDashboard({ user }) {
                 />
               </div>
 
-              <div className="border-t border-slate-100 pt-5 space-y-4">
-                <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-                  Your Learning Preferences
-                </h4>
+              <div className="border-t border-[var(--surface-border)]/50 pt-10 space-y-8">
+                <div className="space-y-2">
+                  <h4 className="text-lg font-black text-[var(--text-main)]">
+                    Learning Preferences
+                  </h4>
+                  <p className="text-[13px] font-medium text-[var(--text-muted)]">Customize your experience to help us find the right fit for you.</p>
+                </div>
 
-                <div className="grid gap-4 sm:grid-cols-2">
+                <div className="grid gap-6 sm:grid-cols-2">
                   <div>
-                    <label className="block text-xs font-bold text-slate-700">
+                    <label className="block text-[11px] font-black uppercase tracking-[0.15em] text-[var(--text-muted)] mb-2">
                       {t("skillLevel")}
                     </label>
                     <select
@@ -885,7 +914,7 @@ export function StudentDashboard({ user }) {
                           currentSkillLevel: e.target.value,
                         })
                       }
-                      className="mt-1 w-full rounded-xl border border-slate-200 p-2.5 text-xs outline-none bg-white"
+                      className="w-full rounded-[var(--radius-xl)] border border-[var(--surface-border)] bg-[var(--surface-page)] px-5 py-4 text-sm font-bold text-[var(--text-main)] outline-none transition-all focus:border-[var(--tlh-blue-primary)] focus:bg-white focus:ring-4 focus:ring-[var(--tlh-blue-primary)]/5"
                     >
                       <option value="Beginner">Beginner</option>
                       <option value="Intermediate">Intermediate</option>
@@ -894,8 +923,8 @@ export function StudentDashboard({ user }) {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-700">
-                      Hours per week
+                    <label className="block text-[11px] font-black uppercase tracking-[0.15em] text-[var(--text-muted)] mb-2">
+                      Study Commitment (Hours/Week)
                     </label>
                     <input
                       type="number"
@@ -908,14 +937,14 @@ export function StudentDashboard({ user }) {
                           weeklyStudyHours: e.target.value,
                         })
                       }
-                      className="mt-1 w-full rounded-xl border border-slate-200 p-2 text-sm outline-none"
+                      className="w-full rounded-[var(--radius-xl)] border border-[var(--surface-border)] bg-[var(--surface-page)] px-5 py-4 text-sm font-bold text-[var(--text-main)] outline-none transition-all focus:border-[var(--tlh-blue-primary)] focus:bg-white focus:ring-4 focus:ring-[var(--tlh-blue-primary)]/5"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                    {t("preferredSchedule")}
+                  <label className="block text-[11px] font-black uppercase tracking-[0.15em] text-[var(--text-muted)] mb-3">
+                    Preferred Schedule
                   </label>
                   <SchedulePreferenceSelector
                     value={profileForm.preferredSchedule}
@@ -926,10 +955,10 @@ export function StudentDashboard({ user }) {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-2">
-                    How would you like to learn?
+                  <label className="block text-[11px] font-black uppercase tracking-[0.15em] text-[var(--text-muted)] mb-4">
+                    Preferred Learning Modes
                   </label>
-                  <div className="grid gap-2 sm:grid-cols-3">
+                  <div className="grid gap-3 sm:grid-cols-3">
                     {LEARNING_MODE_OPTIONS.map((mode) => {
                       const isSelected =
                         profileForm.preferredLearningModes.includes(mode.value);
@@ -950,63 +979,66 @@ export function StudentDashboard({ user }) {
                                   ],
                             })
                           }
-                          className={`rounded-xl border px-3 py-2.5 text-xs font-semibold transition ${
+                          className={`flex items-center gap-3 rounded-[var(--radius-xl)] border p-4 text-left transition-all ${
                             isSelected
-                              ? "border-blue-600 bg-blue-50 text-blue-900 ring-1 ring-blue-600"
-                              : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                              ? "border-[var(--tlh-blue-primary)] bg-[var(--tlh-blue-primary)]/5 ring-4 ring-[var(--tlh-blue-primary)]/10"
+                              : "border-[var(--surface-border)] bg-white text-[var(--text-muted)] hover:border-[var(--tlh-blue-primary)]/40 hover:text-[var(--text-main)]"
                           }`}
                         >
-                          {isSelected ? "✓ " : ""}
-                          {mode.label}
+                          <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 transition-all ${isSelected ? "border-[var(--tlh-blue-primary)] bg-[var(--tlh-blue-primary)] text-white" : "border-[var(--surface-border)]"}`}>
+                            {isSelected && <span className="text-[10px] font-black">✓</span>}
+                          </span>
+                          <span className="text-[13px] font-black">{mode.label}</span>
                         </button>
                       );
                     })}
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-slate-700">
-                    Notes for the academic team
-                  </label>
-                  <textarea
-                    rows={3}
-                    maxLength={1200}
-                    value={profileForm.preferredCourseNotes}
-                    onChange={(e) =>
-                      setProfileForm({
-                        ...profileForm,
-                        preferredCourseNotes: e.target.value,
-                      })
-                    }
-                    className="mt-1 w-full rounded-xl border border-slate-200 p-2 text-sm outline-none"
-                    placeholder="Share your goals, preferred start date, or anything that helps us build the right cohort for you."
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700">
-                    {t("learningGoals")}
-                  </label>
-                  <textarea
-                    rows={2}
-                    value={profileForm.learningGoals}
-                    onChange={(e) =>
-                      setProfileForm({
-                        ...profileForm,
-                        learningGoals: e.target.value,
-                      })
-                    }
-                    className="mt-1 w-full rounded-xl border border-slate-200 p-2 text-sm outline-none"
-                    placeholder="What do you hope to achieve through this learning journey?"
-                  />
+                <div className="grid gap-6 sm:grid-cols-2">
+                  <div>
+                    <label className="block text-[11px] font-black uppercase tracking-[0.15em] text-[var(--text-muted)] mb-2">
+                      Notes for Coordinators
+                    </label>
+                    <textarea
+                      rows={4}
+                      maxLength={1200}
+                      value={profileForm.preferredCourseNotes}
+                      onChange={(e) =>
+                        setProfileForm({
+                          ...profileForm,
+                          preferredCourseNotes: e.target.value,
+                        })
+                      }
+                      className="w-full rounded-[var(--radius-xl)] border border-[var(--surface-border)] bg-[var(--surface-page)] px-5 py-4 text-sm font-semibold text-[var(--text-main)] outline-none transition-all focus:border-[var(--tlh-blue-primary)] focus:bg-white focus:ring-4 focus:ring-[var(--tlh-blue-primary)]/5"
+                      placeholder="Share your specific goals or preferred start dates."
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-black uppercase tracking-[0.15em] text-[var(--text-muted)] mb-2">
+                      Your Primary Learning Goals
+                    </label>
+                    <textarea
+                      rows={4}
+                      value={profileForm.learningGoals}
+                      onChange={(e) =>
+                        setProfileForm({
+                          ...profileForm,
+                          learningGoals: e.target.value,
+                        })
+                      }
+                      className="w-full rounded-[var(--radius-xl)] border border-[var(--surface-border)] bg-[var(--surface-page)] px-5 py-4 text-sm font-semibold text-[var(--text-main)] outline-none transition-all focus:border-[var(--tlh-blue-primary)] focus:bg-white focus:ring-4 focus:ring-[var(--tlh-blue-primary)]/5"
+                      placeholder="What do you hope to achieve?"
+                    />
+                  </div>
                 </div>
               </div>
 
               <button
                 type="submit"
-                className="w-full rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 py-3 text-sm font-bold text-white shadow-lg shadow-blue-500/20 hover:from-blue-700 hover:to-indigo-700 transition"
+                className="golden-btn w-full rounded-full py-4 text-[14px] font-bold text-white shadow-sm hover:shadow-md transition-all active:scale-95"
               >
-                Submit Selected Courses & Preferences
+                Save Preferences & Submit Application
               </button>
             </form>
           </DashboardCard>
@@ -1028,20 +1060,22 @@ export function StudentDashboard({ user }) {
 
       {/* 3. ASSIGNMENTS */}
       {activeTab === "assignments" ? (
-        <div className="space-y-6">
-          <div className="grid gap-6 md:grid-cols-2">
+        <div className="space-y-8">
+          <div className="grid gap-8 md:grid-cols-2">
             {assignments.length === 0 ? (
-              <EmptyState title="No assignments yet." />
+              <div className="md:col-span-2">
+                <EmptyState title="No assignments yet." />
+              </div>
             ) : (
               assignments.map((asgn) => {
                 const sub = asgn.submission;
                 return (
                   <div
                     key={asgn._id}
-                    className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200 space-y-4"
+                    className="group relative rounded-[var(--radius-3xl)] bg-[var(--surface-card)] p-8 shadow-[var(--shadow-md)] border border-[var(--surface-border)]/60 transition-all hover:shadow-[var(--shadow-xl)] hover:border-[var(--tlh-blue-primary)]/20"
                   >
-                    <div className="flex items-center justify-between gap-2">
-                      <h4 className="font-bold text-slate-900">{asgn.title}</h4>
+                    <div className="flex items-center justify-between gap-4 mb-6">
+                      <h4 className="text-xl font-black text-[var(--text-main)] group-hover:text-[var(--tlh-blue-primary)] transition-colors">{asgn.title}</h4>
                       <Badge
                         variant={
                           sub
@@ -1054,65 +1088,70 @@ export function StudentDashboard({ user }) {
                         {sub
                           ? sub.status === "graded"
                             ? `Score: ${sub.score}/${asgn.maxScore}`
-                            : "Awaiting teacher review"
+                            : "Review Pending"
                           : "Not Submitted"}
                       </Badge>
                     </div>
-                    <p className="text-xs text-slate-600 leading-relaxed">
+                    
+                    <p className="text-[15px] font-medium text-[var(--text-muted)] leading-relaxed mb-8">
                       {asgn.instructions}
                     </p>
-                    <div className="flex justify-between items-center text-xs text-slate-500 border-t border-slate-100 pt-3">
-                      <span>
-                        Due: {new Date(asgn.dueDate).toLocaleDateString()}
-                      </span>
-                      <span>Max score: {asgn.maxScore}</span>
+                    
+                    <div className="flex justify-between items-center py-4 border-y border-[var(--surface-border)]/50 mb-8">
+                      <div className="space-y-1">
+                        <p className="text-[10px] font-black uppercase tracking-[0.15em] text-[var(--text-muted)]/60">Due Date</p>
+                        <p className="text-[13px] font-bold text-[var(--text-main)]">{new Date(asgn.dueDate).toLocaleDateString()}</p>
+                      </div>
+                      <div className="space-y-1 text-right">
+                        <p className="text-[10px] font-black uppercase tracking-[0.15em] text-[var(--text-muted)]/60">Max Points</p>
+                        <p className="text-[13px] font-bold text-[var(--text-main)]">{asgn.maxScore}</p>
+                      </div>
                     </div>
 
-                    {sub?.textResponse ? (
-                      <div className="rounded-xl bg-slate-50 p-3 text-xs text-slate-700">
-                        <p className="font-bold text-slate-900 mb-1">
-                          Your response
-                        </p>
-                        <p className="whitespace-pre-wrap">
-                          {sub.textResponse}
-                        </p>
+                    {sub?.textResponse && (
+                      <div className="mb-6 rounded-[var(--radius-xl)] bg-[var(--surface-page)] p-5 border border-[var(--surface-border)]/60">
+                        <p className="text-[11px] font-black uppercase tracking-[0.15em] text-[var(--text-muted)]/60 mb-2">Your Response</p>
+                        <p className="text-[13px] font-medium text-[var(--text-main)] whitespace-pre-wrap">{sub.textResponse}</p>
                       </div>
-                    ) : null}
+                    )}
 
-                    {sub?.attachments?.length ? (
-                      <div className="flex flex-wrap gap-2">
-                        {sub.attachments.map((file, fileIndex) => (
-                          <span
-                            key={file.key || fileIndex}
-                            className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-semibold text-slate-700"
-                          >
-                            📎 {file.filename}
-                          </span>
-                        ))}
-                      </div>
-                    ) : null}
+                    <div className="space-y-4 mb-8">
+                      {sub?.attachments?.length ? (
+                        <div className="flex flex-wrap gap-2">
+                          {sub.attachments.map((file, fileIndex) => (
+                            <span
+                              key={file.key || fileIndex}
+                              className="inline-flex items-center gap-2 rounded-full border border-[var(--surface-border)] bg-white px-4 py-2 text-[12px] font-bold text-[var(--text-main)] shadow-sm"
+                            >
+                              📎 {file.filename}
+                            </span>
+                          ))}
+                        </div>
+                      ) : null}
 
-                    {sub?.submissionLinks?.length ? (
-                      <div className="space-y-1">
-                        {sub.submissionLinks.map((link, linkIndex) => (
-                          <a
-                            key={linkIndex}
-                            href={link.url}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="block truncate text-xs font-semibold text-[#0066ff] hover:underline"
-                          >
-                            🔗 {link.label || link.url}
-                          </a>
-                        ))}
-                      </div>
-                    ) : null}
+                      {sub?.submissionLinks?.length ? (
+                        <div className="space-y-2">
+                          {sub.submissionLinks.map((link, linkIndex) => (
+                            <a
+                              key={linkIndex}
+                              href={link.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[var(--tlh-blue-primary)]/5 text-[12px] font-bold text-[var(--tlh-blue-primary)] hover:bg-[var(--tlh-blue-primary)]/10 transition-colors"
+                            >
+                              🔗 {link.label || link.url}
+                            </a>
+                          ))}
+                        </div>
+                      ) : null}
+                    </div>
 
-                    {sub?.feedback ? (
-                      <div className="rounded-xl bg-blue-50 p-3 text-xs text-blue-900">
-                        <strong>Instructor feedback:</strong> {sub.feedback}
+                    {sub?.feedback && (
+                      <div className="mb-8 rounded-[var(--radius-xl)] bg-[var(--tlh-blue-primary)]/5 p-5 border border-[var(--tlh-blue-primary)]/10">
+                        <p className="text-[11px] font-black uppercase tracking-[0.15em] text-[var(--tlh-blue-primary)]/60 mb-2">Instructor Feedback</p>
+                        <p className="text-[13px] font-bold text-[var(--tlh-navy)]">{sub.feedback}</p>
                       </div>
-                    ) : null}
+                    )}
 
                     {!sub || sub.status !== "graded" ? (
                       <button
@@ -1130,9 +1169,9 @@ export function StudentDashboard({ user }) {
                             files: [],
                           })
                         }
-                        className="w-full rounded-xl bg-blue-600 py-2.5 text-xs font-bold text-white hover:bg-blue-700 transition-colors"
+                        className="golden-btn w-full rounded-full py-4 text-[13px] font-bold text-white shadow-sm hover:shadow-md transition-all active:scale-95"
                       >
-                        {sub ? "Resubmit" : t("submitWork")}
+                        {sub ? "Resubmit Work" : t("submitWork")}
                       </button>
                     ) : null}
                   </div>
@@ -1145,48 +1184,56 @@ export function StudentDashboard({ user }) {
 
       {/* 4. ASSESSMENTS / QUIZZES */}
       {activeTab === "assessments" ? (
-        <div className="space-y-6">
-          <div className="grid gap-6 md:grid-cols-2">
+        <div className="space-y-8">
+          <div className="grid gap-8 md:grid-cols-2">
             {assessments.length === 0 ? (
-              <EmptyState title="No assessments yet." />
+              <div className="md:col-span-2">
+                <EmptyState title="No assessments yet." />
+              </div>
             ) : (
               assessments.map((qz) => {
                 const att = qz.latestAttempt;
                 return (
                   <div
                     key={qz._id}
-                    className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200 space-y-4"
+                    className="group relative rounded-[var(--radius-3xl)] bg-[var(--surface-card)] p-8 shadow-[var(--shadow-md)] border border-[var(--surface-border)]/60 transition-all hover:shadow-[var(--shadow-xl)] hover:border-[var(--tlh-cyan)]/20"
                   >
-                    <div className="flex items-center justify-between">
-                      <h4 className="font-bold text-slate-900">{qz.title}</h4>
+                    <div className="flex items-center justify-between gap-4 mb-6">
+                      <h4 className="text-xl font-black text-[var(--text-main)] group-hover:text-[var(--tlh-cyan)] transition-colors">{qz.title}</h4>
                       {att?.status === "reviewed" ? (
                         <Badge variant={att.passed ? "emerald" : "rose"}>
-                          {att.percentage}% (
-                          {att.passed ? t("passed") : t("failed")})
+                          {att.percentage}% ({att.passed ? "Passed" : "Failed"})
                         </Badge>
                       ) : att ? (
-                        <Badge variant="amber">Awaiting teacher review</Badge>
+                        <Badge variant="amber">Review Pending</Badge>
                       ) : (
                         <Badge variant="cyan">
-                          {qz.assessmentType?.replace("_", " ") ||
-                            `${qz.timeLimitMinutes} min`}
+                          {qz.assessmentType?.replace("_", " ") || "Standard"}
                         </Badge>
                       )}
                     </div>
-                    <p className="text-xs text-slate-600 leading-relaxed">
+                    
+                    <p className="text-[15px] font-medium text-[var(--text-muted)] leading-relaxed mb-8">
                       {qz.description}
                     </p>
-                    <div className="flex justify-between items-center text-xs text-slate-500 border-t border-slate-100 pt-3">
-                      <span>Questions: {qz.questions?.length || 0}</span>
-                      <span>Passing score: {qz.passingScorePercentage}%</span>
+                    
+                    <div className="flex justify-between items-center py-4 border-y border-[var(--surface-border)]/50 mb-8 text-[13px] font-bold text-[var(--text-main)]">
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg">📋</span>
+                        <span>{qz.questions?.length || 0} Questions</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg">⏱️</span>
+                        <span>{qz.timeLimitMinutes} Minutes</span>
+                      </div>
                     </div>
 
                     {att?.status !== "reviewed" && (
                       <button
                         onClick={() => startQuiz(qz)}
-                        className="w-full rounded-xl bg-cyan-600 py-2.5 text-xs font-bold text-white hover:bg-cyan-700 transition-colors"
+                        className="golden-btn w-full rounded-full py-4 text-[13px] font-bold text-white shadow-sm hover:shadow-md transition-all active:scale-95"
                       >
-                        {att ? "Resubmit for review" : t("takeAssessment")}
+                        {att ? "Resume Assessment" : t("takeAssessment")}
                       </button>
                     )}
                   </div>
@@ -1199,42 +1246,40 @@ export function StudentDashboard({ user }) {
 
       {/* 5. RESOURCES */}
       {activeTab === "resources" ? (
-        <div className="space-y-6">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="space-y-8">
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {resources.length === 0 ? (
-              <EmptyState title="No resources have been added yet." />
+              <div className="sm:col-span-2 lg:col-span-3">
+                <EmptyState title="No learning resources available." />
+              </div>
             ) : (
               resources.map((res) => (
                 <div
                   key={res._id}
-                  className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200 flex flex-col justify-between"
+                  className="group relative rounded-[var(--radius-2xl)] bg-[var(--surface-card)] p-6 shadow-[var(--shadow-sm)] border border-[var(--surface-border)]/60 transition-all hover:shadow-[var(--shadow-md)] hover:border-[var(--tlh-blue-primary)]/20 flex flex-col justify-between"
                 >
                   <div>
-                    <Badge variant="indigo">{res.category}</Badge>
-                    <h4 className="font-bold text-slate-900 mt-2">
+                    <div className="flex items-center justify-between mb-4">
+                      <Badge variant="indigo">{res.category}</Badge>
+                      <span className="text-[11px] font-black text-[var(--text-muted)]/40 uppercase">{(res.fileSize / 1024).toFixed(1)} KB</span>
+                    </div>
+                    <h4 className="text-lg font-black text-[var(--text-main)] group-hover:text-[var(--tlh-blue-primary)] transition-colors mb-2">
                       {res.title}
                     </h4>
-                    <p className="text-xs text-slate-500 mt-1">
+                    <p className="text-[13px] font-medium text-[var(--text-muted)] leading-relaxed line-clamp-2">
                       {res.description}
                     </p>
                   </div>
-                  <div className="mt-4 pt-3 border-t border-slate-100 flex justify-between items-center text-xs">
-                    <span className="text-slate-400">
-                      {(res.fileSize / 1024).toFixed(1)} KB
-                    </span>
-                    {res.classroom?._id ||
-                    res.classroom ||
-                    classrooms[0]?._id ? (
+                  <div className="mt-6 pt-5 border-t border-[var(--surface-border)]/50">
+                    {res.classroom?._id || res.classroom || classrooms[0]?._id ? (
                       <Link
                         to={`/workspace/${res.classroom?._id || res.classroom || classrooms[0]?._id}?resourceId=${res._id}`}
-                        className="font-bold text-[#0066ff] hover:text-[#0052cc] flex items-center gap-1 hover:underline"
+                        className="flex items-center justify-center gap-2 w-full rounded-xl bg-[var(--surface-page)] py-3 text-[12px] font-black text-[var(--tlh-blue-primary)] border border-[var(--surface-border)]/60 transition-all hover:bg-[var(--tlh-blue-primary)] hover:text-white hover:border-transparent"
                       >
-                        Open in Workspace →
+                        Open Workspace →
                       </Link>
                     ) : (
-                      <span className="font-semibold text-slate-500">
-                        View only
-                      </span>
+                      <div className="text-center text-[12px] font-bold text-[var(--text-muted)]/50">View only access</div>
                     )}
                   </div>
                 </div>
@@ -1246,12 +1291,12 @@ export function StudentDashboard({ user }) {
 
       {/* 6. TEACHER-PUBLISHED PROGRESS & ATTENDANCE */}
       {activeTab === "progress" ? (
-        <div className="space-y-8">
+        <div className="space-y-10">
           {progressReports.length === 0 ? (
-            <DashboardCard title="Progress reports">
+            <DashboardCard title="Progress Reports">
               <EmptyState
-                title="Your teacher has not published a progress report yet."
-                description="Grades, self-assessment, and progress details appear here after your teacher releases them."
+                title="No reports published yet"
+                description="Your academic performance and feedback will appear here once released by your teacher."
               />
             </DashboardCard>
           ) : (
@@ -1259,147 +1304,176 @@ export function StudentDashboard({ user }) {
               <DashboardCard
                 key={report._id}
                 title={`${report.classroom?.title || "Cohort"} · ${report.period}`}
-                subtitle={`Published by ${report.teacher?.fullName || "your teacher"}${report.publishedAt ? ` on ${new Date(report.publishedAt).toLocaleDateString()}` : ""}`}
+                subtitle={`Released by ${report.teacher?.fullName || "Instructor"}${report.publishedAt ? ` on ${new Date(report.publishedAt).toLocaleDateString()}` : ""}`}
               >
-                <div className="space-y-5">
-                  <div className="rounded-xl bg-blue-50 p-4">
-                    <p className="text-xs font-bold uppercase tracking-wide text-blue-800">
-                      Overall result
-                    </p>
-                    <p className="mt-1 text-3xl font-black text-slate-900">
-                      {report.overallScore}%
-                    </p>
+                <div className="space-y-8">
+                  <div className="rounded-[var(--radius-2xl)] bg-gradient-to-br from-[var(--tlh-blue-primary)]/5 to-white p-8 border border-[var(--tlh-blue-primary)]/10">
+                    <p className="text-[11px] font-black uppercase tracking-[0.2em] text-[var(--tlh-blue-primary)]/60 mb-2">Overall Performance</p>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-5xl font-black text-[var(--text-main)] tracking-tighter">
+                        {report.overallScore}%
+                      </span>
+                      <span className="text-sm font-bold text-[var(--tlh-blue-primary)] uppercase">Success Rate</span>
+                    </div>
                   </div>
+
                   {report.components?.length ? (
-                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                       {report.components.map((component) => (
                         <div
                           key={component._id}
-                          className="rounded-xl border border-slate-200 p-3"
+                          className="rounded-[var(--radius-xl)] border border-[var(--surface-border)]/60 bg-[var(--surface-page)] p-5 transition-all hover:border-[var(--tlh-blue-primary)]/20"
                         >
-                          <p className="text-xs font-bold text-slate-600">
+                          <p className="text-[11px] font-black uppercase tracking-wider text-[var(--text-muted)]/60 mb-3">
                             {component.title}
                           </p>
-                          <p className="mt-1 text-xl font-black text-slate-900">
-                            {component.score}/{component.maxScore}
-                          </p>
+                          <div className="flex items-baseline gap-1 mb-2">
+                            <span className="text-2xl font-black text-[var(--text-main)]">{component.score}</span>
+                            <span className="text-sm font-bold text-[var(--text-muted)]/50">/ {component.maxScore}</span>
+                          </div>
                           {component.feedback ? (
-                            <p className="mt-1 text-xs text-slate-600">
-                              {component.feedback}
+                            <p className="text-[12px] font-medium text-[var(--text-muted)] leading-relaxed italic border-t border-[var(--surface-border)]/50 pt-3 mt-3">
+                              "{component.feedback}"
                             </p>
                           ) : null}
                         </div>
                       ))}
                     </div>
                   ) : null}
-                  {report.selfAssessment ? (
-                    <div>
-                      <h4 className="text-xs font-bold text-slate-700">
-                        Teacher self-assessment
-                      </h4>
-                      <p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-slate-600">
-                        {report.selfAssessment}
-                      </p>
-                    </div>
-                  ) : null}
-                  {report.feedback ? (
-                    <div className="rounded-xl bg-slate-50 p-4">
-                      <h4 className="text-xs font-bold text-slate-700">
-                        Teacher feedback
-                      </h4>
-                      <p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-slate-600">
-                        {report.feedback}
-                      </p>
-                    </div>
-                  ) : null}
+
+                  <div className="grid gap-8 lg:grid-cols-2">
+                    {report.selfAssessment && (
+                      <div className="space-y-3">
+                        <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-[var(--text-main)]">Self-Assessment Summary</h4>
+                        <div className="rounded-[var(--radius-xl)] bg-white p-6 border border-[var(--surface-border)]/60 text-[14px] font-medium text-[var(--text-muted)] leading-relaxed shadow-sm">
+                          {report.selfAssessment}
+                        </div>
+                      </div>
+                    )}
+                    {report.feedback && (
+                      <div className="space-y-3">
+                        <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-[var(--tlh-blue-primary)]">Instructor Commentary</h4>
+                        <div className="rounded-[var(--radius-xl)] bg-[var(--tlh-blue-primary)]/5 p-6 border border-[var(--tlh-blue-primary)]/10 text-[14px] font-bold text-[var(--tlh-navy)] leading-relaxed shadow-sm">
+                          {report.feedback}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </DashboardCard>
             ))
           )}
 
           <DashboardCard
-            title="Attendance register"
-            subtitle="Cumulative attendance across every cohort you are enrolled in."
+            title="Attendance Analytics"
+            subtitle="Track your participation and engagement across all active learning cohorts."
           >
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-5 mb-10">
               <MetricCard
-                label="Attendance rate"
+                label="Average Rate"
                 value={`${attendanceSummary?.attendanceRate ?? 0}%`}
+                icon="📊"
               />
-              <MetricCard label="Present" value={attendanceSummary?.present ?? 0} />
-              <MetricCard label="Late" value={attendanceSummary?.late ?? 0} />
-              <MetricCard label="Absent" value={attendanceSummary?.absent ?? 0} />
+              <MetricCard label="Present" value={attendanceSummary?.present ?? 0} icon="✅" />
+              <MetricCard label="Late" value={attendanceSummary?.late ?? 0} icon="🕒" />
+              <MetricCard label="Absent" value={attendanceSummary?.absent ?? 0} icon="❌" />
               <MetricCard
                 label="Excused"
                 value={attendanceSummary?.excused ?? 0}
+                icon="📝"
               />
             </div>
 
             {attendanceClasses.length > 0 ? (
-              <div className="mt-6 overflow-x-auto">
-                <table className="w-full min-w-[520px] text-left text-xs">
-                  <thead>
-                    <tr className="border-b border-slate-200 text-slate-500 uppercase tracking-wider">
-                      <th className="py-2 pr-3 font-bold">Cohort</th>
-                      <th className="py-2 px-3 font-bold">Sessions held</th>
-                      <th className="py-2 px-3 font-bold">Present</th>
-                      <th className="py-2 px-3 font-bold">Late</th>
-                      <th className="py-2 px-3 font-bold">Absent</th>
-                      <th className="py-2 pl-3 font-bold">Rate</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {attendanceClasses.map((row) => (
-                      <tr key={row.classroom?._id}>
-                        <td className="py-2.5 pr-3 font-semibold text-slate-900">
-                          {row.classroom?.courseTitle || row.classroom?.title}
-                          <span className="block text-[11px] font-normal text-slate-400">
-                            {row.classroom?.title}
-                          </span>
-                        </td>
-                        <td className="py-2.5 px-3 text-slate-600">
-                          {row.sessionsHeld ?? 0}
-                        </td>
-                        <td className="py-2.5 px-3 text-emerald-600 font-semibold">
-                          {row.present ?? 0}
-                        </td>
-                        <td className="py-2.5 px-3 text-amber-600 font-semibold">
-                          {row.late ?? 0}
-                        </td>
-                        <td className="py-2.5 px-3 text-rose-600 font-semibold">
-                          {row.absent ?? 0}
-                        </td>
-                        <td className="py-2.5 pl-3 font-bold text-slate-900">
-                          {row.attendanceRate ?? 0}%
-                        </td>
+              <div className="rounded-[var(--radius-2xl)] border border-[var(--surface-border)]/60 overflow-hidden bg-[var(--surface-page)]/30">
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[600px] text-left">
+                    <thead>
+                      <tr className="border-b border-[var(--surface-border)]/60 bg-[var(--surface-page)]/50">
+                        <th className="py-4 px-6 text-[11px] font-black uppercase tracking-wider text-[var(--text-muted)]">Cohort Program</th>
+                        <th className="py-4 px-6 text-[11px] font-black uppercase tracking-wider text-[var(--text-muted)] text-center">Sessions</th>
+                        <th className="py-4 px-6 text-[11px] font-black uppercase tracking-wider text-[var(--text-muted)] text-center">Present</th>
+                        <th className="py-4 px-6 text-[11px] font-black uppercase tracking-wider text-[var(--text-muted)] text-center">Late</th>
+                        <th className="py-4 px-6 text-[11px] font-black uppercase tracking-wider text-[var(--text-muted)] text-center">Absent</th>
+                        <th className="py-4 px-6 text-[11px] font-black uppercase tracking-wider text-[var(--text-muted)] text-right">Success Rate</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="divide-y divide-[var(--surface-border)]/40">
+                      {attendanceClasses.map((row) => (
+                        <tr key={row.classroom?._id} className="hover:bg-white transition-colors group">
+                          <td className="py-5 px-6">
+                            <p className="text-[14px] font-black text-[var(--text-main)] group-hover:text-[var(--tlh-blue-primary)] transition-colors">
+                              {row.classroom?.courseTitle || row.classroom?.title}
+                            </p>
+                            <p className="text-[11px] font-bold text-[var(--text-muted)]/50 mt-0.5 uppercase tracking-tighter">
+                              {row.classroom?.title}
+                            </p>
+                          </td>
+                          <td className="py-5 px-6 text-center text-[13px] font-bold text-[var(--text-muted)]">
+                            {row.sessionsHeld ?? 0}
+                          </td>
+                          <td className="py-5 px-6 text-center">
+                            <span className="inline-flex items-center justify-center w-10 h-8 rounded-lg bg-emerald-50 text-emerald-700 text-[13px] font-black">
+                              {row.present ?? 0}
+                            </span>
+                          </td>
+                          <td className="py-5 px-6 text-center">
+                            <span className="inline-flex items-center justify-center w-10 h-8 rounded-lg bg-amber-50 text-amber-700 text-[13px] font-black">
+                              {row.late ?? 0}
+                            </span>
+                          </td>
+                          <td className="py-5 px-6 text-center">
+                            <span className="inline-flex items-center justify-center w-10 h-8 rounded-lg bg-rose-50 text-rose-700 text-[13px] font-black">
+                              {row.absent ?? 0}
+                            </span>
+                          </td>
+                          <td className="py-5 px-6 text-right">
+                            <div className="flex flex-col items-end">
+                              <span className="text-[15px] font-black text-[var(--text-main)]">{row.attendanceRate ?? 0}%</span>
+                              <div className="w-20 h-1.5 bg-[var(--surface-border)]/40 rounded-full mt-2 overflow-hidden">
+                                <div 
+                                  className="h-full bg-gradient-to-r from-[var(--tlh-blue-primary)] to-[var(--tlh-sky)] rounded-full transition-all duration-1000"
+                                  style={{ width: `${row.attendanceRate ?? 0}%` }}
+                                />
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             ) : null}
 
-            <div className="mt-6">
-              <h4 className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-500">
-                Session-by-session
-              </h4>
-              <div className="divide-y divide-slate-100">
+            <div className="mt-12">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="h-px flex-1 bg-[var(--surface-border)]/50" />
+                <h4 className="text-[11px] font-black uppercase tracking-[0.25em] text-[var(--text-muted)]/60">
+                  Recent Participation Log
+                </h4>
+                <div className="h-px flex-1 bg-[var(--surface-border)]/50" />
+              </div>
+              <div className="grid gap-4">
                 {attendanceRecords.length === 0 ? (
-                  <EmptyState title="No attendance records yet." />
+                  <EmptyState title="No participation records found." />
                 ) : (
-                  attendanceRecords.map((rec) => (
+                  attendanceRecords.slice(0, 10).map((rec) => (
                     <div
                       key={rec._id}
-                      className="py-3 flex justify-between items-center text-xs"
+                      className="group flex justify-between items-center p-4 rounded-[var(--radius-xl)] border border-[var(--surface-border)]/40 bg-[var(--surface-page)]/30 hover:bg-white hover:shadow-sm transition-all"
                     >
-                      <div>
-                        <span className="font-bold text-slate-900">
-                          {rec.session?.title || "Class Session"}
-                        </span>
-                        <p className="text-slate-400">
-                          {rec.classroom?.title ? `${rec.classroom.title} · ` : ""}
-                          {new Date(rec.session?.startsAt || rec.createdAt).toLocaleDateString()}
-                        </p>
+                      <div className="flex items-center gap-4">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white border border-[var(--surface-border)]/60 text-lg shadow-sm">🗓️</div>
+                        <div>
+                          <p className="text-[14px] font-black text-[var(--text-main)] group-hover:text-[var(--tlh-blue-primary)] transition-colors">
+                            {rec.session?.title || "Class Session"}
+                          </p>
+                          <p className="text-[11px] font-bold text-[var(--text-muted)]/50 uppercase tracking-tighter mt-0.5">
+                            {rec.classroom?.title ? `${rec.classroom.title} · ` : ""}
+                            {new Date(rec.session?.startsAt || rec.createdAt).toLocaleDateString()}
+                          </p>
+                        </div>
                       </div>
                       <Badge
                         variant={
@@ -1449,7 +1523,7 @@ export function StudentDashboard({ user }) {
                           {attempt.assessment?.assessmentType || "Assessment"}
                         </p>
                       </div>
-                      <span className="rounded-xl bg-blue-50 px-3 py-1 text-sm font-black text-blue-700">
+                      <span className="rounded-xl bg-blue-50 px-3 py-1 text-sm font-black text-[var(--tlh-blue-hover)]">
                         {attempt.score ?? 0}/{attempt.maxScore ?? 100}
                       </span>
                     </div>
@@ -1570,7 +1644,7 @@ export function StudentDashboard({ user }) {
               </p>
               <button
                 type="submit"
-                className="w-full rounded-xl bg-blue-600 py-2.5 text-xs font-bold text-white hover:bg-blue-700"
+                className="w-full rounded-xl bg-[var(--tlh-blue-primary)] py-2.5 text-xs font-bold text-white hover:bg-[var(--tlh-blue-hover)]"
               >
                 Save personal profile
               </button>
@@ -1712,7 +1786,7 @@ export function StudentDashboard({ user }) {
 
                 <button
                   type="submit"
-                  className="w-full rounded-xl bg-blue-600 py-2.5 text-xs font-bold text-white hover:bg-blue-700"
+                  className="w-full rounded-xl bg-[var(--tlh-blue-primary)] py-2.5 text-xs font-bold text-white hover:bg-[var(--tlh-blue-hover)]"
                 >
                   Save preferences
                 </button>
@@ -1775,7 +1849,7 @@ export function StudentDashboard({ user }) {
                         className={`rounded-lg px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white ${
                           cert.status === "revoked"
                             ? "bg-rose-600"
-                            : "bg-gradient-to-r from-[#0066ff] to-[#0099ff]"
+                            : "bg-gradient-to-r from-[var(--tlh-blue-primary)] to-[var(--tlh-sky)]"
                         }`}
                       >
                         {cert.status === "revoked"
@@ -1798,7 +1872,7 @@ export function StudentDashboard({ user }) {
                       </p>
                       <p>
                         Overall Grade:{" "}
-                        <strong className="text-[#0066ff]">
+                        <strong className="text-[var(--tlh-blue-primary)]">
                           {cert.overallScore}%
                         </strong>
                       </p>
@@ -1835,7 +1909,7 @@ export function StudentDashboard({ user }) {
                     <Link
                       to={`/verify-certificate/${cert.certificateNumber}`}
                       target="_blank"
-                      className="block text-center text-[11px] font-bold text-[#0066ff] hover:underline"
+                      className="block text-center text-[11px] font-bold text-[var(--tlh-blue-primary)] hover:underline"
                     >
                       Open public verification page ↗
                     </Link>
@@ -1969,7 +2043,7 @@ export function StudentDashboard({ user }) {
                     links: [...prev.links, { label: "", url: "" }],
                   }))
                 }
-                className="text-[11px] font-bold text-blue-600 hover:text-blue-700"
+                className="text-[11px] font-bold text-[var(--tlh-blue-primary)] hover:text-[var(--tlh-blue-hover)]"
               >
                 + Add link
               </button>
@@ -2036,7 +2110,7 @@ export function StudentDashboard({ user }) {
               onChange={(e) =>
                 setSubmitModal((prev) => ({ ...prev, files: e.target.files }))
               }
-              className="w-full rounded-xl border border-dashed border-slate-300 p-2.5 text-xs text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-blue-50 file:px-3 file:py-1.5 file:text-xs file:font-bold file:text-blue-700"
+              className="w-full rounded-xl border border-dashed border-slate-300 p-2.5 text-xs text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-blue-50 file:px-3 file:py-1.5 file:text-xs file:font-bold file:text-[var(--tlh-blue-hover)]"
             />
             {submitModal.files?.length ? (
               <ul className="mt-2 space-y-1">
@@ -2066,7 +2140,7 @@ export function StudentDashboard({ user }) {
           <button
             type="submit"
             disabled={submitBusy}
-            className="w-full rounded-xl bg-blue-600 py-2.5 text-xs font-bold text-white hover:bg-blue-700 disabled:opacity-60"
+            className="w-full rounded-xl bg-[var(--tlh-blue-primary)] py-2.5 text-xs font-bold text-white hover:bg-[var(--tlh-blue-hover)] disabled:opacity-60"
           >
             {submitBusy ? "Submitting…" : t("submitWork")}
           </button>
@@ -2094,7 +2168,7 @@ export function StudentDashboard({ user }) {
             {quizModal.result.status === "reviewed" ? (
               <>
                 <div
-                  className={`mx-auto flex h-16 w-16 items-center justify-center rounded-full text-3xl ${quizModal.result.passed ? "bg-sky-100 text-blue-700" : "bg-rose-100 text-rose-600"}`}
+                  className={`mx-auto flex h-16 w-16 items-center justify-center rounded-full text-3xl ${quizModal.result.passed ? "bg-sky-100 text-[var(--tlh-blue-hover)]" : "bg-rose-100 text-rose-600"}`}
                 >
                   {quizModal.result.passed ? "✓" : "!"}
                 </div>
@@ -2115,7 +2189,7 @@ export function StudentDashboard({ user }) {
               </>
             ) : (
               <>
-                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-sky-100 text-3xl text-blue-700">
+                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-sky-100 text-3xl text-[var(--tlh-blue-hover)]">
                   ⏳
                 </div>
                 <h3 className="text-xl font-bold text-slate-900">
@@ -2184,12 +2258,12 @@ export function StudentDashboard({ user }) {
                           }
                           className={`flex w-full items-center gap-3 rounded-xl border p-3 text-left text-xs font-semibold transition-colors ${
                             isSelected
-                              ? "border-blue-600 bg-blue-50 text-blue-900 ring-1 ring-blue-600"
+                              ? "border-[var(--tlh-blue-primary)] bg-blue-50 text-[var(--tlh-navy-deep)] ring-1 ring-[var(--tlh-blue-primary)]"
                               : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
                           }`}
                         >
                           <span
-                            className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold ${isSelected ? "bg-blue-600 text-white" : "border border-slate-300"}`}
+                            className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold ${isSelected ? "bg-[var(--tlh-blue-primary)] text-white" : "border border-slate-300"}`}
                           >
                             {String.fromCharCode(65 + optIdx)}
                           </span>
@@ -2232,7 +2306,7 @@ export function StudentDashboard({ user }) {
                         links: [...prev.links, { label: "", url: "" }],
                       }))
                     }
-                    className="text-[11px] font-bold text-blue-600 hover:text-blue-700"
+                    className="text-[11px] font-bold text-[var(--tlh-blue-primary)] hover:text-[var(--tlh-blue-hover)]"
                   >
                     + Add link
                   </button>
@@ -2301,7 +2375,7 @@ export function StudentDashboard({ user }) {
                   onChange={(e) =>
                     setQuizModal((prev) => ({ ...prev, files: e.target.files }))
                   }
-                  className="w-full rounded-xl border border-dashed border-slate-300 p-2.5 text-xs text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-blue-50 file:px-3 file:py-1.5 file:text-xs file:font-bold file:text-blue-700"
+                  className="w-full rounded-xl border border-dashed border-slate-300 p-2.5 text-xs text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-blue-50 file:px-3 file:py-1.5 file:text-xs file:font-bold file:text-[var(--tlh-blue-hover)]"
                 />
                 {quizModal.files?.length ? (
                   <ul className="mt-2 space-y-1">
@@ -2333,7 +2407,7 @@ export function StudentDashboard({ user }) {
             <button
               onClick={handleSubmitQuiz}
               disabled={quizBusy}
-              className="w-full rounded-xl bg-cyan-600 py-3 text-xs font-bold text-white hover:bg-cyan-700 shadow-sm disabled:opacity-60"
+              className="w-full rounded-xl bg-[var(--tlh-cyan)] py-3 text-xs font-bold text-white hover:bg-cyan-700 shadow-sm disabled:opacity-60"
             >
               {quizBusy ? "Submitting…" : t("submitAnswers")}
             </button>

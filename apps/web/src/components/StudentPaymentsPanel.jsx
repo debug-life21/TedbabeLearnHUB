@@ -193,7 +193,7 @@ export function StudentPaymentsPanel({ courses = [] }) {
     return (
         <div className="space-y-6">
             {error ? <p role="alert" className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">{error}</p> : null}
-            {feedback ? <p role="status" className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900">{feedback}</p> : null}
+            {feedback ? <p role="status" className="rounded-xl border border-[var(--tlh-blue-primary)]/20 bg-[var(--primary-light)] p-3 text-sm font-semibold text-[var(--tlh-blue-primary)]">{feedback}</p> : null}
 
             {instructions ? (
                 <DashboardCard title="Complete your payment" subtitle={`Order ${instructions.reference}`}>

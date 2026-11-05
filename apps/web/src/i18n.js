@@ -6,7 +6,7 @@ i18n.use(initReactI18next).init({
     en: {
       translation: {
         brandTagline:
-          "Practical learning. Expert instruction. Progress shared when ready.",
+          "Your Learning Partner for a Better Future. Learn. Grow. Achieve.",
         courses: "Courses",
         navHowItWorks: "How it works",
         navInstructors: "Instructors",
@@ -22,11 +22,11 @@ i18n.use(initReactI18next).init({
         teacherApply: "Teach with us",
         dashboard: "Dashboard",
         signOut: "Sign out",
-        heroTitle: "THE WORLD IS CHENGING RAPIDLY. ARE YOU READY TO LEARN?",
+        heroTitle: "Grow Your Knowledge, Build Your Future in Your Own Hands!",
         heroDescription:
-          "TedbabelearnHUB helps you learn different courses on one platform , study with professional instructors, and developnew skills.",
-        heroPrimary: "Explore learning programs",
-        heroSecondary: "See how it works",
+          "TedbabeLearnHUB helps you learn different courses on one platform, study with professional instructors, and develop new skills.",
+        heroPrimary: "Start Now",
+        heroSecondary: "View Courses",
         categoriesTitle: "Find a program that fits your goals",
         categoriesSubtitle:
           "Explore structured programs across technology, languages, business, and school subjects. Review the curriculum and available cohorts before you choose.",
@@ -344,7 +344,7 @@ i18n.use(initReactI18next).init({
     },
     am: {
       translation: {
-        brandTagline: "ተግባራዊ ትምህርት። የአስተማሪ መመሪያ። ዝግጁ ሲሆን የሚጋራ እድገት።",
+        brandTagline: "ለተሻለ ነገ የትምህርት አጋርዎ — ይማሩ፣ ያድጉ፣ ይሳኩ።",
         courses: "ትምህርቶች",
         navHowItWorks: "እንዴት እንደሚሰራ",
         navInstructors: "አስተማሪዎች",
@@ -360,11 +360,11 @@ i18n.use(initReactI18next).init({
         teacherApply: "ከእኛ ጋር ያስተምሩ",
         dashboard: "ዳሽቦርድ",
         signOut: "ይውጡ",
-        heroTitle: "ዓለም በፍጥነት እየተለወጠች ነው። ለመማር ዝግጁ ነዎት?",
+        heroTitle: "እውቀትህን አሳድግ፣ የወደፊትህን በራስህ እጅ ገንባ!",
         heroDescription:
-          "Tedbabe learnHUB ከአንድ መድረክ በተለያዩ ትምህርቶች ፣ ከባለሙያ አስተማሪዎች ጋር መማር፣ እና አዳዲስ ክህሎቶችን መገንባት ያግዛዎታል።",
-        heroPrimary: "የትምህርት ፕሮግራሞችን ይመልከቱ",
-        heroSecondary: "እንዴት እንደሚሰራ ይወቁ",
+          "TedbabelearnHUB በአንድ መድረክ የተለያዩ ኮርሶችን እንድትማር፣ ከአስተማሪዎች ጋር እንድትሳተፍ እና አዳዲስ ክህሎቶችን እንድትገነባ ያግዝሃል።",
+        heroPrimary: "አሁን ይጀምሩ",
+        heroSecondary: "ኮርሶችን ይመልከቱ",
         categoriesTitle: "ከግቦችዎ ጋር የሚስማማ ፕሮግራም ያግኙ",
         categoriesSubtitle:
           "በቴክኖሎጂ፣ ቋንቋዎች፣ ንግድ እና ትምህርት ቤት ትምህርቶች ያሉ የተዋቀሩ ፕሮግራሞችን ያስሱ። ከመምረጥዎ በፊት የትምህርት ይዘቱንና ያሉ ኮሆርቶችን ይመልከቱ።",

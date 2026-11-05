@@ -32,35 +32,35 @@ export function buildCertificateDocument(cert) {
 <title>TLH Certificate ${escapeHtml(cert?.certificateNumber)}</title>
 <style>
   * { box-sizing: border-box; }
-  body { margin: 0; padding: 32px; background: #f1f5f9; color: #0f172a;
+  body { margin: 0; padding: 32px; background: #F5F8FE; color: #17243B;
          font-family: Inter, "Segoe UI", system-ui, -apple-system, sans-serif; }
-  .sheet { max-width: 900px; margin: 0 auto; background: #fffef9; border: 10px solid #0f172a;
-           border-radius: 22px; padding: 56px 48px; text-align: center; }
-  .inner { border: 1px solid rgba(2, 132, 199, 0.35); border-radius: 16px; padding: 48px 36px; }
-  .seal { width: 64px; height: 64px; margin: 0 auto 24px; border-radius: 16px;
-          background: linear-gradient(135deg, #001b44, #0066ff); color: #fff; font-weight: 900;
-          display: flex; align-items: center; justify-content: center; font-size: 20px; }
-  .brand { font-size: 11px; letter-spacing: 0.25em; font-weight: 900; color: #172554; margin: 0; }
-  h1 { font-size: 26px; margin: 14px 0 0; }
-  .lead { font-size: 11px; letter-spacing: 0.2em; color: #64748b; text-transform: uppercase; margin: 30px 0 0; }
-  .name { font-size: 34px; font-weight: 800; margin: 10px 0 0; display: inline-block;
-          border-bottom: 2px solid #38bdf8; padding-bottom: 6px; }
-  .req { font-size: 12px; color: #475569; max-width: 560px; margin: 24px auto 0; line-height: 1.65; }
-  .course { font-size: 22px; font-weight: 900; color: #1d4ed8; margin: 16px 0 0; }
+  .sheet { max-width: 900px; margin: 0 auto; background: #fffef9; border: 10px solid #071B49;
+           border-radius: 22px; padding: 56px 48px; text-align: center; box-shadow: 0 20px 50px rgba(7, 27, 73, 0.15); }
+  .inner { border: 1.5px solid rgba(18, 188, 235, 0.45); border-radius: 16px; padding: 48px 36px; }
+  .logo-wrap { margin: 0 auto 18px; text-align: center; }
+  .brand { font-size: 11px; letter-spacing: 0.25em; font-weight: 900; color: #071B49; margin: 0; }
+  h1 { font-size: 26px; margin: 14px 0 0; color: #071B49; }
+  .lead { font-size: 11px; letter-spacing: 0.2em; color: #667085; text-transform: uppercase; margin: 30px 0 0; }
+  .name { font-size: 34px; font-weight: 800; margin: 10px 0 0; display: inline-block; color: #071B49;
+          border-bottom: 2.5px solid #12BCEB; padding-bottom: 6px; }
+  .req { font-size: 12px; color: #667085; max-width: 560px; margin: 24px auto 0; line-height: 1.65; }
+  .course { font-size: 22px; font-weight: 900; color: #1266E8; margin: 16px 0 0; }
   .grid { display: flex; flex-wrap: wrap; justify-content: space-around; gap: 20px;
-          border-top: 1px solid #e2e8f0; margin-top: 34px; padding-top: 28px; text-align: left; }
+          border-top: 1px solid #E2E8F0; margin-top: 34px; padding-top: 28px; text-align: left; }
   .grid .label { display: block; font-size: 10px; text-transform: uppercase; font-weight: 700; color: #94a3b8; }
-  .grid .value { font-weight: 700; color: #1e293b; }
+  .grid .value { font-weight: 700; color: #17243B; }
   .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
   .sig { margin-top: 46px; display: flex; flex-direction: column; align-items: center; }
   .sig .line { width: 260px; border-top: 1px solid #94a3b8; margin-top: 10px; }
-  @media print { body { background: #fff; padding: 0; } .sheet { border-radius: 0; box-shadow: none; } }
+  @media print { body { background: #fff; padding: 0; } .sheet { border-radius: 0; box-shadow: none; border-width: 6px; } }
 </style>
 </head>
 <body>
   <div class="sheet">
     <div class="inner">
-      <div class="seal">TLH</div>
+      <div class="logo-wrap">
+        <img src="/tedbabelearnhub-logo.png" alt="TedbabeLearnHUB (TLH)" style="height:76px;width:auto;margin:0 auto;display:block;object-fit:contain;" />
+      </div>
       <p class="brand">TEDBABELEARNHUB (TLH) ONLINE LEARNING PLATFORM</p>
       <h1>Certificate of Course Completion</h1>
       <p class="lead">This is proudly conferred upon</p>

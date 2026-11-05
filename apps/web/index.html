@@ -1,26 +1,48 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>TedbabeLearnHUB (TLH) — Complete Online Learning & Education Management Platform</title>
-    <meta name="description" content="TedbabeLearnHUB (TLH) is a modern online learning platform with teacher-led courses, student placement, live scheduled lessons, assessments, and progress tracking." />
-    <meta name="theme-color" content="#030712" />
-    <meta property="og:type" content="website" />
-    <meta property="og:title" content="TedbabeLearnHUB (TLH) — Universal Online Learning Platform" />
-    <meta property="og:description" content="Learn Anything. Grow Everywhere. Verified mentors, live cohorts, structured curriculum, and verifiable certificates." />
-    <meta property="og:image" content="/tedbabelearnhub-logo.png" />
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="TedbabeLearnHUB (TLH) — Universal Online Learning Platform" />
-    <meta name="twitter:description" content="Learn Anything. Grow Everywhere. Teacher-led live cohorts, assessments, and verifiable certificates." />
-    <meta name="twitter:image" content="/tedbabelearnhub-logo.png" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+Ethiopic:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="icon" type="image/png" href="/learnhub-icon.png" />
+<head">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TedbabeLearnHUB (TLH) — Complete Online Learning & Education Management Platform</title>
+  <meta name="description"
+    content="TedbabeLearnHUB (TLH) is a modern online learning platform with teacher-led courses, student placement, live scheduled lessons, assessments, and progress tracking." />
+  <meta name="theme-color" content="#071B49" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="TedbabeLearnHUB (TLH) — Universal Online Learning Platform" />
+  <meta property="og:description"
+    content="Learn Anything. Grow Everywhere. Verified mentors, live cohorts, structured curriculum, and verifiable certificates." />
+  <meta property="og:image" content="/tedbabelearnhub-logo.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="TedbabeLearnHUB (TLH) — Universal Online Learning Platform" />
+  <meta name="twitter:description"
+    content="Learn Anything. Grow Everywhere. Teacher-led live cohorts, assessments, and verifiable certificates." />
+  <meta name="twitter:image" content="/tedbabelearnhub-logo.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+Ethiopic:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet">
+  <link rel="icon" type="image/png" href="/learnhub-icon.png" />
+  <script>
+    (function () {
+      try {
+        var saved = localStorage.getItem('learnhub_theme');
+        var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (saved === 'dark' || saved === 'bluedark' || (!saved && prefersDark)) {
+          document.documentElement.classList.add('dark');
+          document.documentElement.setAttribute('data-theme', 'dark');
+        } else {
+          document.documentElement.classList.remove('dark', 'bluedark');
+          document.documentElement.setAttribute('data-theme', 'light');
+        }
+      } catch (e) { }
+    })();
+  </script>
   </head>
+
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
+
 </html>

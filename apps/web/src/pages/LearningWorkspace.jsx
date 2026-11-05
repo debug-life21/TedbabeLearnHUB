@@ -140,9 +140,8 @@ function ProtectedDocumentPreview({ resource, kind = "document" }) {
                 </div>
                 {/* Reader mode */}
                 <button type="button" onClick={() => setIsDarkMode((d) => !d)}
-                    className={`rounded-xl px-2.5 py-1 text-[11px] font-bold border transition ${
-                        isDarkMode ? "bg-slate-800 text-cyan-300 border-cyan-500/30" : "bg-white/5 text-slate-300 border-white/10 hover:bg-white/10"
-                    }`} title="Toggle Reader Mode">
+                    className={`rounded-xl px-2.5 py-1 text-[11px] font-bold border transition ${isDarkMode ? "bg-slate-800 text-cyan-300 border-cyan-500/30" : "bg-white/5 text-slate-300 border-white/10 hover:bg-white/10"
+                        }`} title="Toggle Reader Mode">
                     {isDarkMode ? "🌙 Dark" : "☀️ Light"}
                 </button>
                 {/* Expand/collapse */}
@@ -154,7 +153,7 @@ function ProtectedDocumentPreview({ resource, kind = "document" }) {
                     </button>
                 ) : (
                     <button type="button" onClick={() => setIsExpanded(true)}
-                        className="rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-2.5 py-1 text-[11px] font-bold text-white border border-emerald-500/40 hover:from-emerald-500 hover:to-teal-500 transition"
+                        className="rounded-xl bg-gradient-to-r from-[var(--tlh-blue-primary)] to-[var(--tlh-sky)] px-2.5 py-1 text-[11px] font-bold text-white border border-[var(--tlh-cyan)]/40 hover:from-[var(--tlh-blue-hover)] hover:to-[var(--tlh-sky)] transition"
                         title="Expand to Full View">
                         ⛶ Expand
                     </button>
@@ -171,9 +170,8 @@ function ProtectedDocumentPreview({ resource, kind = "document" }) {
     );
 
     const ReaderContent = () => (
-        <div className={`relative flex-1 overflow-auto p-4 flex items-start justify-center transition-colors ${
-            isDarkMode ? "bg-slate-950" : "bg-slate-100/90"
-        }`}>
+        <div className={`relative flex-1 overflow-auto p-4 flex items-start justify-center transition-colors ${isDarkMode ? "bg-slate-950" : "bg-slate-100/90"
+            }`}>
             {loading && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-sm font-medium text-slate-300">
                     <div className="h-10 w-10 animate-spin rounded-full border-3 border-cyan-400 border-t-transparent shadow-lg shadow-cyan-500/20" />
@@ -320,13 +318,13 @@ function VideoThumbnail({ resource, lesson, className = "", aspect = "aspect-vid
                     className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent flex items-center justify-center">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-700/90 text-white shadow-md transition group-hover:scale-110">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[var(--tlh-blue-primary)]/90 text-white shadow-md transition group-hover:scale-110">
                         <svg className="h-3 w-3 fill-current ml-0.5" viewBox="0 0 24 24">
                             <path d="M8 5v14l11-7z" />
                         </svg>
                     </span>
                 </div>
-                <span className="absolute bottom-1 right-1 rounded bg-black/80 px-1 py-0.5 text-[8px] font-bold text-emerald-300">
+                <span className="absolute bottom-1 right-1 rounded bg-black/80 px-1 py-0.5 text-[8px] font-bold text-[var(--tlh-cyan)]">
                     VIDEO
                 </span>
             </div>
@@ -697,7 +695,7 @@ export function LearningWorkspace() {
     }
 
     return (
-        <div className="editorial-page min-h-screen pb-24 lg:pl-72">
+        <div className="learning-workspace editorial-page min-h-screen pb-24 lg:pl-72">
             <DashboardSidebar
                 title="Learning space"
                 user={user}
@@ -720,7 +718,7 @@ export function LearningWorkspace() {
                                 ← Back to Dashboard
                             </Link>
                             <span className="text-stone-300">/</span>
-                            <span className="text-xs font-bold text-emerald-800 uppercase tracking-wider">
+                            <span className="text-xs font-bold text-[var(--tlh-blue-primary)] uppercase tracking-wider">
                                 {classroom.course?.title || "Cohort Workspace"}
                             </span>
                         </div>
@@ -752,16 +750,16 @@ export function LearningWorkspace() {
 
             <div className="mx-auto max-w-7xl px-4 pt-6 sm:px-6 lg:px-8">
                 {isAdmin && (
-                    <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-sky-300 bg-gradient-to-r from-sky-50 via-blue-50 to-indigo-50/60 p-4 shadow-sm">
+                    <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-sky-300/40 bg-gradient-to-r from-sky-50 via-blue-50 to-indigo-50/60 p-4 shadow-sm dark:border-sky-500/20 dark:bg-gradient-to-r dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
                         <div className="flex items-center gap-3">
-                            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-r from-[#0066ff] to-[#0099ff] text-xs font-black text-white shadow-sm">
+                            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-r from-[var(--tlh-blue-primary)] to-[var(--tlh-sky)] text-xs font-black text-white shadow-sm">
                                 TLH
                             </span>
                             <div>
-                                <p className="text-xs font-black uppercase tracking-wider text-slate-900">
+                                <p className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white">
                                     Administrator Oversight Mode
                                 </p>
-                                <p className="text-xs text-[#0066ff]">
+                                <p className="text-xs text-[var(--tlh-blue-primary)] dark:text-sky-300">
                                     You have full administrative visibility to track live sessions, lesson media, student attendance, and discussions in this cohort.
                                 </p>
                             </div>
@@ -770,13 +768,13 @@ export function LearningWorkspace() {
                             <button
                                 type="button"
                                 onClick={() => setActiveTab("tracking")}
-                                className={`rounded-xl px-3.5 py-2 text-xs font-bold transition ${activeTab === "tracking" ? "bg-gradient-to-r from-[#0066ff] to-[#0099ff] text-white shadow-sm" : "bg-white text-blue-900 border border-sky-200 hover:bg-sky-50"}`}
+                                className={`rounded-xl px-3.5 py-2 text-xs font-bold transition ${activeTab === "tracking" ? "golden-btn shadow-sm" : "bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700"}`}
                             >
                                 📊 Track Cohort Space
                             </button>
                             <Link
                                 to="/dashboard"
-                                className="rounded-xl border border-sky-300 bg-white px-3.5 py-2 text-xs font-bold text-blue-900 transition hover:bg-sky-50"
+                                className="rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3.5 py-2 text-xs font-bold text-slate-900 dark:text-white transition hover:bg-slate-50 dark:hover:bg-slate-700"
                             >
                                 ← Admin Dashboard
                             </Link>
@@ -786,12 +784,12 @@ export function LearningWorkspace() {
 
                 {/* Prominent Live Session Spotlight */}
                 {nextSession && (
-                    <div className="mb-6 overflow-hidden rounded-3xl border border-teal-500/30 bg-gradient-to-r from-slate-950 via-slate-900 to-teal-950 p-6 sm:p-7 text-white shadow-2xl shadow-teal-900/20">
+                    <div className="mb-6 overflow-hidden rounded-3xl border border-[var(--tlh-cyan)]/30 bg-gradient-to-r from-[#071B49] via-[#050E24] to-slate-950 dark:from-[#050E24] dark:via-[#091124] dark:to-slate-950 p-6 sm:p-7 text-white shadow-2xl">
                         <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
                             <div className="space-y-1.5">
                                 <div className="flex flex-wrap items-center gap-2.5">
-                                    <span className="inline-flex items-center gap-1.5 rounded-full bg-teal-500/20 px-3 py-1 text-xs font-black uppercase tracking-wider text-teal-300 border border-teal-400/30">
-                                        <span className="h-2 w-2 rounded-full bg-teal-400 animate-ping" />
+                                    <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--tlh-cyan)]/20 px-3 py-1 text-xs font-black uppercase tracking-wider text-[var(--tlh-cyan)] border border-[var(--tlh-cyan)]/30">
+                                        <span className="h-2 w-2 rounded-full bg-[var(--tlh-cyan)] animate-ping" />
                                         <span>Scheduled Live Session</span>
                                     </span>
                                     <span className="text-xs font-semibold text-slate-400">
@@ -831,81 +829,81 @@ export function LearningWorkspace() {
                         {/* Video Player Column */}
                         <div className="lg:col-span-2 space-y-6">
                             {/* Video player expanded overlay */}
-                        {videoExpanded && (
-                            <div
-                                className="fixed inset-0 z-[9999] flex flex-col bg-black"
-                                style={{ animation: "fadeInScale 0.2s ease" }}
-                            >
-                                <style>{`
+                            {videoExpanded && (
+                                <div
+                                    className="fixed inset-0 z-[9999] flex flex-col bg-black"
+                                    style={{ animation: "fadeInScale 0.2s ease" }}
+                                >
+                                    <style>{`
                                     @keyframes fadeInScale {
                                         from { opacity: 0; transform: scale(0.97); }
                                         to { opacity: 1; transform: scale(1); }
                                     }
                                 `}</style>
-                                <div className="flex items-center justify-between px-5 py-3 border-b border-white/10 bg-slate-900/90 backdrop-blur-md">
-                                    <div className="flex items-center gap-2">
-                                        <span className="h-3 w-3 rounded-full bg-rose-500/80" />
-                                        <span className="h-3 w-3 rounded-full bg-amber-500/80" />
-                                        <span className="h-3 w-3 rounded-full bg-emerald-500/80" />
-                                        <span className="ml-3 text-xs font-bold text-slate-200 truncate max-w-xs sm:max-w-lg">
-                                            {selectedVideoResource?.title || currentLesson?.title || "Classroom Player"}
-                                        </span>
-                                    </div>
-                                    <button type="button" onClick={() => setVideoExpanded(false)}
-                                        className="rounded-xl bg-rose-600/80 px-3 py-1.5 text-[11px] font-bold text-white border border-rose-500/40 hover:bg-rose-600 transition">
-                                        ✕ Exit Full View
-                                    </button>
-                                </div>
-                                <div className="flex-1 flex items-center justify-center bg-black overflow-hidden">
-                                    {selectedVideoResource?.sourceType === "youtube" ? (
-                                        <iframe
-                                            src={`https://www.youtube-nocookie.com/embed/${getYouTubeVideoId(selectedVideoResource.sourceUrl || selectedVideoResource.externalUrl)}?rel=0&modestbranding=1&iv_load_policy=3&playsinline=1&controls=1&fs=1&autoplay=1`}
-                                            title={selectedVideoResource.title}
-                                            className="w-full h-full border-0 bg-black"
-                                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                                            referrerPolicy="strict-origin-when-cross-origin"
-                                            allowFullScreen
-                                        />
-                                    ) : selectedVideoResource?.sourceType === "google_drive" ? (
-                                        <iframe
-                                            src={selectedVideoResource.externalUrl}
-                                            title={selectedVideoResource.title}
-                                            className="w-full h-full border-0 bg-black"
-                                            referrerPolicy="no-referrer"
-                                            allow="autoplay"
-                                            allowFullScreen
-                                        />
-                                    ) : selectedVideoResource ? (
-                                        <video
-                                            src={resUrl(`/api/resources/${selectedVideoResource.storedKey}/file`)}
-                                            controls
-                                            autoPlay
-                                            controlsList="nodownload"
-                                            onContextMenu={(e) => e.preventDefault()}
-                                            onTimeUpdate={handleTimeUpdate}
-                                            className="w-full h-full object-contain bg-black"
-                                        />
-                                    ) : currentLesson?.videoUrl ? (
-                                        <video
-                                            src={currentLesson.videoUrl}
-                                            controls
-                                            autoPlay
-                                            controlsList="nodownload"
-                                            onContextMenu={(e) => e.preventDefault()}
-                                            onTimeUpdate={handleTimeUpdate}
-                                            className="w-full h-full object-contain bg-black"
-                                        />
-                                    ) : (
-                                        <div className="flex flex-col items-center justify-center p-8 text-slate-400">
-                                            <span className="text-5xl mb-4">📺</span>
-                                            <p className="font-bold text-white text-lg">No video available</p>
+                                    <div className="flex items-center justify-between px-5 py-3 border-b border-white/10 bg-slate-900/90 backdrop-blur-md">
+                                        <div className="flex items-center gap-2">
+                                            <span className="h-3 w-3 rounded-full bg-rose-500/80" />
+                                            <span className="h-3 w-3 rounded-full bg-amber-500/80" />
+                                            <span className="h-3 w-3 rounded-full bg-emerald-500/80" />
+                                            <span className="ml-3 text-xs font-bold text-slate-200 truncate max-w-xs sm:max-w-lg">
+                                                {selectedVideoResource?.title || currentLesson?.title || "Classroom Player"}
+                                            </span>
                                         </div>
-                                    )}
+                                        <button type="button" onClick={() => setVideoExpanded(false)}
+                                            className="rounded-xl bg-rose-600/80 px-3 py-1.5 text-[11px] font-bold text-white border border-rose-500/40 hover:bg-rose-600 transition">
+                                            ✕ Exit Full View
+                                        </button>
+                                    </div>
+                                    <div className="flex-1 flex items-center justify-center bg-black overflow-hidden">
+                                        {selectedVideoResource?.sourceType === "youtube" ? (
+                                            <iframe
+                                                src={`https://www.youtube-nocookie.com/embed/${getYouTubeVideoId(selectedVideoResource.sourceUrl || selectedVideoResource.externalUrl)}?rel=0&modestbranding=1&iv_load_policy=3&playsinline=1&controls=1&fs=1&autoplay=1`}
+                                                title={selectedVideoResource.title}
+                                                className="w-full h-full border-0 bg-black"
+                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                                referrerPolicy="strict-origin-when-cross-origin"
+                                                allowFullScreen
+                                            />
+                                        ) : selectedVideoResource?.sourceType === "google_drive" ? (
+                                            <iframe
+                                                src={selectedVideoResource.externalUrl}
+                                                title={selectedVideoResource.title}
+                                                className="w-full h-full border-0 bg-black"
+                                                referrerPolicy="no-referrer"
+                                                allow="autoplay"
+                                                allowFullScreen
+                                            />
+                                        ) : selectedVideoResource ? (
+                                            <video
+                                                src={resUrl(`/api/resources/${selectedVideoResource.storedKey}/file`)}
+                                                controls
+                                                autoPlay
+                                                controlsList="nodownload"
+                                                onContextMenu={(e) => e.preventDefault()}
+                                                onTimeUpdate={handleTimeUpdate}
+                                                className="w-full h-full object-contain bg-black"
+                                            />
+                                        ) : currentLesson?.videoUrl ? (
+                                            <video
+                                                src={currentLesson.videoUrl}
+                                                controls
+                                                autoPlay
+                                                controlsList="nodownload"
+                                                onContextMenu={(e) => e.preventDefault()}
+                                                onTimeUpdate={handleTimeUpdate}
+                                                className="w-full h-full object-contain bg-black"
+                                            />
+                                        ) : (
+                                            <div className="flex flex-col items-center justify-center p-8 text-slate-400">
+                                                <span className="text-5xl mb-4">📺</span>
+                                                <p className="font-bold text-white text-lg">No video available</p>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
-                        )}
+                            )}
 
-                        <div className="relative rounded-3xl p-1 bg-gradient-to-b from-cyan-400/35 via-slate-700/25 to-transparent shadow-[0_25px_95px_rgba(0,102,255,0.28)] ring-1 ring-white/15">
+                            <div className="relative rounded-3xl p-1 bg-gradient-to-b from-cyan-400/35 via-slate-700/25 to-transparent shadow-[0_25px_95px_rgba(0,102,255,0.28)] ring-1 ring-white/15">
                                 <div className="relative rounded-[22px] overflow-hidden bg-slate-950 backdrop-blur-xl">
                                     {/* Top Media Bar / Window Frame */}
                                     <div className="flex items-center justify-between px-5 py-3 border-b border-white/10 bg-slate-900/90 backdrop-blur-md">
@@ -993,11 +991,10 @@ export function LearningWorkspace() {
                                                         key={spd}
                                                         type="button"
                                                         onClick={() => handleSpeedChange(spd)}
-                                                        className={`rounded-lg px-2.5 py-1 text-[11px] font-bold transition ${
-                                                            playbackRate === spd
-                                                                ? "bg-cyan-500 text-slate-950 shadow-sm shadow-cyan-500/30"
-                                                                : "bg-white/10 text-white hover:bg-white/20"
-                                                        }`}
+                                                        className={`rounded-lg px-2.5 py-1 text-[11px] font-bold transition ${playbackRate === spd
+                                                            ? "bg-cyan-500 text-slate-950 shadow-sm shadow-cyan-500/30"
+                                                            : "bg-white/10 text-white hover:bg-white/20"
+                                                            }`}
                                                     >
                                                         {spd}x
                                                     </button>
@@ -1055,11 +1052,10 @@ export function LearningWorkspace() {
                                                         setSelectedVideoResource(resource);
                                                         setCurrentLesson(null);
                                                     }}
-                                                    className={`group flex w-full items-center gap-3 rounded-2xl p-2 text-left transition-all ${
-                                                        isSelected
-                                                            ? "bg-gradient-to-r from-[#0066ff] to-[#0099ff] text-white shadow-md ring-2 ring-blue-500/40"
-                                                            : "bg-stone-50 text-stone-800 hover:bg-stone-100"
-                                                    }`}
+                                                    className={`group flex w-full items-center gap-3 rounded-2xl p-2 text-left transition-all ${isSelected
+                                                        ? "bg-gradient-to-r from-[var(--tlh-blue-primary)] to-[var(--tlh-sky)] text-white shadow-md ring-2 ring-blue-500/40"
+                                                        : "bg-stone-50 text-stone-800 hover:bg-stone-100"
+                                                        }`}
                                                 >
                                                     <div className="w-24 shrink-0 sm:w-28">
                                                         <VideoThumbnail resource={resource} aspect="aspect-video" />
@@ -1106,11 +1102,10 @@ export function LearningWorkspace() {
                                                                     setCurrentLesson(les);
                                                                     setSelectedVideoResource(null);
                                                                 }}
-                                                                className={`group flex w-full items-center gap-3 rounded-2xl p-2 text-left text-xs transition ${
-                                                                    isSelected
-                                                                        ? "bg-emerald-800 text-white font-bold"
-                                                                        : "bg-stone-50 text-stone-700 hover:bg-stone-100"
-                                                                }`}
+                                                                className={`group flex w-full items-center gap-3 rounded-2xl p-2 text-left text-xs transition ${isSelected
+                                                                    ? "bg-emerald-800 text-white font-bold"
+                                                                    : "bg-stone-50 text-stone-700 hover:bg-stone-100"
+                                                                    }`}
                                                             >
                                                                 {les.videoUrl ? (
                                                                     <div className="w-16 shrink-0">
@@ -1204,10 +1199,10 @@ export function LearningWorkspace() {
                                 const isPdf = res.mimeType?.includes("pdf") || res.category === "pdf" || /\.pdf$/i.test(res.originalFilename || "");
                                 const fileIcon = res.sourceType === "google_drive" ? "☁️"
                                     : isPdf ? "📕"
-                                    : isPresentation ? "📊"
-                                    : isSpreadsheet ? "📈"
-                                    : res.mimeType?.includes("image") ? "🖼️"
-                                    : "📄";
+                                        : isPresentation ? "📊"
+                                            : isSpreadsheet ? "📈"
+                                                : res.mimeType?.includes("image") ? "🖼️"
+                                                    : "📄";
                                 return (
                                     <button
                                         key={res._id}
@@ -1221,11 +1216,10 @@ export function LearningWorkspace() {
                                                 setActiveTab("documents");
                                             }
                                         }}
-                                        className={`group flex w-full items-center gap-3 rounded-2xl p-2.5 text-left transition ${
-                                            isSelected
-                                                ? "bg-emerald-50 ring-2 ring-emerald-400"
-                                                : "bg-stone-50 hover:bg-stone-100"
-                                        }`}
+                                        className={`group flex w-full items-center gap-3 rounded-2xl p-2.5 text-left transition ${isSelected
+                                            ? "bg-emerald-50 ring-2 ring-emerald-400"
+                                            : "bg-stone-50 hover:bg-stone-100"
+                                            }`}
                                     >
                                         {isVideo ? (
                                             <div className="w-20 sm:w-24 shrink-0">
@@ -1241,8 +1235,8 @@ export function LearningWorkspace() {
                                             <p className="text-[10px] text-stone-500">
                                                 {res.sourceType === "youtube" ? "YouTube video"
                                                     : res.sourceType === "google_drive" ? `Google Drive · ${res.category}`
-                                                    : res.fileSize ? `${(res.fileSize / 1024 / 1024).toFixed(1)} MB · ${res.category}`
-                                                    : res.category}
+                                                        : res.fileSize ? `${(res.fileSize / 1024 / 1024).toFixed(1)} MB · ${res.category}`
+                                                            : res.category}
                                             </p>
                                         </div>
                                         {isVideo && (
@@ -1268,7 +1262,7 @@ export function LearningWorkspace() {
                             <button
                                 type="button"
                                 onClick={() => setNewThreadModal(true)}
-                                className="rounded-2xl bg-gradient-to-r from-[#0066ff] to-[#0099ff] px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-blue-500/25 hover:from-[#0052cc] hover:to-[#0088e6]"
+                                className="golden-btn rounded-full px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:shadow-md transition-all active:scale-95"
                             >
                                 + New Discussion Topic
                             </button>
@@ -1393,11 +1387,11 @@ export function LearningWorkspace() {
                             <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-stone-200">
                                 <div className="flex items-center justify-between mb-2">
                                     <span className="text-xs font-black uppercase tracking-wider text-slate-600">Cohort Capacity Fill</span>
-                                    <span className="text-xs font-bold text-[#0066ff]">{trackingStats.fillRate}%</span>
+                                    <span className="text-xs font-bold text-[var(--tlh-blue-primary)]">{trackingStats.fillRate}%</span>
                                 </div>
                                 <div className="h-3 w-full rounded-full bg-slate-100 overflow-hidden">
                                     <div
-                                        className="h-full rounded-full bg-gradient-to-r from-[#0066ff] to-[#00d2ff] transition-all"
+                                        className="h-full rounded-full bg-gradient-to-r from-[var(--tlh-blue-primary)] to-[var(--tlh-cyan)] transition-all"
                                         style={{ width: `${Math.min(trackingStats.fillRate, 100)}%` }}
                                     />
                                 </div>
@@ -1419,7 +1413,7 @@ export function LearningWorkspace() {
                                             className="h-11 w-11 rounded-xl object-cover ring-1 ring-stone-200"
                                         />
                                     ) : (
-                                        <div className="h-11 w-11 rounded-xl bg-gradient-to-r from-[#0066ff] to-[#0099ff] flex items-center justify-center text-xs font-black text-white shadow-sm">
+                                        <div className="h-11 w-11 rounded-xl bg-gradient-to-r from-[var(--tlh-blue-primary)] to-[var(--tlh-sky)] flex items-center justify-center text-xs font-black text-white shadow-sm">
                                             {(trackingData.cohort.teacher.fullName || "T").slice(0, 2).toUpperCase()}
                                         </div>
                                     )}
@@ -1484,9 +1478,8 @@ export function LearningWorkspace() {
                                         const isLiveNow = Date.now() >= start.getTime() && Date.now() < end.getTime();
                                         const isCompleted = sess.status === "completed" || end.getTime() < Date.now();
                                         return (
-                                            <div key={sess._id} className={`flex items-center gap-3 rounded-xl p-3 ${
-                                                isLiveNow ? "bg-emerald-50 ring-1 ring-emerald-300" : isCompleted ? "bg-stone-50" : "bg-stone-50"
-                                            }`}>
+                                            <div key={sess._id} className={`flex items-center gap-3 rounded-xl p-3 ${isLiveNow ? "bg-emerald-50 ring-1 ring-emerald-300" : isCompleted ? "bg-stone-50" : "bg-stone-50"
+                                                }`}>
                                                 <div className="flex flex-col items-center justify-center gap-1 w-12 shrink-0">
                                                     {isLiveNow ? (
                                                         <>
@@ -1511,9 +1504,8 @@ export function LearningWorkspace() {
                                                     </p>
                                                 </div>
                                                 <div className="flex shrink-0 items-center gap-2">
-                                                    <span className={`rounded-lg px-2 py-0.5 text-[9px] font-black uppercase tracking-wider ${
-                                                        isLiveNow ? "bg-emerald-700 text-white" : isCompleted ? "bg-stone-200 text-stone-600" : "bg-blue-100 text-blue-700"
-                                                    }`}>
+                                                    <span className={`rounded-lg px-2 py-0.5 text-[9px] font-black uppercase tracking-wider ${isLiveNow ? "bg-emerald-700 text-white" : isCompleted ? "bg-stone-200 text-stone-600" : "bg-blue-100 text-blue-700"
+                                                        }`}>
                                                         {isLiveNow ? "In Progress" : isCompleted ? "Completed" : "Scheduled"}
                                                     </span>
                                                     {sess.meetingUrl && (
@@ -1592,7 +1584,7 @@ export function LearningWorkspace() {
                         </button>
                         <button
                             type="submit"
-                            className="rounded-2xl bg-gradient-to-r from-[#0066ff] to-[#0099ff] px-5 py-2 text-xs font-bold text-white shadow-md shadow-blue-500/25 hover:from-[#0052cc] hover:to-[#0088e6]"
+                            className="golden-btn rounded-full px-5 py-2 text-xs font-bold text-white shadow-sm hover:shadow-md transition-all active:scale-95"
                         >
                             Post Topic
                         </button>

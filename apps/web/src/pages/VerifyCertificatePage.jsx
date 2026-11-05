@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { apiRequest } from "../lib/api";
+import { BrandLogo } from "../components/BrandLogo";
 
 export function VerifyCertificatePage() {
   const { certificateNumber } = useParams();
@@ -84,7 +85,7 @@ export function VerifyCertificatePage() {
               <button
                 type="submit"
                 disabled={loading || !query.trim()}
-                className="rounded-2xl bg-gradient-to-r from-[#0066ff] to-[#0099ff] px-6 py-3 text-xs font-black uppercase tracking-wider text-white shadow-md shadow-blue-500/25 transition hover:from-[#0052cc] hover:to-[#0088e6] disabled:opacity-50"
+                className="rounded-2xl bg-gradient-to-r from-[var(--tlh-blue-primary)] to-[var(--tlh-sky)] px-6 py-3 text-xs font-black uppercase tracking-wider text-white shadow-md shadow-blue-500/25 transition hover:from-[var(--tlh-blue-hover)] hover:to-[var(--tlh-sky)] disabled:opacity-50"
               >
                 {loading ? "Checking…" : "Verify"}
               </button>
@@ -163,16 +164,16 @@ export function VerifyCertificatePage() {
             {/* Framed Certificate Presentation */}
             <div
               id="tlh-certificate"
-              className="relative overflow-hidden rounded-3xl border-8 border-slate-900 bg-[#fffef9] p-8 sm:p-14 shadow-2xl text-center"
+              className="relative overflow-hidden rounded-3xl border-8 border-[var(--tlh-navy)] bg-[#fffef9] p-8 sm:p-14 shadow-2xl text-center"
             >
               {/* Inner Decorative Border */}
-              <div className="rounded-2xl border border-sky-600/30 p-8 sm:p-12 relative bg-radial-gradient">
+              <div className="rounded-2xl border border-[var(--tlh-cyan)]/40 p-8 sm:p-12 relative bg-radial-gradient">
                 {/* Watermark Brand Seal */}
-                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-[#001b44] to-[#0066ff] text-xl font-black text-white shadow-lg mb-6 ring-2 ring-sky-400/40">
-                  TLH
+                <div className="mx-auto mb-6 flex justify-center">
+                  <BrandLogo size="lg" appearance="light" />
                 </div>
 
-                <p className="text-[11px] font-black uppercase tracking-[0.25em] text-blue-950">
+                <p className="text-[11px] font-black uppercase tracking-[0.25em] text-[var(--tlh-navy)]">
                   TEDBABELEARNHUB (TLH) ONLINE LEARNING PLATFORM
                 </p>
                 <h2 className="editorial-display mt-3 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
@@ -182,7 +183,7 @@ export function VerifyCertificatePage() {
                 <p className="mt-6 text-xs text-slate-500 uppercase tracking-widest">
                   THIS IS PROUDLY CONFERRED UPON
                 </p>
-                <div className="editorial-display mt-2 text-3xl font-extrabold text-slate-950 sm:text-4xl underline decoration-sky-400 decoration-2 underline-offset-8">
+                <div className="editorial-display mt-2 text-3xl font-extrabold text-slate-950 sm:text-4xl underline decoration-[var(--tlh-cyan)] decoration-2 underline-offset-8">
                   {certificate.studentName}
                 </div>
 
@@ -192,7 +193,7 @@ export function VerifyCertificatePage() {
                   coursework assignments, and passing evaluation assessments in
                 </p>
 
-                <div className="mt-3 text-xl font-black text-blue-700 sm:text-2xl">
+                <div className="mt-3 text-xl font-black text-[var(--tlh-blue-primary)] sm:text-2xl">
                   {certificate.courseTitle}
                 </div>
 

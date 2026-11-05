@@ -693,7 +693,7 @@ export function TeacherDashboard({ user }) {
     { id: "security", label: "Account security", icon: "🔒" },
   ];
   return (
-    <div className="min-h-screen space-y-8 px-4 py-6 sm:px-6 lg:pl-72 lg:pr-8">
+    <div className="teacher-workspace min-h-screen space-y-8 px-4 py-6 sm:px-6 lg:pl-72 lg:pr-8">
       <DashboardSidebar
         title="Teacher workspace"
         user={{
@@ -705,85 +705,138 @@ export function TeacherDashboard({ user }) {
         activeTab={activeTab}
         onSelect={setActiveTab}
       />
-      {/* Top Banner */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0c234b] via-[#091b3b] to-[#061124] p-6 sm:p-8 text-white border border-sky-500/25 shadow-xl flex flex-wrap items-center justify-between gap-6">
+
+      {/* Top Banner - Premium Redesign */}
+      <div className="relative overflow-hidden rounded-[var(--radius-3xl)] bg-gradient-to-br from-[var(--tlh-navy)] via-[var(--tlh-deep-blue)] to-slate-950 p-6 sm:p-10 text-white border border-[var(--tlh-cyan)]/25 shadow-[var(--shadow-lg)] flex flex-wrap items-center justify-between gap-8">
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute -right-20 -top-24 h-64 w-64 rounded-full bg-blue-500/10 blur-3xl"
+          className="pointer-events-none absolute -right-20 -top-24 h-96 w-96 rounded-full bg-[var(--tlh-blue-primary)]/10 blur-[100px]"
         />
-        <div className="relative">
-          <span className="text-xs font-extrabold uppercase tracking-[0.16em] text-sky-400">
-            TedbabeLearnHUB · {t("teacherOverview")}
-          </span>
-          <div className="mt-2 flex items-center gap-4">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -left-20 -bottom-24 h-64 w-64 rounded-full bg-[var(--tlh-cyan)]/5 blur-[80px]"
+        />
+        
+        <div className="relative flex items-center gap-6 sm:gap-8">
+          <div className="relative">
             {profileForm.avatarUrl ? (
               <img
                 src={profileForm.avatarUrl}
                 alt=""
-                className="h-14 w-14 rounded-full object-cover ring-2 ring-white/30"
+                className="h-20 w-20 sm:h-24 sm:w-24 rounded-full object-cover ring-4 ring-white/10 shadow-2xl"
               />
-            ) : null}
-            <h1 className="text-3xl font-black text-white sm:text-4xl">
-              {profileForm.fullName}
-            </h1>
+            ) : (
+              <div className="flex h-20 w-20 sm:h-24 sm:w-24 items-center justify-center rounded-full bg-gradient-to-br from-[var(--tlh-blue-primary)] to-[var(--tlh-sky)] text-3xl font-black ring-4 ring-white/10 shadow-2xl">
+                {profileForm.fullName?.charAt(0) || "T"}
+              </div>
+            )}
+            <div className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-[var(--tlh-gold)] text-white shadow-lg ring-2 ring-[var(--tlh-navy)]">
+              <span className="text-xs">✨</span>
+            </div>
           </div>
-          <p className="mt-1 text-sm text-slate-300">{user.email}</p>
+          
+          <div className="space-y-1">
+            <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.2em] text-[var(--tlh-cyan)] backdrop-blur-md border border-white/10">
+              <span className="h-1.5 w-1.5 rounded-full bg-[var(--tlh-cyan)] animate-pulse"></span>
+              {t("teacherOverview")}
+            </span>
+            <h1 className="text-3xl font-black tracking-tight text-white sm:text-5xl lg:text-6xl drop-shadow-sm">
+              {profileForm.fullName.split(' ')[0]}<span className="text-[var(--tlh-sky)]">.</span>
+            </h1>
+            <div className="flex items-center gap-3 text-sm font-medium text-slate-300">
+              <span className="flex items-center gap-1.5">
+                <span className="text-[var(--tlh-gold)]">📧</span> {user.email}
+              </span>
+              <span className="h-1 w-1 rounded-full bg-slate-500"></span>
+              <span className="text-[var(--tlh-sky)] font-bold uppercase tracking-wider text-[10px]">
+                {user.role}
+              </span>
+            </div>
+          </div>
         </div>
-        <div className="relative flex flex-wrap gap-2">
+
+        <div className="relative flex flex-wrap gap-3">
           <button
             onClick={() => setCreateAssignModal(true)}
-            className="rounded-xl bg-gradient-to-r from-[#0066ff] to-[#0099ff] px-4 py-2.5 text-xs font-extrabold text-white shadow-md shadow-blue-500/25 hover:from-[#0052cc] hover:to-[#0088e6] transition-all hover:-translate-y-0.5"
+            className="golden-btn group flex items-center gap-2 rounded-full px-6 py-3.5 text-sm font-bold text-white shadow-sm hover:shadow-md transition-all active:scale-95"
           >
-            + {t("createAssignment")}
+            <span className="text-lg transition-transform group-hover:rotate-12">+</span>
+            {t("createAssignment")}
           </button>
           <button
             onClick={() => setCreateQuizModal(true)}
-            className="rounded-xl bg-gradient-to-r from-[#6366f1] to-[#8b5cf6] px-4 py-2.5 text-xs font-extrabold text-white shadow-md shadow-indigo-500/25 hover:from-[#4f46e5] hover:to-[#7c3aed] transition-all hover:-translate-y-0.5"
+            className="group flex items-center gap-2 rounded-2xl bg-white/10 px-6 py-3.5 text-sm font-black text-white backdrop-blur-md border border-white/20 transition-all hover:bg-white/20 hover:-translate-y-1 active:scale-95"
           >
-            + {t("createAssessment")}
+            <span className="text-lg text-[var(--tlh-gold)] transition-transform group-hover:scale-110">⏱️</span>
+            {t("createAssessment")}
           </button>
           <button
             onClick={() => setUploadModal(true)}
-            className="rounded-xl border border-white/20 bg-white/10 px-4 py-2.5 text-xs font-bold text-white hover:bg-white/20 transition-all"
+            className="group flex items-center gap-2 rounded-2xl bg-white/5 px-6 py-3.5 text-sm font-black text-white/80 backdrop-blur-md border border-white/10 transition-all hover:bg-white/15 hover:-translate-y-1 active:scale-95"
           >
-            + {t("uploadResource")}
+            <span className="text-lg transition-transform group-hover:scale-110">📁</span>
+            {t("uploadResource")}
           </button>
         </div>
       </div>
 
-      {/* Prominent Next Scheduled Live Session Banner */}
+      {/* Prominent Next Scheduled Live Session Banner - Premium Redesign */}
       {upcomingLessons[0] ? (
-        <div className="rounded-3xl bg-gradient-to-r from-emerald-950 via-slate-900 to-teal-950 p-6 sm:p-7 text-white shadow-xl flex flex-wrap items-center justify-between gap-6 border border-emerald-500/30">
-          <div className="space-y-1.5">
-            <div className="inline-flex items-center gap-2 rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-bold text-emerald-300 border border-emerald-500/30">
-              <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping"></span>
-              <span>Next scheduled live session</span>
+        <div className="group relative overflow-hidden rounded-[var(--radius-3xl)] bg-slate-950 p-6 sm:p-8 text-white shadow-[var(--shadow-xl)] border border-emerald-500/20">
+          <div className="absolute inset-0 bg-gradient-to-r from-emerald-950/80 via-slate-950 to-slate-950 opacity-90" />
+          <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-emerald-500/10 blur-[80px] transition-transform group-hover:scale-110" />
+          
+          <div className="relative flex flex-wrap items-center justify-between gap-8">
+            <div className="space-y-4">
+              <div className="inline-flex items-center gap-2.5 rounded-full bg-emerald-500/10 px-4 py-1.5 text-xs font-black text-emerald-400 border border-emerald-500/20 backdrop-blur-md">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+                <span className="uppercase tracking-widest">Next Live Session</span>
+              </div>
+              
+              <div className="space-y-1">
+                <h2 className="text-2xl font-black text-white sm:text-3xl lg:text-4xl tracking-tight">
+                  {upcomingLessons[0].title}
+                </h2>
+                <div className="flex flex-wrap items-center gap-5 text-sm font-bold text-slate-400">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">📅</span>
+                    <span>{formatSessionTime(upcomingLessons[0].startsAt)} — {formatSessionTime(upcomingLessons[0].endsAt)}</span>
+                  </div>
+                  <div className="h-4 w-px bg-slate-800 hidden sm:block"></div>
+                  <div className="flex items-center gap-2 text-[var(--tlh-gold)]">
+                    <span>🔒</span>
+                    <span className="text-xs uppercase tracking-tighter text-[var(--tlh-gold)]/80">Meeting link active 10m prior</span>
+                  </div>
+                </div>
+              </div>
             </div>
-            <h2 className="text-2xl font-black text-white">
-              {upcomingLessons[0].title}
-            </h2>
-            <div className="flex flex-wrap items-center gap-4 text-xs text-slate-300">
-              <p>
-                📅 {formatSessionTime(upcomingLessons[0].startsAt)} —{" "}
-                {formatSessionTime(upcomingLessons[0].endsAt)}
-              </p>
-              <span className="text-amber-300 font-medium">
-                🔒 Meeting link activates 10 minutes prior
-              </span>
+            
+            <div className="flex items-center gap-4">
+              {upcomingLessons[0].meetingUrl ? (
+                <LiveSessionButton session={upcomingLessons[0]} />
+              ) : (
+                <div className="rounded-2xl bg-white/5 px-6 py-4 text-center border border-white/10 backdrop-blur-sm">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Status</p>
+                  <p className="text-sm font-bold text-slate-300">Link Pending</p>
+                </div>
+              )}
             </div>
           </div>
-          {upcomingLessons[0].meetingUrl ? (
-            <LiveSessionButton session={upcomingLessons[0]} />
-          ) : null}
         </div>
       ) : null}
 
       {feedback ? (
-        <div className="rounded-2xl bg-blue-50 p-4 text-sm font-semibold text-blue-900 ring-1 ring-blue-200 flex justify-between items-center">
-          <span>{feedback}</span>
+        <div className="flex items-center justify-between rounded-2xl bg-[var(--tlh-blue-primary)]/5 p-4 text-sm font-bold text-[var(--tlh-blue-primary)] border border-[var(--tlh-blue-primary)]/20 shadow-sm animate-in fade-in slide-in-from-top-2">
+          <div className="flex items-center gap-3">
+            <span className="text-lg">ℹ️</span>
+            <span>{feedback}</span>
+          </div>
           <button
             onClick={() => setFeedback("")}
-            className="text-blue-500 hover:text-blue-800"
+            className="h-8 w-8 rounded-full hover:bg-[var(--tlh-blue-primary)]/10 flex items-center justify-center transition-colors"
           >
             ✕
           </button>
@@ -793,34 +846,39 @@ export function TeacherDashboard({ user }) {
       {/* 1. OVERVIEW */}
       {activeTab === "overview" ? (
         <div className="space-y-8">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-5">
             <MetricCard
               label="Assigned cohorts"
               value={classes.length}
               icon="🏫"
+              variant="blue"
             />
             <MetricCard
               label="Upcoming sessions"
               value={upcomingLessons.length}
               icon="📹"
+              variant="emerald"
             />
             <MetricCard
-              label="Learners"
+              label="Total Learners"
               value={classes.reduce(
                 (acc, c) => acc + (c.students?.length || 0),
                 0,
               )}
               icon="🎓"
+              variant="indigo"
             />
             <MetricCard
               label="Pending grading"
               value={overview?.pendingSubmissionsToGrade ?? 0}
               icon="📝"
+              variant="amber"
             />
             <MetricCard
               label="Assessment reviews"
               value={overview?.pendingAssessmentReviews ?? 0}
               icon="✅"
+              variant="cyan"
             />
           </div>
 
@@ -833,18 +891,22 @@ export function TeacherDashboard({ user }) {
                   upcomingLessons.map((session) => (
                     <div
                       key={session._id}
-                      className="rounded-2xl border border-slate-200 p-4 space-y-2"
+                      className="group rounded-[var(--radius-xl)] border border-[var(--surface-border)] bg-[var(--surface-card)] p-5 transition-all hover:border-[var(--tlh-blue-primary)]/30 hover:shadow-[var(--shadow-md)]"
                     >
-                      <div className="flex items-center justify-between">
-                        <h4 className="font-bold text-slate-900">
-                          {session.title}
-                        </h4>
-                        <Badge variant="cyan">
-                          {formatSessionTime(session.startsAt)}
-                        </Badge>
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="space-y-1">
+                          <h4 className="font-black text-[var(--text-main)] group-hover:text-[var(--tlh-blue-primary)] transition-colors">
+                            {session.title}
+                          </h4>
+                          <div className="flex items-center gap-2 text-xs font-bold text-[var(--text-muted)]">
+                            <span>🕒</span>
+                            <span>{formatSessionTime(session.startsAt)}</span>
+                          </div>
+                        </div>
+                        <Badge variant="blue">Scheduled</Badge>
                       </div>
                       {session.meetingUrl ? (
-                        <div className="pt-2">
+                        <div className="mt-4 pt-4 border-t border-[var(--surface-border)]">
                           <LiveSessionButton session={session} compact />
                         </div>
                       ) : null}
@@ -862,13 +924,14 @@ export function TeacherDashboard({ user }) {
                   notifications.slice(0, 10).map((n) => (
                     <div
                       key={n._id}
-                      className="rounded-xl bg-slate-50 p-3 text-xs"
+                      className="rounded-[var(--radius-lg)] bg-[var(--surface-page)] p-4 border border-[var(--surface-border)]"
                     >
-                      <p className="font-bold text-slate-900">{n.title}</p>
-                      <p className="mt-1 text-slate-600">{n.message}</p>
-                      <span className="mt-1 block text-[10px] text-slate-400">
-                        {new Date(n.createdAt).toLocaleDateString()}
-                      </span>
+                      <p className="font-black text-sm text-[var(--text-main)]">{n.title}</p>
+                      <p className="mt-1 text-xs font-medium text-[var(--text-secondary)] leading-relaxed">{n.message}</p>
+                      <div className="mt-2 flex items-center gap-2 text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">
+                        <span>📅</span>
+                        <span>{new Date(n.createdAt).toLocaleDateString()}</span>
+                      </div>
                     </div>
                   ))
                 )}
@@ -877,21 +940,29 @@ export function TeacherDashboard({ user }) {
           </div>
 
           {announcements.length > 0 && (
-            <div className="rounded-3xl border border-sky-200 bg-sky-50/60 p-6 space-y-4">
-              <div className="flex items-center gap-2">
-                <span className="text-lg">📢</span>
-                <h3 className="font-bold text-slate-900 text-base">
-                  Announcements & Updates
-                </h3>
+            <div className="rounded-[var(--radius-3xl)] border border-[var(--tlh-cyan)]/20 bg-[var(--tlh-cyan)]/5 p-8 space-y-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[var(--tlh-cyan)]/20 text-xl">
+                    📢
+                  </div>
+                  <div>
+                    <h3 className="font-black text-[var(--text-main)] text-lg tracking-tight">
+                      Announcements & Updates
+                    </h3>
+                    <p className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-wider">Stay informed with platform news</p>
+                  </div>
+                </div>
               </div>
-              <div className="grid gap-3 md:grid-cols-2">
+              
+              <div className="grid gap-4 md:grid-cols-2">
                 {announcements.slice(0, 4).map((ann) => (
                   <div
                     key={ann._id}
-                    className="rounded-2xl bg-white p-4 shadow-sm border border-sky-100/80 space-y-2"
+                    className="group rounded-[var(--radius-2xl)] bg-[var(--surface-card)] p-6 shadow-[var(--shadow-sm)] border border-[var(--surface-border)] transition-all hover:shadow-[var(--shadow-md)] hover:border-[var(--tlh-cyan)]/30"
                   >
-                    <div className="flex items-center justify-between gap-2">
-                      <h4 className="font-bold text-slate-900 text-sm">
+                    <div className="flex items-center justify-between gap-4 mb-3">
+                      <h4 className="font-black text-[var(--text-main)] text-sm group-hover:text-[var(--tlh-cyan)] transition-colors">
                         {ann.title}
                       </h4>
                       <Badge
@@ -906,20 +977,18 @@ export function TeacherDashboard({ user }) {
                         {ann.priority}
                       </Badge>
                     </div>
-                    <p className="text-xs text-slate-600 leading-relaxed">
+                    <p className="text-xs font-medium text-[var(--text-secondary)] leading-relaxed mb-4">
                       {ann.content}
                     </p>
-                    <div className="flex items-center gap-2 text-[10px] text-slate-400 pt-1 border-t border-slate-50">
-                      <span>
-                        {ann.author?.fullName
-                          ? `By ${ann.author.fullName}`
-                          : "Academy"}
-                      </span>
-                      {ann.classroom ? (
-                        <span>• Cohort: {ann.classroom.title}</span>
-                      ) : null}
-                      <span>
-                        • {new Date(ann.createdAt).toLocaleDateString()}
+                    <div className="flex items-center justify-between pt-4 border-t border-[var(--surface-border)]">
+                      <div className="flex items-center gap-2">
+                        <div className="h-6 w-6 rounded-full bg-slate-100 flex items-center justify-center text-[10px]">👤</div>
+                        <span className="text-[10px] font-bold text-[var(--text-muted)] uppercase">
+                          {ann.author?.fullName || "Academy"}
+                        </span>
+                      </div>
+                      <span className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-tighter">
+                        {new Date(ann.createdAt).toLocaleDateString()}
                       </span>
                     </div>
                   </div>
@@ -930,48 +999,69 @@ export function TeacherDashboard({ user }) {
         </div>
       ) : null}
 
-      {/* 2. CLASSES */}
+      {/* 2. CLASSES / COHORTS */}
       {activeTab === "classes" ? (
         <div className="space-y-6">
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {classes.map((cls) => (
               <div
                 key={cls._id}
-                className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 space-y-4"
+                className="group relative overflow-hidden rounded-[var(--radius-3xl)] bg-[var(--surface-card)] p-8 shadow-[var(--shadow-sm)] border border-[var(--surface-border)] transition-all hover:shadow-[var(--shadow-lg)] hover:border-[var(--tlh-blue-primary)]/30"
               >
-                <div className="flex items-center justify-between">
-                  <h4 className="text-lg font-bold text-slate-900">
-                    {cls.title}
-                  </h4>
-                  <Badge variant="emerald">{cls.status}</Badge>
+                <div className="flex items-center justify-between mb-6">
+                  <div className="h-12 w-12 rounded-2xl bg-[var(--tlh-blue-primary)]/10 flex items-center justify-center text-2xl">
+                    🏫
+                  </div>
+                  <Badge variant={cls.status === "active" ? "emerald" : "amber"}>
+                    {cls.status.toUpperCase()}
+                  </Badge>
                 </div>
-                <p className="text-xs text-slate-600">
-                  <strong>Program:</strong> {cls.course?.title || "General"}
-                </p>
-                <div className="border-t border-slate-100 pt-3">
-                  <h5 className="text-xs font-bold text-slate-700 mb-2">
-                    Assigned learners ({cls.students?.length || 0}):
-                  </h5>
-                  <div className="space-y-1 max-h-48 overflow-y-auto">
-                    {cls.students?.map((s) => (
-                      <div
-                        key={s._id}
-                        className="rounded-lg bg-slate-50 p-2 text-xs flex justify-between"
-                      >
-                        <span className="font-semibold text-slate-800">
-                          {s.fullName}
-                        </span>
-                        <span className="text-slate-400">{s.email}</span>
-                      </div>
-                    ))}
+                
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="text-xl font-black text-[var(--text-main)] tracking-tight">
+                      {cls.title}
+                    </h4>
+                    <p className="text-xs font-bold text-[var(--tlh-blue-primary)] uppercase tracking-widest mt-1">
+                      {cls.course?.title || "Educational Program"}
+                    </p>
+                  </div>
+
+                  <div className="pt-4 border-t border-[var(--surface-border)]">
+                    <div className="flex items-center justify-between mb-3">
+                      <h5 className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">
+                        Enrolled Learners ({cls.students?.length || 0})
+                      </h5>
+                    </div>
+                    <div className="space-y-2 max-h-40 overflow-y-auto pr-2 custom-scrollbar">
+                      {cls.students?.length > 0 ? (
+                        cls.students.map((s) => (
+                          <div
+                            key={s._id}
+                            className="rounded-xl bg-[var(--surface-page)] p-3 text-xs border border-[var(--surface-border)] flex items-center justify-between group/student hover:border-[var(--tlh-blue-primary)]/20 transition-colors"
+                          >
+                            <span className="font-bold text-[var(--text-main)]">
+                              {s.fullName}
+                            </span>
+                            <span className="text-[10px] text-[var(--text-muted)] font-medium opacity-0 group-hover/student:opacity-100 transition-opacity uppercase tracking-tighter">
+                              View Profile
+                            </span>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-[10px] text-[var(--text-muted)] italic">No students assigned yet.</p>
+                      )}
+                    </div>
                   </div>
                 </div>
-                <div className="pt-2 border-t border-slate-100">
+
+                <div className="mt-8">
                   <Link
                     to={`/workspace/${cls._id}`}
-                    className="block w-full text-center rounded-2xl bg-gradient-to-r from-[#0066ff] to-[#0099ff] py-2.5 text-xs font-bold text-white shadow-md shadow-blue-500/25 transition hover:from-[#0052cc] hover:to-[#0088e6]"
+                    className="flex items-center justify-center gap-2 w-full rounded-2xl bg-[var(--surface-page)] py-4 text-xs font-black text-[var(--tlh-blue-primary)] border border-[var(--tlh-blue-primary)]/20 transition-all hover:bg-[var(--tlh-blue-primary)] hover:text-white hover:shadow-[0_8px_20px_-6px_rgba(18,102,232,0.4)]"
                   >
-                    Open Cohort Workspace →
+                    Enter Workspace
+                    <span className="text-lg">→</span>
                   </Link>
                 </div>
               </div>
@@ -984,8 +1074,8 @@ export function TeacherDashboard({ user }) {
       {activeTab === "schedule" ? (
         <div className="space-y-6">
           <DashboardCard
-            title="Live class schedule"
-            subtitle="Times are shown in your device's local time. You can also compare with the cohort time zone."
+            title="Live session schedule"
+            subtitle="Manage your upcoming virtual classrooms and meeting links."
           >
             <SessionSchedule sessions={upcomingLessons} />
           </DashboardCard>
@@ -994,203 +1084,262 @@ export function TeacherDashboard({ user }) {
 
       {/* 4. ATTENDANCE TRACKER */}
       {activeTab === "attendance" ? (
-        <div className="space-y-6">
+        <div className="space-y-8">
           <DashboardCard
-            title="Attendance tracker"
-            subtitle="Record learner attendance as present, absent, late, or excused."
+            title="Session Attendance"
+            subtitle="Mark learners as present, absent, late, or excused for the current session."
           >
-            <div className="space-y-6">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Select a session
+            <div className="space-y-8">
+              <div className="max-w-md">
+                <label className="block text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-2">
+                  Select Active Session
                 </label>
-                <select
-                  value={selectedSessionId}
-                  onChange={(e) => setSelectedSessionId(e.target.value)}
-                  className="w-full sm:w-96 rounded-xl border border-slate-200 p-2.5 text-xs outline-none bg-white"
-                >
-                  {upcomingLessons.map((s) => (
-                    <option key={s._id} value={s._id}>
-                      {s.title} ({formatSessionTime(s.startsAt)})
-                    </option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <select
+                    value={selectedSessionId}
+                    onChange={(e) => setSelectedSessionId(e.target.value)}
+                    className="w-full appearance-none rounded-2xl border border-[var(--surface-border)] bg-[var(--surface-page)] p-4 text-sm font-bold text-[var(--text-main)] outline-none focus:ring-2 focus:ring-[var(--tlh-blue-primary)]/20 transition-all"
+                  >
+                    {upcomingLessons.map((s) => (
+                      <option key={s._id} value={s._id}>
+                        {s.title} ({formatSessionTime(s.startsAt)})
+                      </option>
+                    ))}
+                  </select>
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-[var(--text-muted)]">
+                    ▼
+                  </div>
+                </div>
               </div>
 
               {currentClassForAttendance ? (
-                <div className="divide-y divide-slate-100">
-                  {currentClassForAttendance.students.map((stud) => {
-                    const currentStatus =
-                      attendanceRecords[stud._id]?.status || "present";
-                    return (
-                      <div
-                        key={stud._id}
-                        className="py-4 flex flex-wrap items-center justify-between gap-4"
-                      >
-                        <div>
-                          <p className="font-bold text-sm text-slate-900">
-                            {stud.fullName}
-                          </p>
-                          <p className="text-xs text-slate-400">{stud.email}</p>
-                        </div>
-                        <div className="flex gap-1.5">
-                          {["present", "absent", "late", "excused"].map(
-                            (st) => (
-                              <button
-                                key={st}
-                                type="button"
-                                onClick={() =>
-                                  setStudentAttendance(stud._id, st)
-                                }
-                                className={`rounded-lg px-3 py-1.5 text-xs font-bold capitalize transition-colors ${
-                                  currentStatus === st
-                                    ? st === "present"
-                                      ? "bg-[#0066ff] text-white"
-                                      : st === "absent"
-                                        ? "bg-rose-600 text-white"
-                                        : st === "late"
-                                          ? "bg-amber-500 text-white"
-                                          : "bg-blue-600 text-white"
-                                    : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                                }`}
-                              >
-                                {t(st)}
-                              </button>
-                            ),
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
+                <div className="overflow-hidden rounded-3xl border border-[var(--surface-border)] bg-[var(--surface-card)] shadow-sm">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left">
+                      <thead>
+                        <tr className="bg-[var(--surface-page)] border-b border-[var(--surface-border)]">
+                          <th className="px-6 py-4 text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">Learner</th>
+                          <th className="px-6 py-4 text-center text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-[var(--surface-border)]">
+                        {currentClassForAttendance.students.map((stud) => {
+                          const currentStatus = attendanceRecords[stud._id]?.status || "present";
+                          return (
+                            <tr key={stud._id} className="hover:bg-slate-50/50 transition-colors">
+                              <td className="px-6 py-4">
+                                <div>
+                                  <p className="font-black text-sm text-[var(--text-main)]">{stud.fullName}</p>
+                                  <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-tighter">{stud.email}</p>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4">
+                                <div className="flex justify-center gap-1">
+                                  {["present", "absent", "late", "excused"].map((st) => (
+                                    <button
+                                      key={st}
+                                      type="button"
+                                      onClick={() => setStudentAttendance(stud._id, st)}
+                                      className={`rounded-xl px-4 py-2 text-[10px] font-black uppercase tracking-widest transition-all ${
+                                        currentStatus === st
+                                          ? st === "present"
+                                            ? "bg-[var(--tlh-blue-primary)] text-white shadow-lg shadow-blue-500/25"
+                                            : st === "absent"
+                                              ? "bg-rose-600 text-white shadow-lg shadow-rose-500/25"
+                                              : st === "late"
+                                                ? "bg-amber-500 text-white shadow-lg shadow-amber-500/25"
+                                                : "bg-[var(--tlh-cyan)] text-white shadow-lg shadow-cyan-500/25"
+                                          : "bg-[var(--surface-page)] text-[var(--text-secondary)] border border-[var(--surface-border)] hover:bg-white"
+                                      }`}
+                                    >
+                                      {t(st)}
+                                    </button>
+                                  ))}
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               ) : (
                 <EmptyState title="No learners are assigned to this cohort yet." />
               )}
 
-              <button
-                onClick={saveAttendance}
-                className="rounded-xl bg-slate-900 px-6 py-2.5 text-xs font-bold text-white hover:bg-slate-800"
-              >
-                {t("markAttendance")}
-              </button>
+              <div className="flex justify-end pt-4">
+                <button
+                  onClick={saveAttendance}
+                  className="rounded-2xl bg-[var(--tlh-navy)] px-8 py-4 text-xs font-black text-white shadow-xl hover:bg-[#0a1636] transition-all hover:-translate-y-0.5 active:scale-95"
+                >
+                  {t("markAttendance")}
+                </button>
+              </div>
             </div>
           </DashboardCard>
 
           <DashboardCard
-            title="Cohort attendance register"
-            subtitle="Cumulative attendance for each learner across all sessions."
+            title="Cohort Attendance Register"
+            subtitle="Analyze cumulative attendance patterns and engagement metrics for each cohort."
           >
-            <select
-              value={registerClassroomId}
-              onChange={(e) => void loadCohortRegister(e.target.value)}
-              className="w-full sm:w-96 rounded-xl border border-slate-200 bg-white p-2.5 text-xs outline-none"
-            >
-              <option value="">Select a cohort</option>
-              {classes.map((classroom) => (
-                <option key={classroom._id} value={classroom._id}>
-                  {classroom.title}
-                </option>
-              ))}
-            </select>
-
-            {registerLoading ? (
-              <p className="mt-4 text-xs text-slate-500">Loading register…</p>
-            ) : cohortRegister ? (
-              <div className="mt-4 overflow-x-auto">
-                <div className="mb-3 text-xs text-slate-500">
-                  Sessions held: <strong>{cohortRegister.summary?.sessions ?? 0}</strong>{" "}
-                  · Cohort attendance rate:{" "}
-                  <strong>{cohortRegister.summary?.attendanceRate ?? 0}%</strong>
-                </div>
-                <table className="w-full min-w-[640px] text-left text-xs">
-                  <thead>
-                    <tr className="border-b border-slate-200 text-slate-500 uppercase tracking-wider">
-                      <th className="py-2 pr-3 font-bold">Learner</th>
-                      <th className="py-2 px-3 font-bold">Present</th>
-                      <th className="py-2 px-3 font-bold">Late</th>
-                      <th className="py-2 px-3 font-bold">Absent</th>
-                      <th className="py-2 px-3 font-bold">Excused</th>
-                      <th className="py-2 px-3 font-bold">Marked</th>
-                      <th className="py-2 pl-3 font-bold">Rate</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {cohortRegister.students?.map((row) => (
-                      <tr key={row._id}>
-                        <td className="py-2.5 pr-3 font-semibold text-slate-900">
-                          {row.fullName || row.name}
-                        </td>
-                        <td className="py-2.5 px-3 text-emerald-600 font-semibold">
-                          {row.present}
-                        </td>
-                        <td className="py-2.5 px-3 text-amber-600 font-semibold">
-                          {row.late}
-                        </td>
-                        <td className="py-2.5 px-3 text-rose-600 font-semibold">
-                          {row.absent}
-                        </td>
-                        <td className="py-2.5 px-3 text-slate-600">
-                          {row.excused}
-                        </td>
-                        <td className="py-2.5 px-3 text-slate-600">{row.total}</td>
-                        <td className="py-2.5 pl-3 font-bold text-slate-900">
-                          {row.attendanceRate}%
-                        </td>
-                      </tr>
+            <div className="space-y-6">
+              <div className="max-w-md">
+                <label className="block text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-2">
+                  Select Cohort
+                </label>
+                <div className="relative">
+                  <select
+                    value={registerClassroomId}
+                    onChange={(e) => void loadCohortRegister(e.target.value)}
+                    className="w-full appearance-none rounded-2xl border border-[var(--surface-border)] bg-[var(--surface-page)] p-4 text-sm font-bold text-[var(--text-main)] outline-none focus:ring-2 focus:ring-[var(--tlh-blue-primary)]/20 transition-all"
+                  >
+                    <option value="">Choose a cohort...</option>
+                    {classes.map((classroom) => (
+                      <option key={classroom._id} value={classroom._id}>
+                        {classroom.title}
+                      </option>
                     ))}
-                  </tbody>
-                </table>
+                  </select>
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-[var(--text-muted)]">
+                    ▼
+                  </div>
+                </div>
               </div>
-            ) : (
-              <p className="mt-4 text-xs text-slate-500">
-                Select a cohort to view its attendance register.
-              </p>
-            )}
+
+              {registerLoading ? (
+                <div className="py-12 text-center">
+                  <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[var(--tlh-blue-primary)] border-r-transparent"></div>
+                  <p className="mt-4 text-xs font-bold text-[var(--text-muted)] uppercase tracking-widest">Synchronizing records...</p>
+                </div>
+              ) : cohortRegister ? (
+                <div className="space-y-6">
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="rounded-2xl bg-[var(--tlh-blue-primary)]/5 p-4 border border-[var(--tlh-blue-primary)]/10">
+                      <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">Sessions Held</p>
+                      <p className="text-2xl font-black text-[var(--tlh-blue-primary)]">{cohortRegister.summary?.sessions ?? 0}</p>
+                    </div>
+                    <div className="rounded-2xl bg-emerald-500/5 p-4 border border-emerald-500/10">
+                      <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">Attendance Rate</p>
+                      <p className="text-2xl font-black text-emerald-600">{cohortRegister.summary?.attendanceRate ?? 0}%</p>
+                    </div>
+                  </div>
+
+                  <div className="overflow-hidden rounded-3xl border border-[var(--surface-border)] bg-[var(--surface-card)]">
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left">
+                        <thead>
+                          <tr className="bg-[var(--surface-page)] border-b border-[var(--surface-border)]">
+                            <th className="px-6 py-4 text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">Learner</th>
+                            <th className="px-4 py-4 text-center text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">Present</th>
+                            <th className="px-4 py-4 text-center text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">Late</th>
+                            <th className="px-4 py-4 text-center text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">Absent</th>
+                            <th className="px-4 py-4 text-center text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">Excused</th>
+                            <th className="px-6 py-4 text-right text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">Rate</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-[var(--surface-border)]">
+                          {cohortRegister.students?.map((row) => (
+                            <tr key={row._id} className="hover:bg-slate-50/50 transition-colors">
+                              <td className="px-6 py-4">
+                                <span className="font-black text-sm text-[var(--text-main)]">{row.fullName || row.name}</span>
+                              </td>
+                              <td className="px-4 py-4 text-center">
+                                <span className="text-sm font-bold text-emerald-600">{row.present}</span>
+                              </td>
+                              <td className="px-4 py-4 text-center">
+                                <span className="text-sm font-bold text-amber-600">{row.late}</span>
+                              </td>
+                              <td className="px-4 py-4 text-center">
+                                <span className="text-sm font-bold text-rose-600">{row.absent}</span>
+                              </td>
+                              <td className="px-4 py-4 text-center">
+                                <span className="text-sm font-bold text-[var(--text-secondary)]">{row.excused}</span>
+                              </td>
+                              <td className="px-6 py-4 text-right">
+                                <div className="inline-flex items-center gap-2">
+                                  <div className="h-2 w-16 rounded-full bg-slate-100 overflow-hidden">
+                                    <div 
+                                      className={`h-full rounded-full ${Number(row.attendanceRate) > 75 ? 'bg-emerald-500' : Number(row.attendanceRate) > 50 ? 'bg-amber-500' : 'bg-rose-500'}`}
+                                      style={{ width: `${row.attendanceRate}%` }}
+                                    />
+                                  </div>
+                                  <span className="text-sm font-black text-[var(--text-main)] w-10">{row.attendanceRate}%</span>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="py-12 text-center border-2 border-dashed border-[var(--surface-border)] rounded-[var(--radius-3xl)]">
+                  <p className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-widest">Please select a cohort to generate reports</p>
+                </div>
+              )}
+            </div>
           </DashboardCard>
         </div>
       ) : null}
 
       {/* 5. ASSIGNMENTS */}
       {activeTab === "assignments" ? (
-        <div className="space-y-6">
-          <div className="flex justify-between items-center">
-            <h3 className="text-xl font-bold text-slate-900">Assignments</h3>
+        <div className="space-y-8">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <h3 className="text-2xl font-black text-[var(--text-main)] tracking-tight">Assignment Management</h3>
+              <p className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-widest mt-1">Review and grade learner submissions</p>
+            </div>
             <button
               onClick={() => setCreateAssignModal(true)}
-              className="rounded-xl bg-blue-600 px-3.5 py-1.5 text-xs font-bold text-white hover:bg-blue-700"
+              className="flex items-center gap-2 rounded-2xl bg-[var(--tlh-blue-primary)] px-6 py-3.5 text-sm font-black text-white shadow-[0_8px_20px_-6px_rgba(18,102,232,0.4)] transition-all hover:-translate-y-1 active:scale-95"
             >
-              + {t("createAssignment")}
+              <span>+</span>
+              {t("createAssignment")}
             </button>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {assignments.map((asgn) => (
               <div
                 key={asgn._id}
-                className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 space-y-4"
+                className="group flex flex-col rounded-[var(--radius-3xl)] bg-[var(--surface-card)] p-8 shadow-[var(--shadow-sm)] border border-[var(--surface-border)] transition-all hover:shadow-[var(--shadow-lg)] hover:border-[var(--tlh-blue-primary)]/30"
               >
-                <div className="flex items-center justify-between">
-                  <h4 className="font-bold text-slate-900">{asgn.title}</h4>
-                  <Badge variant="blue">{asgn.maxScore} pts</Badge>
+                <div className="flex items-center justify-between mb-4">
+                  <Badge variant="blue">{asgn.maxScore} POINTS</Badge>
+                  <div className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-tighter">
+                    Due: {new Date(asgn.dueDate).toLocaleDateString()}
+                  </div>
                 </div>
-                <p className="text-xs text-slate-600 line-clamp-2">
+                
+                <h4 className="text-xl font-black text-[var(--text-main)] group-hover:text-[var(--tlh-blue-primary)] transition-colors line-clamp-1 mb-2">
+                  {asgn.title}
+                </h4>
+                <p className="text-xs font-medium text-[var(--text-secondary)] line-clamp-2 mb-6 leading-relaxed">
                   {asgn.instructions}
                 </p>
-                <div className="flex justify-between items-center text-xs text-slate-500 border-t border-slate-100 pt-3">
-                  <span>
-                    Due: {new Date(asgn.dueDate).toLocaleDateString()}
-                  </span>
-                  <span className="font-bold text-blue-600">
-                    {asgn.submissionCount || 0} submitted (
-                    {asgn.gradedCount || 0} graded)
-                  </span>
+                
+                <div className="mt-auto space-y-6">
+                  <div className="grid grid-cols-2 gap-4 pt-6 border-t border-[var(--surface-border)]">
+                    <div className="text-center">
+                      <p className="text-lg font-black text-[var(--text-main)]">{asgn.submissionCount || 0}</p>
+                      <p className="text-[9px] font-black text-[var(--text-muted)] uppercase tracking-widest">Submitted</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-lg font-black text-emerald-600">{asgn.gradedCount || 0}</p>
+                      <p className="text-[9px] font-black text-[var(--text-muted)] uppercase tracking-widest">Graded</p>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => openSubmissions(asgn)}
+                    className="flex items-center justify-center gap-2 w-full rounded-2xl bg-[var(--surface-page)] py-4 text-xs font-black text-[var(--text-main)] border border-[var(--surface-border)] transition-all hover:bg-[var(--tlh-blue-primary)] hover:text-white hover:border-[var(--tlh-blue-primary)]"
+                  >
+                    Manage Submissions
+                  </button>
                 </div>
-                <button
-                  onClick={() => openSubmissions(asgn)}
-                  className="w-full rounded-xl bg-slate-100 py-2 text-xs font-bold text-slate-800 hover:bg-slate-200"
-                >
-                  View submissions
-                </button>
               </div>
             ))}
           </div>
@@ -1199,265 +1348,231 @@ export function TeacherDashboard({ user }) {
 
       {/* 6. ASSESSMENTS / QUIZZES */}
       {activeTab === "assessments" ? (
-        <div className="space-y-6">
-          <div className="flex justify-between items-center">
-            <h3 className="text-xl font-bold text-slate-900">Assessments</h3>
+        <div className="space-y-8">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <h3 className="text-2xl font-black text-[var(--text-main)] tracking-tight">Assessments & Exams</h3>
+              <p className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-widest mt-1">Create and review automated or manual exams</p>
+            </div>
             <button
               onClick={() => setCreateQuizModal(true)}
-              className="rounded-xl bg-cyan-600 px-3.5 py-1.5 text-xs font-bold text-white hover:bg-cyan-700"
+              className="flex items-center gap-2 rounded-2xl bg-[var(--tlh-cyan)] px-6 py-3.5 text-sm font-black text-white shadow-[0_8px_20px_-6px_rgba(18,188,235,0.4)] transition-all hover:-translate-y-1 active:scale-95"
             >
-              + {t("createAssessment")}
+              <span>+</span>
+              {t("createAssessment")}
             </button>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {assessments.map((qz) => (
               <div
                 key={qz._id}
-                className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 space-y-3"
+                className="group flex flex-col rounded-[var(--radius-3xl)] bg-[var(--surface-card)] p-8 shadow-[var(--shadow-sm)] border border-[var(--surface-border)] transition-all hover:shadow-[var(--shadow-lg)] hover:border-[var(--tlh-cyan)]/30"
               >
-                <div className="flex items-center justify-between">
-                  <h4 className="font-bold text-slate-900">{qz.title}</h4>
+                <div className="flex items-center justify-between mb-4">
                   <Badge variant="cyan">
                     {ASSESSMENT_TYPE_LABELS[qz.assessmentType] || "Quiz"}
                   </Badge>
+                  <div className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-tighter">
+                    {qz.questions?.length || 0} Questions
+                  </div>
                 </div>
-                <p className="text-xs text-slate-600">{qz.description}</p>
-                <div className="text-xs text-slate-500 border-t border-slate-100 pt-2 flex justify-between">
-                  <span>Questions: {qz.questions?.length || 0}</span>
-                  <span>Passing score: {qz.passingScorePercentage}%</span>
+                
+                <h4 className="text-xl font-black text-[var(--text-main)] group-hover:text-[var(--tlh-cyan)] transition-colors line-clamp-1 mb-2">
+                  {qz.title}
+                </h4>
+                <p className="text-xs font-medium text-[var(--text-secondary)] line-clamp-2 mb-6 leading-relaxed">
+                  {qz.description}
+                </p>
+                
+                <div className="mt-auto space-y-6">
+                  <div className="flex items-center justify-between text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest border-t border-[var(--surface-border)] pt-6">
+                    <span>Pass: {qz.passingScorePercentage}%</span>
+                    <span className="text-[var(--tlh-cyan)]">
+                      {qz.attemptCount || 0} Attempts · {qz.reviewedCount || 0} Reviewed
+                    </span>
+                  </div>
+
+                  <button
+                    onClick={() => openAttempts(qz)}
+                    className="flex items-center justify-center gap-2 w-full rounded-2xl bg-[var(--tlh-cyan)]/5 py-4 text-xs font-black text-[var(--tlh-cyan)] border border-[var(--tlh-cyan)]/20 transition-all hover:bg-[var(--tlh-cyan)] hover:text-white"
+                  >
+                    Review Attempts
+                  </button>
                 </div>
-                <div className="flex items-center justify-between text-xs text-slate-500">
-                  <span className="font-bold text-cyan-700">
-                    {qz.attemptCount || 0} submitted ({qz.reviewedCount || 0}{" "}
-                    released)
-                  </span>
-                </div>
-                <button
-                  onClick={() => openAttempts(qz)}
-                  className="w-full rounded-xl bg-cyan-50 py-2 text-xs font-bold text-cyan-800 hover:bg-cyan-100"
-                >
-                  Review submissions
-                </button>
               </div>
             ))}
           </div>
         </div>
       ) : null}
 
+      {/* 7. PROGRESS & RESULTS */}
       {activeTab === "progress" ? (
-        <div className="space-y-6">
+        <div className="space-y-8">
           <DashboardCard
-            title="Teacher-published progress"
-            subtitle="Scores and self-assessment remain private to the learner until you publish the report."
+            title="Comprehensive Grading & Progress Publishing"
+            subtitle="Centralized interface for finalizing student grades and publishing performance reports."
           >
-            <label className="block max-w-xl text-xs font-bold text-slate-700">
-              Cohort
-              <select
-                value={progressClassroomId}
-                onChange={(event) =>
-                  void openProgressReports(event.target.value)
-                }
-                className="mt-1 w-full rounded-xl border border-slate-200 bg-white p-2.5 text-sm"
-              >
-                <option value="">Select a cohort</option>
-                {classes.map((classroom) => (
-                  <option key={classroom._id} value={classroom._id}>
-                    {classroom.title}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <div className="max-w-md">
+              <label className="block text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest mb-2">
+                Select Target Cohort
+              </label>
+              <div className="relative">
+                <select
+                  value={progressClassroomId}
+                  onChange={(event) => void openProgressReports(event.target.value)}
+                  className="w-full appearance-none rounded-2xl border border-[var(--surface-border)] bg-[var(--surface-page)] p-4 text-sm font-bold text-[var(--text-main)] outline-none focus:ring-2 focus:ring-[var(--tlh-blue-primary)]/20 transition-all"
+                >
+                  <option value="">Choose a cohort...</option>
+                  {classes.map((classroom) => (
+                    <option key={classroom._id} value={classroom._id}>
+                      {classroom.title}
+                    </option>
+                  ))}
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-[var(--text-muted)]">
+                  ▼
+                </div>
+              </div>
+            </div>
+
             {progressLoading && (
-              <p role="status" className="mt-4 text-sm text-slate-500">
-                Loading cohort progress…
-              </p>
-            )}
-            {!progressLoading && !classes.length && (
-              <EmptyState title="No cohorts assigned yet." />
+              <div className="py-12 text-center">
+                <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[var(--tlh-blue-primary)] border-r-transparent"></div>
+                <p className="mt-4 text-xs font-bold text-[var(--text-muted)] uppercase tracking-widest">Compiling progress data...</p>
+              </div>
             )}
           </DashboardCard>
 
           {progressClassroomId && !progressLoading ? (
-            <DashboardCard
-              title="Prepare learner report"
-              subtitle="Enter each component score; the overall score is summed automatically."
-            >
-              {progressRoster.length === 0 ? (
-                <EmptyState title="This cohort has no learners assigned." />
-              ) : (
-                <div className="space-y-5">
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <label className="block text-xs font-bold text-slate-700">
-                      Learner
-                      <select
-                        value={progressForm.studentId}
-                        onChange={(event) =>
-                          handleProgressStudentChange(event.target.value)
-                        }
-                        className="mt-1 w-full rounded-xl border border-slate-200 bg-white p-2.5 text-sm"
-                      >
-                        {progressRoster.map((student) => (
-                          <option key={student._id} value={student._id}>
-                            {student.fullName} · {student.email}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                    <label className="block text-xs font-bold text-slate-700">
-                      Reporting period
-                      <input
-                        required
-                        maxLength={80}
-                        value={progressForm.period}
-                        onChange={(event) =>
-                          setProgressForm((form) => ({
-                            ...form,
-                            period: event.target.value,
-                          }))
-                        }
-                        className="mt-1 w-full rounded-xl border border-slate-200 p-2.5 text-sm"
-                        placeholder="e.g. Term 1, 2026"
-                      />
-                    </label>
+            <div className="grid gap-8 lg:grid-cols-12">
+              {/* Learner Roster Sidebar */}
+              <div className="lg:col-span-4 space-y-4">
+                <DashboardCard title="Learner Roster">
+                  <div className="space-y-2 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
+                    {progressRoster.map((student) => {
+                      const isSelected = progressForm.studentId === student._id;
+                      const hasReport = progressReports.some(r => String(r.student?._id ?? r.student) === student._id);
+                      return (
+                        <button
+                          key={student._id}
+                          onClick={() => handleProgressStudentChange(student._id)}
+                          className={`w-full text-left rounded-2xl p-4 transition-all border ${
+                            isSelected 
+                              ? "bg-[var(--tlh-blue-primary)] border-[var(--tlh-blue-primary)] text-white shadow-lg" 
+                              : "bg-[var(--surface-page)] border-[var(--surface-border)] text-[var(--text-main)] hover:border-[var(--tlh-blue-primary)]/30"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="font-black text-sm">{student.fullName}</span>
+                            {hasReport && (
+                              <Badge variant={isSelected ? "white" : "emerald"}>GRADED</Badge>
+                            )}
+                          </div>
+                          <p className={`text-[10px] mt-1 font-bold uppercase tracking-tighter ${isSelected ? "text-white/70" : "text-[var(--text-muted)]"}`}>
+                            {student.email}
+                          </p>
+                        </button>
+                      );
+                    })}
                   </div>
+                </DashboardCard>
+              </div>
 
-                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    <label className="block text-xs font-bold text-slate-700">
-                      Overall score (%)
-                      <input
-                        type="text"
-                        readOnly
-                        value={hasProgressComponents ? progressOverallTotal : ""}
-                        className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-100 p-2.5 text-sm font-bold text-slate-900"
-                        placeholder="Sum of components"
-                      />
-                      <span className="mt-1 block text-[11px] font-normal text-slate-500">
-                        Automatically the sum of the component scores above.
-                      </span>
-                    </label>
-                    {PROGRESS_COMPONENTS.map(({ category, label }) => (
-                      <label
-                        key={category}
-                        className="block text-xs font-bold text-slate-700"
-                      >
-                        {label} (%)
-                        <input
-                          type="number"
-                          min="0"
-                          max="100"
-                          step="0.1"
-                          value={progressForm[category]}
-                          onChange={(event) =>
-                            setProgressForm((form) => ({
-                              ...form,
-                              [category]: event.target.value,
-                            }))
-                          }
-                          className="mt-1 w-full rounded-xl border border-slate-200 p-2.5 text-sm"
-                          placeholder="Optional"
-                        />
-                      </label>
-                    ))}
-                  </div>
+              {/* Grading Form */}
+              <div className="lg:col-span-8">
+                <DashboardCard title="Grading & Feedback Form">
+                  {progressForm.studentId ? (
+                    <div className="space-y-8">
+                      <div className="grid gap-6 sm:grid-cols-2">
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">Reporting Period</label>
+                          <input
+                            required
+                            maxLength={80}
+                            value={progressForm.period}
+                            onChange={(event) => setProgressForm(f => ({ ...f, period: event.target.value }))}
+                            className="w-full rounded-2xl border border-[var(--surface-border)] bg-[var(--surface-page)] p-4 text-sm font-bold text-[var(--text-main)] outline-none focus:ring-2 focus:ring-[var(--tlh-blue-primary)]/20"
+                            placeholder="e.g. Final Term 2026"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">Calculated Overall (%)</label>
+                          <div className="w-full rounded-2xl bg-[var(--tlh-navy)] p-4 text-sm font-black text-[var(--tlh-gold)] flex items-center justify-between shadow-inner">
+                            <span>TOTAL SCORE</span>
+                            <span>{hasProgressComponents ? progressOverallTotal : "0"}%</span>
+                          </div>
+                        </div>
+                      </div>
 
-                  <label className="block text-xs font-bold text-slate-700">
-                    Teacher self-assessment
-                    <textarea
-                      rows={3}
-                      maxLength={4000}
-                      value={progressForm.selfAssessment}
-                      onChange={(event) =>
-                        setProgressForm((form) => ({
-                          ...form,
-                          selfAssessment: event.target.value,
-                        }))
-                      }
-                      className="mt-1 w-full rounded-xl border border-slate-200 p-3 text-sm"
-                      placeholder="Describe the learner’s strengths, growth, and next steps."
-                    />
-                  </label>
-                  <label className="block text-xs font-bold text-slate-700">
-                    Feedback for learner
-                    <textarea
-                      rows={3}
-                      maxLength={4000}
-                      value={progressForm.feedback}
-                      onChange={(event) =>
-                        setProgressForm((form) => ({
-                          ...form,
-                          feedback: event.target.value,
-                        }))
-                      }
-                      className="mt-1 w-full rounded-xl border border-slate-200 p-3 text-sm"
-                      placeholder="Add feedback that will appear with the published report."
-                    />
-                  </label>
-
-                  {progressReports.filter(
-                    (report) =>
-                      String(report.student?._id ?? report.student) ===
-                      progressForm.studentId,
-                  ).length > 0 && (
-                    <div className="space-y-2 border-t border-slate-100 pt-4">
-                      <h4 className="text-xs font-bold uppercase tracking-wide text-slate-500">
-                        Existing reports
-                      </h4>
-                      {progressReports
-                        .filter(
-                          (report) =>
-                            String(report.student?._id ?? report.student) ===
-                            progressForm.studentId,
-                        )
-                        .map((report) => (
-                          <div
-                            key={report._id}
-                            className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-slate-50 px-3 py-2 text-xs"
-                          >
-                            <span className="font-semibold text-slate-700">
-                              {report.period} ·{" "}
-                              {report.overallScore ?? "No score"}%
-                            </span>
-                            <Badge
-                              variant={
-                                report.status === "published"
-                                  ? "emerald"
-                                  : "amber"
-                              }
-                            >
-                              {report.status}
-                            </Badge>
+                      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                        {PROGRESS_COMPONENTS.map(({ category, label }) => (
+                          <div key={category} className="space-y-2">
+                            <label className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">{label} (%)</label>
+                            <input
+                              type="number"
+                              min="0"
+                              max="100"
+                              step="0.1"
+                              value={progressForm[category]}
+                              onChange={(event) => setProgressForm(f => ({ ...f, [category]: event.target.value }))}
+                              className="w-full rounded-2xl border border-[var(--surface-border)] bg-[var(--surface-page)] p-4 text-sm font-bold text-[var(--text-main)] outline-none focus:ring-2 focus:ring-[var(--tlh-blue-primary)]/20"
+                              placeholder="0.0"
+                            />
                           </div>
                         ))}
+                      </div>
+
+                      <div className="space-y-6">
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">Internal Self-Assessment</label>
+                          <textarea
+                            rows={3}
+                            value={progressForm.selfAssessment}
+                            onChange={(event) => setProgressForm(f => ({ ...f, selfAssessment: event.target.value }))}
+                            className="w-full rounded-2xl border border-[var(--surface-border)] bg-[var(--surface-page)] p-4 text-sm font-bold text-[var(--text-main)] outline-none focus:ring-2 focus:ring-[var(--tlh-blue-primary)]/20"
+                            placeholder="Learner's performance analysis for records..."
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">Feedback for Learner</label>
+                          <textarea
+                            rows={3}
+                            value={progressForm.feedback}
+                            onChange={(event) => setProgressForm(f => ({ ...f, feedback: event.target.value }))}
+                            className="w-full rounded-2xl border border-[var(--surface-border)] bg-[var(--surface-page)] p-4 text-sm font-bold text-[var(--text-main)] outline-none focus:ring-2 focus:ring-[var(--tlh-blue-primary)]/20"
+                            placeholder="Direct encouragement and guidance for the student..."
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap justify-end gap-3 pt-6 border-t border-[var(--surface-border)]">
+                        <button
+                          type="button"
+                          disabled={progressSaving || !progressForm.period.trim()}
+                          onClick={() => void saveProgressReport("draft")}
+                          className="rounded-2xl border border-[var(--surface-border)] px-8 py-4 text-xs font-black text-[var(--text-secondary)] hover:bg-[var(--surface-page)] transition-all"
+                        >
+                          {progressSaving ? "Saving..." : "Save Draft"}
+                        </button>
+                        <button
+                          type="button"
+                          disabled={progressSaving || !progressForm.period.trim() || !hasProgressComponents || !progressForm.selfAssessment.trim()}
+                          onClick={() => void saveProgressReport("published")}
+                          className="rounded-2xl bg-[var(--tlh-blue-primary)] px-8 py-4 text-xs font-black text-white shadow-xl hover:shadow-blue-500/30 transition-all hover:-translate-y-0.5"
+                        >
+                          {progressSaving ? "Publishing..." : "Publish to Learner"}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="py-24 text-center">
+                      <p className="text-xs font-black text-[var(--text-muted)] uppercase tracking-[0.2em]">Select a learner from the roster to start grading</p>
                     </div>
                   )}
-
-                  <div className="flex flex-wrap justify-end gap-2 border-t border-slate-100 pt-4">
-                    <button
-                      type="button"
-                      disabled={progressSaving || !progressForm.period.trim()}
-                      onClick={() => void saveProgressReport("draft")}
-                      className="rounded-xl border border-slate-300 px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
-                    >
-                      {progressSaving ? "Saving…" : "Save draft"}
-                    </button>
-                    <button
-                      type="button"
-                      disabled={
-                        progressSaving ||
-                        !progressForm.period.trim() ||
-                        !hasProgressComponents ||
-                        !progressForm.selfAssessment.trim()
-                      }
-                      onClick={() => void saveProgressReport("published")}
-                      className="rounded-xl bg-blue-700 px-4 py-2.5 text-xs font-bold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      {progressSaving ? "Publishing…" : "Publish to learner"}
-                    </button>
-                  </div>
-                </div>
-              )}
-            </DashboardCard>
+                </DashboardCard>
+              </div>
+            </div>
           ) : null}
         </div>
       ) : null}
@@ -2560,7 +2675,7 @@ export function TeacherDashboard({ user }) {
 
           <button
             type="submit"
-            className="w-full rounded-xl bg-gradient-to-r from-[#0066ff] to-[#0099ff] py-2.5 text-xs font-bold text-white hover:from-[#0052cc] hover:to-[#0088e6] shadow-md shadow-blue-500/20 transition-all"
+            className="golden-btn w-full rounded-full py-3 text-xs font-bold text-white shadow-sm hover:shadow-md transition-all active:scale-95"
           >
             {uploadForm.sourceType === "youtube"
               ? "▶️ Share YouTube resource"

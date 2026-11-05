@@ -40,8 +40,8 @@ publicRouter.get("/home", asyncHandler(async (_req, res) => {
     ]);
     res.json({
         brand: {
-            name: "TedbabeLearnHUB(TLH)",
-            tagline: "Structured online learning with real teacher guidance and clear student placement.",
+            name: "TedbabeLearnHUB (TLH)",
+            tagline: "Your Learning Partner for a Better Future. Learn. Grow. Achieve.",
         },
         categories,
         featuredCourses,

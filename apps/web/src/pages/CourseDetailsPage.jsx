@@ -181,7 +181,7 @@ export function CourseDetailsPage() {
                   key={i}
                   className="flex items-start gap-3 rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200/60"
                 >
-                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gradient-to-r from-[#0066ff] to-[#0099ff] text-xs font-bold text-white shadow-xs">
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gradient-to-r from-[var(--tlh-blue-primary)] to-[var(--tlh-sky)] text-xs font-bold text-white shadow-xs">
                     ✓
                   </span>
                   <span className="text-xs font-semibold text-slate-800 leading-relaxed">
@@ -223,7 +223,7 @@ export function CourseDetailsPage() {
                     className="flex w-full items-center justify-between bg-slate-50 px-6 py-4 text-left font-bold text-slate-900 hover:bg-slate-100 transition-colors"
                   >
                     <div className="flex items-center gap-3">
-                      <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-[#001b44] text-xs font-black text-sky-400">
+                      <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-[var(--tlh-navy)] text-xs font-black text-sky-400">
                         {index + 1}
                       </span>
                       <div>
@@ -265,7 +265,7 @@ export function CourseDetailsPage() {
         </div>
 
         {/* Enrollment & Placement Notice — Brand Dark Layout */}
-        <div className="rounded-3xl border border-sky-500/25 bg-gradient-to-br from-[#0c234b] via-[#091b3b] to-[#061124] p-8 text-white shadow-xl ring-1 ring-white/10">
+        <div className="rounded-3xl border border-[var(--tlh-cyan)]/25 bg-gradient-to-br from-[var(--tlh-navy)] via-[var(--tlh-navy-deep)] to-slate-950 p-8 text-white shadow-xl ring-1 ring-white/10">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
             <div>
               <span className="rounded-full border border-sky-400/30 bg-sky-500/15 px-3 py-1 text-xs font-bold text-sky-300">
@@ -283,7 +283,7 @@ export function CourseDetailsPage() {
             </div>
             <Link
               to="/register/student"
-              className="rounded-2xl bg-gradient-to-r from-[#0066ff] to-[#0099ff] px-6 py-3.5 text-xs font-black uppercase tracking-wider text-white shadow-md shadow-blue-500/25 hover:from-[#0052cc] hover:to-[#0088e6] transition-all hover:-translate-y-0.5 whitespace-nowrap shrink-0"
+              className="golden-btn inline-flex items-center justify-center rounded-full px-6 py-3.5 text-xs font-bold text-white shadow-sm hover:shadow-md transition-all active:scale-95 whitespace-nowrap shrink-0"
             >
               Register as Student →
             </Link>

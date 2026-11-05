@@ -105,7 +105,7 @@ export function CourseCatalogPage() {
                             />
                             <button
                                 type="submit"
-                                className="absolute right-2 rounded-xl bg-gradient-to-r from-[#0066ff] to-[#0099ff] px-4 py-2 text-xs font-bold uppercase tracking-wider text-white shadow-md shadow-blue-500/25 transition hover:from-[#0052cc] hover:to-[#0088e6]"
+                                className="golden-btn absolute right-2 rounded-full px-4 py-2 text-xs font-bold text-white shadow-sm hover:shadow-md transition-all active:scale-95"
                             >
                                 Search
                             </button>
@@ -127,10 +127,10 @@ export function CourseCatalogPage() {
                                     params.set("page", "1");
                                     setSearchParams(params);
                                 }}
-                                className={`rounded-xl px-3.5 py-1.5 text-xs font-semibold transition ${
+                                className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition ${
                                     selectedLevel === lvl
-                                        ? "bg-gradient-to-r from-[#0066ff] to-[#0099ff] text-white shadow-sm"
-                                        : "bg-white/80 text-slate-700 ring-1 ring-slate-200 hover:bg-white"
+                                        ? "bg-[#C59B27] text-white shadow-sm"
+                                        : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 ring-1 ring-slate-200 dark:ring-slate-700 hover:bg-white dark:hover:bg-slate-700"
                                 }`}
                             >
                                 {lvl === "all" ? "All Levels" : lvl}
@@ -166,10 +166,10 @@ export function CourseCatalogPage() {
                                         key={cat._id}
                                         type="button"
                                         onClick={() => handleCategoryClick(cat._id)}
-                                        className={`rounded-xl px-3.5 py-2 text-xs font-semibold transition ${
+                                        className={`rounded-full px-3.5 py-2 text-xs font-semibold transition ${
                                             isSelected
-                                                ? "bg-gradient-to-r from-[#0066ff] to-[#0099ff] text-white shadow-md shadow-blue-500/25"
-                                                : "bg-white text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50"
+                                                ? "bg-[#C59B27] text-white shadow-sm"
+                                                : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 ring-1 ring-slate-200 dark:ring-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700"
                                         }`}
                                     >
                                         {cat.name}
@@ -231,10 +231,10 @@ export function CourseCatalogPage() {
                             >
                                 <div>
                                     <div className="flex items-center justify-between gap-2 mb-3">
-                                        <span className="rounded-lg bg-sky-50 px-2.5 py-1 text-[11px] font-bold text-blue-700 ring-1 ring-sky-200/60">
+                                        <span className="rounded-lg bg-sky-50 dark:bg-sky-500/15 px-2.5 py-1 text-[11px] font-bold text-blue-700 dark:text-sky-300 ring-1 ring-sky-200/60 dark:ring-sky-500/30">
                                             {course.category?.name || "Subject"}
                                         </span>
-                                        <span className="text-[11px] font-semibold text-slate-500">
+                                        <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-300">
                                             {course.skillLevel || "All levels"}
                                         </span>
                                     </div>
@@ -269,7 +269,7 @@ export function CourseCatalogPage() {
                                     </span>
                                     <Link
                                         to={`/courses/${course.slug || course._id}`}
-                                        className="rounded-xl bg-slate-900 px-3.5 py-2 text-xs font-bold text-white transition hover:bg-blue-600"
+                                        className="golden-btn rounded-full px-4 py-2 text-xs font-bold text-white transition shadow-sm hover:shadow-md"
                                     >
                                         View Syllabus →
                                     </Link>

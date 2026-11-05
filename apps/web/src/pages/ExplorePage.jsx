@@ -45,14 +45,14 @@ export function ExplorePage() {
 
       {/* Category Pills Filter */}
       <div className="flex flex-wrap gap-2">
-        <button onClick={() => setSearchParams({})} type="button" className={`rounded-2xl px-4 py-2 text-xs font-bold transition-all ${!selectedCat
-            ? "bg-gradient-to-r from-[#0066ff] to-[#0099ff] text-white shadow-md shadow-blue-500/25"
-            : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50"}`}>
+        <button onClick={() => setSearchParams({})} type="button" className={`rounded-full px-4 py-2 text-xs font-bold transition-all ${!selectedCat
+            ? "bg-[#C59B27] text-white shadow-sm"
+            : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700"}`}>
           {t("allCategories")}
         </button>
-        {categories.map((cat) => (<button key={cat._id} onClick={() => setSearchParams({ selected: cat._id })} type="button" className={`rounded-2xl px-4 py-2 text-xs font-bold transition-all ${selectedCat === cat._id
-                ? "bg-gradient-to-r from-[#0066ff] to-[#0099ff] text-white shadow-md shadow-blue-500/25"
-                : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50"}`}>
+        {categories.map((cat) => (<button key={cat._id} onClick={() => setSearchParams({ selected: cat._id })} type="button" className={`rounded-full px-4 py-2 text-xs font-bold transition-all ${selectedCat === cat._id
+                ? "bg-[#C59B27] text-white shadow-sm"
+                : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700"}`}>
             {cat.name}
           </button>))}
       </div>
@@ -72,7 +72,7 @@ export function ExplorePage() {
             {filteredCourses.map((course) => (<div key={course._id} className="group flex flex-col justify-between rounded-3xl bg-white p-7 shadow-sm ring-1 ring-slate-200/90 hover:shadow-xl hover:ring-blue-500/40 transition-all duration-300">
                 <div>
                   <div className="flex items-center justify-between">
-                    <span className="rounded-full bg-sky-50 px-3 py-1 text-xs font-bold text-blue-700 border border-sky-200/60">
+                    <span className="rounded-full bg-sky-50 dark:bg-sky-500/15 px-3 py-1 text-xs font-bold text-blue-700 dark:text-sky-300 border border-sky-200/60 dark:border-sky-500/30">
                       {course.category?.name ?? "General"}
                     </span>
                     <span className="text-xs text-slate-500 font-semibold">
@@ -97,8 +97,8 @@ export function ExplorePage() {
                   </div>
                 </div>
 
-                <div className="mt-6 border-t border-slate-100 pt-5">
-                  <Link to="/register/student" className="inline-flex w-full items-center justify-center rounded-2xl bg-gradient-to-r from-[#0066ff] to-[#0099ff] px-4 py-3 text-xs font-bold uppercase tracking-wider text-white shadow-md shadow-blue-500/25 hover:from-[#0052cc] hover:to-[#0088e6] transition-all hover:-translate-y-0.5">
+                <div className="mt-6 border-t border-slate-100 dark:border-slate-800 pt-5">
+                  <Link to="/register/student" className="golden-btn inline-flex w-full items-center justify-center rounded-full px-4 py-3 text-xs font-bold text-white shadow-sm hover:shadow-md transition-all active:scale-95">
                     {t("registerAndRequest")}
                   </Link>
                 </div>

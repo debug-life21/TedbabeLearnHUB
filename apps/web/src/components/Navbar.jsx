@@ -3,6 +3,7 @@ import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../context/AuthContext";
 import { BrandLogo } from "./BrandLogo";
+import { ThemeToggle } from "./ThemeToggle";
 import { NotificationCenter } from "./NotificationCenter";
 
 function LanguageToggle({ compact = false }) {
@@ -25,7 +26,7 @@ function LanguageToggle({ compact = false }) {
             onClick={toggle}
             title={isAmharic ? "Switch to English" : "ወደ አማርኛ ቀይር"}
             aria-label={isAmharic ? "Switch to English" : "Switch to Amharic"}
-            className={`flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white font-bold text-slate-700 shadow-xs transition-all hover:border-sky-300 hover:bg-sky-50 hover:text-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 ${
+            className={`flex items-center gap-1.5 rounded-[var(--radius-md)] border border-[var(--surface-border)] bg-[var(--surface-card)] font-bold text-[var(--text-main)] shadow-[var(--shadow-sm)] transition-all hover:border-[var(--tlh-blue-primary)]/40 hover:bg-[var(--primary-light)] hover:text-[var(--tlh-blue-primary)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tlh-blue-primary)] ${
                 compact ? "px-2.5 py-1.5 text-xs" : "px-3 py-2 text-[13px]"
             }`}
         >
@@ -44,10 +45,10 @@ const navigationItems = [
 ];
 
 function navLinkClass({ isActive }) {
-    return `rounded-xl px-4 py-2.5 text-sm sm:text-[15px] font-bold transition-all whitespace-nowrap tracking-wide ${
+    return `rounded-[var(--radius-md)] px-4 py-2.5 text-sm sm:text-[15px] font-bold transition-all whitespace-nowrap tracking-wide ${
         isActive
-            ? "bg-white text-blue-700 shadow-sm ring-1 ring-blue-600/15 font-extrabold"
-            : "text-slate-600 hover:bg-white/80 hover:text-slate-950 hover:shadow-xs"
+            ? "bg-[var(--surface-card)] text-[var(--tlh-blue-primary)] shadow-[var(--shadow-sm)] ring-1 ring-[var(--tlh-blue-primary)]/15 font-extrabold"
+            : "text-[var(--text-secondary)] hover:bg-[var(--surface-card)]/80 hover:text-[var(--text-main)] hover:shadow-[var(--shadow-sm)]"
     }`;
 }
 
@@ -121,17 +122,28 @@ export function Navbar() {
             ? "Teacher"
             : "Student";
     return (
-        <header className="editorial-nav sticky top-0 z-40 border-b border-slate-200/80 shadow-[0_4px_20px_rgba(7,19,41,0.04)] backdrop-blur-xl">
+        <header className="editorial-nav sticky top-0 z-40 border-b border-[var(--surface-border)] shadow-[var(--shadow-sm)] backdrop-blur-xl">
             <div className="mx-auto flex min-h-[5.25rem] sm:min-h-[5.75rem] max-w-[90rem] items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
                 <Link
                     to="/"
-                    className="nav-brand shrink-0 rounded-xl transition-transform hover:scale-[1.02] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600"
-                    aria-label="TedbabeLearnHUB home"
+                    className="nav-brand flex items-center gap-2.5 sm:gap-3.5 shrink-0 rounded-[var(--radius-md)] transition-transform hover:scale-[1.02] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--tlh-blue-primary)]"
+                    aria-label="TedbabeLearnHUB (TLH) home"
                 >
-                    <BrandLogo />
+                    <BrandLogo
+                        size="md"
+                        imgClassName="h-12 sm:h-14 md:h-16 w-auto object-contain drop-shadow-md transition-transform duration-300 hover:scale-105"
+                    />
+                    <div className="flex flex-col justify-center">
+                        <span className="font-bold tracking-tight text-[var(--text-main)] text-xs sm:text-[13px] md:text-sm leading-tight">
+                            Tedbabe Learn HUB <span className="text-[var(--tlh-blue-primary)] font-extrabold">(TLH)</span>
+                        </span>
+                        <span className="text-[9px] sm:text-[10px] font-medium text-[var(--text-secondary)] tracking-widest uppercase">
+                            Learn. Grow. Achieve.
+                        </span>
+                    </div>
                 </Link>
 
-                <nav aria-label="Main navigation" className="hidden items-center gap-1.5 rounded-2xl border border-slate-200/80 bg-slate-100/90 p-1.5 lg:flex shadow-inner">
+                <nav aria-label="Main navigation" className="hidden items-center gap-1.5 rounded-[var(--radius-xl)] border border-[var(--surface-border)] bg-[var(--surface-muted)]/90 p-1.5 lg:flex shadow-inner">
                     <NavigationLinks />
                 </nav>
 
@@ -141,10 +153,10 @@ export function Navbar() {
                             <NotificationCenter />
                             <Link
                                 to="/dashboard"
-                                className="inline-flex items-center gap-2.5 rounded-xl bg-gradient-to-r from-[#0066ff] to-[#0099ff] px-4 py-2.5 text-sm sm:text-[15px] font-bold text-white shadow-md shadow-blue-500/25 transition-all hover:-translate-y-0.5 hover:from-[#0052cc] hover:to-[#0088e6] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                                className="golden-btn inline-flex items-center gap-2 rounded-full px-5 py-2 text-xs sm:text-[13px] font-bold text-white shadow-sm hover:-translate-y-0.5 active:scale-95 transition-all"
                             >
                                 <span className="max-w-36 truncate">{user.fullName || t("dashboard")}</span>
-                                <span className="rounded-full bg-white/20 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide text-white">
+                                <span className="rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
                                     {roleLabel}
                                 </span>
                             </Link>
@@ -152,7 +164,7 @@ export function Navbar() {
                                 onClick={handleLogout}
                                 type="button"
                                 disabled={loggingOut}
-                                className="rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-rose-50 hover:text-rose-700 disabled:cursor-wait disabled:opacity-60"
+                                className="rounded-[var(--radius-md)] px-3 py-2.5 text-sm font-semibold text-[var(--text-secondary)] transition-colors hover:bg-rose-50 hover:text-rose-700 disabled:cursor-wait disabled:opacity-60"
                                 title={t("signOut")}
                                 aria-label={t("signOut")}
                             >
@@ -165,26 +177,28 @@ export function Navbar() {
                         <div className="hidden items-center gap-2 lg:flex">
                             <Link
                                 to="/sign-in"
-                                className="rounded-xl px-4 py-2.5 text-sm sm:text-[15px] font-bold text-slate-600 transition-colors hover:bg-slate-100/80 hover:text-slate-950"
+                                className="rounded-[var(--radius-md)] px-4 py-2.5 text-sm sm:text-[15px] font-bold text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-muted)]/80 hover:text-[var(--text-main)]"
                             >
                                 {t("signIn")}
                             </Link>
                             <Link
                                 to="/register/student"
-                                className="rounded-xl bg-gradient-to-r from-[#0066ff] to-[#0099ff] px-5 py-2.5 text-sm sm:text-[15px] font-extrabold text-white shadow-md shadow-blue-500/25 transition-all hover:-translate-y-0.5 hover:from-[#0052cc] hover:to-[#0088e6] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                                className="golden-btn inline-flex items-center gap-1.5 rounded-full px-5 py-2.5 text-xs sm:text-[13px] font-bold text-white shadow-sm hover:-translate-y-0.5 active:scale-95 transition-all"
                             >
-                                {t("studentSignUp")}
+                                <span>{t("studentSignUp")}</span>
+                                <span aria-hidden="true">→</span>
                             </Link>
                         </div>
                     )}
 
-                    {/* Desktop Language Toggle */}
+                    {/* Desktop Theme & Language Controls */}
+                    <ThemeToggle />
                     <LanguageToggle />
 
                     <button
                         onClick={() => setMobileMenuState({ pathname: location.pathname, open: !mobileMenuOpen })}
                         type="button"
-                        className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-xs transition-all hover:border-sky-300 hover:bg-sky-50 hover:text-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 lg:hidden"
+                        className="inline-flex h-11 w-11 items-center justify-center rounded-[var(--radius-md)] border border-[var(--surface-border)] bg-[var(--surface-card)] text-[var(--text-secondary)] shadow-[var(--shadow-sm)] transition-all hover:border-[var(--tlh-blue-primary)]/40 hover:bg-[var(--primary-light)] hover:text-[var(--tlh-blue-primary)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tlh-blue-primary)] lg:hidden"
                         aria-label={mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
                         aria-expanded={mobileMenuOpen}
                         aria-controls="mobile-navigation"
@@ -209,27 +223,27 @@ export function Navbar() {
             )}
 
             {mobileMenuOpen && (
-                <div id="mobile-navigation" className="border-t border-slate-200 bg-white px-4 pb-4 pt-3 shadow-lg shadow-slate-900/5 lg:hidden">
-                    <nav aria-label="Mobile navigation" className="grid gap-1 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm">
+                <div id="mobile-navigation" className="border-t border-[var(--surface-border)] bg-[var(--surface-card)] px-4 pb-4 pt-3 shadow-lg shadow-black/20 lg:hidden">
+                    <nav aria-label="Mobile navigation" className="grid gap-1 rounded-2xl border border-[var(--surface-border)] bg-[var(--surface-card)] p-2 shadow-sm">
                         <NavigationLinks onNavigate={closeMobileMenu} mobile />
                     </nav>
 
                     {user ? (
-                        <div className="mt-3 border-t border-slate-100 pt-3">
-                            <div className="mb-3 flex items-center gap-3 rounded-xl bg-slate-50 px-3 py-2.5">
-                                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-100 text-sm font-bold text-blue-700" aria-hidden="true">
+                        <div className="mt-3 border-t border-[var(--surface-border)] pt-3">
+                            <div className="mb-3 flex items-center gap-3 rounded-xl bg-[var(--surface-muted)] px-3 py-2.5">
+                                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--primary-light)] text-sm font-bold text-[var(--tlh-blue-primary)]" aria-hidden="true">
                                     {(user.fullName || "U").trim().charAt(0).toUpperCase()}
                                 </span>
                                 <div className="min-w-0">
-                                    <p className="truncate text-sm font-bold text-slate-900">{user.fullName || t("dashboard")}</p>
-                                    <p className="text-xs font-medium text-slate-500">{roleLabel}</p>
+                                    <p className="truncate text-sm font-bold text-[var(--text-main)]">{user.fullName || t("dashboard")}</p>
+                                    <p className="text-xs font-medium text-[var(--text-secondary)]">{roleLabel}</p>
                                 </div>
                             </div>
                             <div className="grid grid-cols-2 gap-2">
                                 <Link
                                     to="/dashboard"
                                     onClick={closeMobileMenu}
-                                    className="rounded-xl bg-gradient-to-r from-[#0066ff] to-[#0099ff] px-4 py-3 text-center text-base font-bold text-white shadow-md shadow-blue-500/25"
+                                    className="golden-btn rounded-full px-4 py-3 text-center text-sm font-bold text-white shadow-sm"
                                 >
                                     {t("dashboard")}
                                 </Link>
@@ -237,34 +251,40 @@ export function Navbar() {
                                     onClick={handleLogout}
                                     type="button"
                                     disabled={loggingOut}
-                                    className="rounded-xl border border-slate-200 px-4 py-3 text-center text-base font-bold text-slate-700 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700 disabled:cursor-wait disabled:opacity-60"
+                                    className="rounded-full border border-[var(--surface-border)] px-4 py-3 text-center text-base font-bold text-[var(--text-secondary)] hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700 disabled:cursor-wait disabled:opacity-60"
                                 >
                                     {loggingOut ? t("loading") : t("signOut")}
                                 </button>
                             </div>
                         </div>
                     ) : (
-                        <div className="mt-3 grid grid-cols-2 gap-2 border-t border-slate-100 pt-3 lg:hidden">
+                        <div className="mt-3 grid grid-cols-2 gap-2 border-t border-[var(--surface-border)] pt-3 lg:hidden">
                             <Link
                                 to="/sign-in"
                                 onClick={closeMobileMenu}
-                                className="rounded-xl border border-slate-200 px-4 py-3 text-center text-base font-bold text-slate-700 hover:bg-slate-50 shadow-sm"
+                                className="rounded-full border border-[var(--surface-border)] px-4 py-3 text-center text-base font-bold text-[var(--text-main)] hover:bg-[var(--surface-muted)] shadow-sm"
                             >
                                 {t("signIn")}
                             </Link>
                             <Link
                                 to="/register/student"
                                 onClick={closeMobileMenu}
-                                className="rounded-xl bg-gradient-to-r from-[#0066ff] to-[#0099ff] px-4 py-3 text-center text-base font-bold text-white shadow-md shadow-blue-500/25"
+                                className="golden-btn rounded-full px-4 py-3 text-center text-sm font-bold text-white shadow-sm"
                             >
-                                {t("studentSignUp")}
+                                {t("studentSignUp")} →
                             </Link>
                         </div>
                     )}
-                    {/* Mobile Language Toggle */}
-                    <div className="mt-3 border-t border-slate-100 pt-3">
+                    {/* Mobile Theme & Language Controls */}
+                    <div className="mt-3 grid grid-cols-2 gap-2 border-t border-[var(--surface-border)] pt-3">
                         <div className="flex items-center justify-between px-1">
-                            <span className="text-xs font-semibold text-slate-500">
+                            <span className="text-xs font-semibold text-[var(--text-secondary)]">
+                                {i18n.language === "am" ? "ገጽታ" : "Theme"}
+                            </span>
+                            <ThemeToggle compact />
+                        </div>
+                        <div className="flex items-center justify-between px-1">
+                            <span className="text-xs font-semibold text-[var(--text-secondary)]">
                                 {i18n.language === "am" ? "ቋንቋ" : "Language"}
                             </span>
                             <LanguageToggle compact />

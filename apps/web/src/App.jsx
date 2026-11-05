@@ -39,7 +39,7 @@ function ProtectedRoute({ children, roles }) {
     if (loading) {
         return (<div className="flex min-h-[60vh] items-center justify-center">
         <div className="flex items-center gap-3 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
-          <div className="h-6 w-6 animate-spin rounded-full border-2 border-emerald-700 border-t-transparent"></div>
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-[var(--tlh-blue-primary)] border-t-transparent"></div>
           <span className="text-sm font-bold text-slate-700">Loading your learning space…</span>
         </div>
       </div>);

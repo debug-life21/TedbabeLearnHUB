@@ -72,7 +72,7 @@ export function OfficeDocumentPreview({ resource }) {
                                 <style>
                                     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 24px; background: #ffffff; color: #0f172a; }
                                     .csv-table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; }
-                                    .csv-table th { background: #001b44; color: #ffffff; padding: 10px 14px; font-weight: 700; border: 1px solid #1e293b; position: sticky; top: 0; }
+                                    .csv-table th { background: var(--tlh-navy); color: #ffffff; padding: 10px 14px; font-weight: 700; border: 1px solid #1e293b; position: sticky; top: 0; }
                                     .csv-table td { padding: 9px 14px; border: 1px solid #e2e8f0; }
                                     .csv-table tr:nth-child(even) { background: #f8fafc; }
                                     .csv-table tr:hover { background: #eff6ff; }
@@ -274,7 +274,7 @@ export function OfficeDocumentPreview({ resource }) {
                         <span className="hidden sm:inline">{isFullscreen ? "Exit" : "Fullscreen"}</span>
                     </button>
 
-                    <span className="inline-flex items-center gap-1 rounded-xl bg-sky-50 border border-sky-200 px-2.5 py-1 text-[11px] font-extrabold text-[#0066ff]">
+                    <span className="inline-flex items-center gap-1 rounded-xl bg-sky-50 border border-sky-200 px-2.5 py-1 text-[11px] font-extrabold text-[var(--tlh-blue-primary)]">
                         🔒 In-Place Reader
                     </span>
                 </div>
@@ -289,7 +289,7 @@ export function OfficeDocumentPreview({ resource }) {
             >
                 {state.loading && (
                     <div className="flex h-full flex-col items-center justify-center gap-3 p-8 text-center bg-white rounded-xl">
-                        <div className="h-9 w-9 animate-spin rounded-full border-3 border-[#0066ff] border-t-transparent" />
+                        <div className="h-9 w-9 animate-spin rounded-full border-3 border-[var(--tlh-blue-primary)] border-t-transparent" />
                         <p className="text-xs font-bold text-slate-700">Loading {typeBadge.label} into learning space…</p>
                         <p className="text-[11px] text-slate-400">Rendering directly in place without downloading.</p>
                     </div>
@@ -365,7 +365,7 @@ function injectViewerEnhancements(rawHtml, format) {
                 font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
             }
             .spreadsheet-table th, .excel-col-header, .excel-row-num-header {
-                background: #001b44 !important;
+                background: var(--tlh-navy) !important;
                 color: #ffffff !important;
                 padding: 8px 12px;
                 font-weight: 700;
@@ -404,7 +404,7 @@ function injectViewerEnhancements(rawHtml, format) {
                 border-bottom: none;
             }
             .spreadsheet-tab.active, .spreadsheet-tab:hover {
-                background: #0066ff;
+                background: var(--tlh-blue-primary);
                 color: #ffffff;
             }
 
@@ -421,15 +421,15 @@ function injectViewerEnhancements(rawHtml, format) {
                 flex-direction: column;
                 justify-content: flex-start;
             }
-            h1, h2, h3, h4 { color: #001b44; }
-            h1 { font-size: 26px; border-bottom: 2px solid #0066ff; padding-bottom: 8px; margin-top: 0; }
+            h1, h2, h3, h4 { color: var(--tlh-navy); }
+            h1 { font-size: 26px; border-bottom: 2px solid var(--tlh-blue-primary); padding-bottom: 8px; margin-top: 0; }
             h2 { font-size: 20px; margin-top: 18px; }
             ul, ol { padding-left: 24px; }
             li { margin-bottom: 8px; }
             img { max-width: 100%; height: auto; border-radius: 8px; }
 
             /* Prevent select and copying if needed */
-            ::selection { background: #93c5fd; color: #001b44; }
+            ::selection { background: #93c5fd; color: var(--tlh-navy); }
         </style>
     `;
 

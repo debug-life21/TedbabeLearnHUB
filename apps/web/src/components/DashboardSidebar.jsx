@@ -43,7 +43,7 @@ export function DashboardSidebar({ title, user, tabs, activeTab, onSelect, backH
                         onClick={() => setIsOpen(true)}
                         aria-expanded={isOpen}
                         aria-controls="mobile-sidebar-drawer"
-                        className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-gradient-to-r from-[#0066ff] to-[#0099ff] px-3.5 py-2.5 text-xs font-bold text-white shadow-md shadow-blue-500/25 transition hover:from-[#0052cc] hover:to-[#0088e6] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 active:scale-95"
+                        className="golden-btn inline-flex shrink-0 items-center gap-2 rounded-full px-3.5 py-2.5 text-xs font-bold text-white shadow-sm hover:shadow-md transition active:scale-95"
                     >
                         <svg
                             aria-hidden="true"
@@ -102,7 +102,7 @@ export function DashboardSidebar({ title, user, tabs, activeTab, onSelect, backH
                         {/* Header */}
                         <div className="flex items-center justify-between border-b border-slate-100 px-4 py-4">
                             <div className="min-w-0">
-                                <p className="truncate text-[10px] font-black uppercase tracking-[0.18em] text-emerald-700">TedbabeLearnHUB (TLH)</p>
+                                <p className="truncate text-[10px] font-black uppercase tracking-[0.18em] text-[var(--tlh-blue-primary)]">TedbabeLearnHUB (TLH)</p>
                                 <h2 className="mt-0.5 truncate text-sm font-bold text-slate-900">{title}</h2>
                             </div>
                             <button
@@ -125,7 +125,7 @@ export function DashboardSidebar({ title, user, tabs, activeTab, onSelect, backH
                                     placeholder="Filter sections…"
                                     value={searchQuery}
                                     onChange={(event) => setSearchQuery(event.target.value)}
-                                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-900 placeholder:text-slate-400 focus:border-emerald-700 focus:bg-white focus:outline-none"
+                                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-900 placeholder:text-slate-400 focus:border-[var(--tlh-blue-primary)] focus:bg-white focus:outline-none"
                                 />
                             </div>
                         ) : null}
@@ -146,8 +146,8 @@ export function DashboardSidebar({ title, user, tabs, activeTab, onSelect, backH
                                             }}
                                             className={`flex w-full items-center gap-3 rounded-xl px-3.5 py-3 text-left text-xs font-semibold transition ${
                                                 isCurrent
-                                                    ? "bg-gradient-to-r from-[#0066ff] to-[#0099ff] text-white shadow-sm shadow-blue-500/25 font-bold"
-                                                    : "text-slate-600 hover:bg-sky-50 hover:text-blue-700"
+                                                    ? "bg-gradient-to-r from-[var(--tlh-blue-primary)] to-[var(--tlh-sky)] dark:from-slate-800 dark:to-slate-900 text-white dark:text-[#FBBF24] dark:border dark:border-[#C59B27]/40 shadow-sm font-bold"
+                                                    : "text-slate-600 dark:text-slate-300 hover:bg-[var(--primary-light)] dark:hover:bg-slate-800/60 hover:text-[var(--tlh-blue-primary)] dark:hover:text-white"
                                             }`}
                                         >
                                             <span className="text-base" aria-hidden="true">{tab.icon}</span>
@@ -195,7 +195,7 @@ export function DashboardSidebar({ title, user, tabs, activeTab, onSelect, backH
             <aside className="hidden lg:fixed lg:bottom-0 lg:left-0 lg:top-[4.5rem] lg:z-40 lg:block lg:w-64 lg:overflow-y-auto lg:border-r lg:border-slate-200 lg:bg-white/95 lg:px-4 lg:py-6 lg:shadow-none lg:backdrop-blur">
                 <div className="mb-7 flex items-center justify-between gap-3 px-2">
                     <div className="min-w-0">
-                        <p className="truncate text-[10px] font-black uppercase tracking-[0.18em] text-[#0066ff]">TedbabeLearnHUB (TLH)</p>
+                        <p className="truncate text-[10px] font-black uppercase tracking-[0.18em] text-[var(--tlh-blue-primary)]">TedbabeLearnHUB (TLH)</p>
                         <h2 className="mt-1 truncate text-sm font-bold text-slate-900">{title}</h2>
                     </div>
                     {user?.avatarUrl ? (
@@ -213,8 +213,8 @@ export function DashboardSidebar({ title, user, tabs, activeTab, onSelect, backH
                             onClick={() => onSelect(tab.id)}
                             className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-xs font-semibold transition ${
                                 activeTab === tab.id
-                                    ? "bg-gradient-to-r from-[#0066ff] to-[#0099ff] text-white shadow-sm shadow-blue-500/25 font-bold"
-                                    : "text-slate-600 hover:bg-sky-50 hover:text-blue-700"
+                                    ? "bg-gradient-to-r from-[var(--tlh-blue-primary)] to-[var(--tlh-sky)] dark:from-slate-800 dark:to-slate-900 text-white dark:text-[#FBBF24] dark:border dark:border-[#C59B27]/40 shadow-sm font-bold"
+                                    : "text-slate-600 dark:text-slate-300 hover:bg-[var(--primary-light)] dark:hover:bg-slate-800/60 hover:text-[var(--tlh-blue-primary)] dark:hover:text-white"
                             }`}
                         >
                             <span className="text-base" aria-hidden="true">{tab.icon}</span>

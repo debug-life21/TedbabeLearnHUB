@@ -34,9 +34,9 @@ export function PaymentResultPage() {
     const failed = ["failed", "expired"].includes(status);
 
     return (
-        <main className="mx-auto flex min-h-[65vh] max-w-2xl items-center px-4 py-12">
+        <main className="editorial-page mx-auto flex min-h-[65vh] max-w-2xl items-center px-4 py-12">
             <section className="w-full rounded-3xl bg-white p-8 text-center shadow-sm ring-1 ring-slate-200 sm:p-12">
-                <p className="text-xs font-black uppercase tracking-widest text-blue-700">TedbabeLearnHUB checkout</p>
+                <p className="text-xs font-black uppercase tracking-widest text-[var(--tlh-blue-primary)]">TedbabeLearnHUB checkout</p>
                 <h1 className="mt-3 text-3xl font-black text-slate-900">
                     {success ? "Payment confirmed" : failed ? "Payment not completed" : "Payment verification"}
                 </h1>
@@ -56,14 +56,14 @@ export function PaymentResultPage() {
                 )}
                 {error ? <p role="alert" className="mt-5 rounded-xl bg-rose-50 p-3 text-sm text-rose-800">{error}</p> : null}
                 {!success && !failed ? (
-                    <button type="button" disabled={checking || !orderId} onClick={() => void verify()} className="mt-6 rounded-xl bg-blue-700 px-5 py-3 text-sm font-bold text-white disabled:opacity-50">
+                    <button type="button" disabled={checking || !orderId} onClick={() => void verify()} className="golden-btn mt-6 rounded-full px-5 py-3 text-sm font-bold text-white shadow-sm hover:shadow-md transition-all active:scale-95 disabled:opacity-50">
                         {checking ? "Checking with provider…" : "Check payment status"}
                     </button>
                 ) : null}
                 {result?.transaction?.reference ? <p className="mt-5 font-mono text-xs text-slate-500">Reference: {result.transaction.reference}</p> : null}
                 <div className="mt-7 flex flex-wrap justify-center gap-3">
-                    <Link to="/dashboard" className="rounded-xl bg-slate-900 px-5 py-3 text-sm font-bold text-white">Go to dashboard</Link>
-                    <Link to="/courses" className="rounded-xl border border-slate-200 px-5 py-3 text-sm font-bold text-slate-700">Browse courses</Link>
+                    <Link to="/dashboard" className="golden-btn rounded-full px-5 py-3 text-sm font-bold text-white shadow-sm hover:shadow-md transition-all active:scale-95">Go to dashboard</Link>
+                    <Link to="/courses" className="rounded-xl border border-slate-200 px-5 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50">Browse courses</Link>
                 </div>
             </section>
         </main>

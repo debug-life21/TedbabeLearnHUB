@@ -73,7 +73,7 @@ export function InstructorsPage() {
             <p className="mt-2 text-xs text-slate-500 max-w-md mx-auto">
               {t("instructorsEmptyDescription")}
             </p>
-            <Link to="/apply/teacher" className="editorial-button mt-6 text-xs">
+            <Link to="/apply/teacher" className="golden-btn inline-flex items-center justify-center rounded-full px-6 py-3 text-xs font-bold text-white shadow-sm hover:shadow-md transition-all active:scale-95 mt-6">
               {t("instructorsApplyButton")} →
             </Link>
           </div>
@@ -86,7 +86,7 @@ export function InstructorsPage() {
               >
                 <div>
                   <div className="flex items-center gap-4 mb-4">
-                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#0c234b] to-[#0066ff] text-base font-black text-white shadow-md">
+                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[var(--tlh-navy)] to-[var(--tlh-blue-primary)] text-base font-black text-white shadow-md">
                       {instructor.name
                         ? instructor.name.slice(0, 2).toUpperCase()
                         : "TLH"}

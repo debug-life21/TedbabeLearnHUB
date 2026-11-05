@@ -398,7 +398,7 @@ export function MonetizationPanel() {
                         onClick={() => setSection(entry.id)}
                         className={`rounded-full px-4 py-2 text-xs font-bold transition ${
                             section === entry.id
-                                ? "bg-gradient-to-r from-[#0066ff] to-[#0099ff] text-white shadow-sm"
+                                ? "bg-gradient-to-r from-[var(--tlh-blue-primary)] to-[var(--tlh-sky)] text-white shadow-sm"
                                 : "border border-slate-200 bg-white text-slate-600 hover:border-slate-300"
                         }`}
                     >
@@ -412,7 +412,7 @@ export function MonetizationPanel() {
                     title="Monetization plans"
                     subtitle="Packages, tutoring, live classes, resources, certificates and subscriptions."
                     action={
-                        <button onClick={() => openPlanModal(null)} type="button" className="rounded-full bg-gradient-to-r from-[#0066ff] to-[#0099ff] px-5 py-2.5 text-xs font-extrabold text-white shadow-sm">
+                        <button onClick={() => openPlanModal(null)} type="button" className="golden-btn rounded-full px-5 py-2.5 text-xs font-bold text-white shadow-sm hover:shadow-md transition-all active:scale-95">
                             + New plan
                         </button>
                     }
@@ -519,7 +519,7 @@ export function MonetizationPanel() {
                                                         type="button"
                                                         disabled={!dirty || busyId === course._id}
                                                         onClick={() => void savePricing(course)}
-                                                        className="rounded-lg bg-gradient-to-r from-[#0066ff] to-[#0099ff] px-3 py-1.5 text-[11px] font-bold text-white disabled:cursor-not-allowed disabled:opacity-40"
+                                                        className="rounded-lg bg-gradient-to-r from-[var(--tlh-blue-primary)] to-[var(--tlh-sky)] px-3 py-1.5 text-[11px] font-bold text-white disabled:cursor-not-allowed disabled:opacity-40"
                                                     >
                                                         {busyId === course._id ? "Saving…" : "Save"}
                                                     </button>
@@ -698,7 +698,7 @@ export function MonetizationPanel() {
                             Active
                         </label>
                     </div>
-                    <button type="submit" disabled={isSaving} className="w-full rounded-xl bg-gradient-to-r from-[#0066ff] to-[#0099ff] py-2.5 text-xs font-bold text-white disabled:opacity-60">
+                    <button type="submit" disabled={isSaving} className="golden-btn w-full rounded-full py-2.5 text-xs font-bold text-white shadow-sm hover:shadow-md transition-all active:scale-95 disabled:opacity-60">
                         {isSaving ? "Saving…" : planForm.id ? "Save plan" : "Create plan"}
                     </button>
                 </form>

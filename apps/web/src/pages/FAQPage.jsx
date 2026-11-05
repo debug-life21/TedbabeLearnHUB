@@ -65,14 +65,14 @@ export function FAQPage() {
           {filtered.length === 0 ? (<EmptyState title={t("faqNotFoundTitle")} description={t("faqNotFoundDesc")}/>) : (filtered.map((item) => {
               const isOpen = openId === item._id;
               const answerId = `faq-answer-${item._id}`;
-              return (<div key={item._id} className="overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-slate-200/90 transition-all hover:shadow-md">
-                  <button type="button" id={`faq-question-${item._id}`} aria-expanded={isOpen} aria-controls={answerId} onClick={() => setOpenId(isOpen ? null : item._id)} className="flex w-full items-center justify-between p-6 text-left text-base font-bold text-slate-900 hover:text-blue-600 transition-colors">
+              return (<div key={item._id} className="overflow-hidden rounded-3xl bg-white dark:bg-slate-900 shadow-sm ring-1 ring-slate-200/90 dark:ring-slate-800 transition-all hover:shadow-md">
+                  <button type="button" id={`faq-question-${item._id}`} aria-expanded={isOpen} aria-controls={answerId} onClick={() => setOpenId(isOpen ? null : item._id)} className="flex w-full items-center justify-between p-6 sm:p-7 text-left text-base sm:text-lg font-bold text-slate-900 dark:text-white hover:text-[var(--tlh-blue-primary)] transition-colors">
                     <span className="pr-4">{item.question}</span>
-                    <span aria-hidden="true" className={`h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center shrink-0 text-slate-500 font-bold transition-transform ${isOpen ? "rotate-180 bg-blue-50 text-blue-600" : ""}`}>
+                    <span aria-hidden="true" className={`h-8 w-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0 font-bold transition-transform duration-200 ${isOpen ? "rotate-180 bg-[var(--tlh-navy)] text-white dark:bg-[#D97706]" : "text-slate-500 dark:text-slate-400"}`}>
                       ▾
                     </span>
                   </button>
-                  <div id={answerId} role="region" aria-labelledby={`faq-question-${item._id}`} hidden={!isOpen} className="border-t border-slate-100 px-6 pb-6 pt-4 text-sm text-slate-600 leading-relaxed bg-slate-50/50">
+                  <div id={answerId} role="region" aria-labelledby={`faq-question-${item._id}`} hidden={!isOpen} className="border-t border-slate-100 dark:border-slate-800 px-6 sm:px-8 pb-6 pt-4 text-sm text-slate-600 dark:text-slate-200 leading-relaxed bg-slate-50/50 dark:bg-slate-800/40">
                     {item.answer}
                   </div>
                 </div>);
@@ -81,7 +81,7 @@ export function FAQPage() {
       )}
 
       {/* Support Box */}
-      <div className="rounded-3xl border border-sky-500/25 bg-gradient-to-br from-[#0c234b] via-[#091b3b] to-[#061124] p-8 text-center text-white shadow-xl ring-1 ring-white/10">
+      <div className="rounded-3xl border border-[var(--tlh-cyan)]/25 bg-gradient-to-br from-[var(--tlh-navy)] via-[var(--tlh-navy-deep)] to-slate-950 p-8 text-center text-white shadow-xl ring-1 ring-white/10">
         <span className="rounded-full border border-sky-400/30 bg-sky-500/15 px-3 py-1 text-xs font-bold text-sky-300">
           NEED A HAND?
         </span>
@@ -89,7 +89,7 @@ export function FAQPage() {
         <p className="mt-2 text-xs sm:text-sm text-slate-300 max-w-md mx-auto leading-relaxed">
           From choosing a learning path to finding your way around your account, our team is ready to help.
         </p>
-        <Link to="/contact" className="mt-5 inline-block rounded-2xl bg-gradient-to-r from-[#0066ff] to-[#0099ff] px-6 py-3 text-xs font-black uppercase tracking-wider text-white shadow-md shadow-blue-500/25 hover:from-[#0052cc] hover:to-[#0088e6] transition-all hover:-translate-y-0.5">
+        <Link to="/contact" className="golden-btn mt-5 inline-flex items-center justify-center rounded-full bg-[#D97706] hover:bg-[#B45309] px-6 py-3 text-xs font-bold text-white shadow-sm hover:shadow-md transition-all active:scale-95">
           {t("faqContactTeam")} →
         </Link>
       </div>

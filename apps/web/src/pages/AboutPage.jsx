@@ -6,7 +6,7 @@ export function AboutPage() {
     <div className="editorial-page mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 space-y-16">
       {/* Hero Narrative */}
       <div className="max-w-3xl">
-        <div className="inline-flex items-center gap-1.5 rounded-full border border-blue-500/20 bg-blue-50 px-3.5 py-1 text-xs font-bold text-blue-700 mb-4 shadow-2xs">
+        <div className="inline-flex items-center gap-1.5 rounded-full border border-blue-500/20 bg-blue-50 dark:bg-cyan-500/20 px-3.5 py-1 text-xs font-bold text-blue-700 dark:text-cyan-300 mb-4 shadow-2xs">
           <span>📖</span>
           <span>WHY TEDBABE LEARNHUB</span>
         </div>
@@ -58,8 +58,8 @@ export function AboutPage() {
       </div>
 
       {/* Unique Central Placement Model Explanation */}
-      <div className="relative overflow-hidden rounded-3xl border border-sky-500/25 bg-gradient-to-br from-[#0c234b] via-[#091b3b] to-[#061124] p-8 sm:p-12 text-white shadow-2xl ring-1 ring-white/10">
-        <div className="absolute top-0 right-0 h-64 w-64 rounded-full bg-sky-500/20 blur-3xl pointer-events-none"></div>
+      <div className="relative overflow-hidden rounded-3xl border border-[var(--tlh-cyan)]/25 bg-gradient-to-br from-[var(--tlh-navy)] via-[var(--tlh-navy-deep)] to-slate-950 p-8 sm:p-12 text-white shadow-2xl ring-1 ring-white/10">
+        <div className="absolute top-0 right-0 h-64 w-64 rounded-full bg-[var(--tlh-cyan)]/15 blur-3xl pointer-events-none"></div>
 
         <div className="relative z-10 max-w-3xl">
           <span className="rounded-full border border-sky-400/30 bg-sky-500/15 px-3.5 py-1 text-xs font-bold text-sky-300">
@@ -74,7 +74,7 @@ export function AboutPage() {
           <div className="mt-8 flex flex-wrap gap-4">
             <Link
               to="/register/student"
-              className="rounded-2xl bg-gradient-to-r from-[#0066ff] to-[#0099ff] px-6 py-3 text-xs font-black text-white shadow-md shadow-blue-500/25 hover:from-[#0052cc] hover:to-[#0088e6] transition-all hover:-translate-y-0.5"
+              className="golden-btn rounded-full px-6 py-3 text-xs font-bold text-white shadow-sm hover:shadow-md transition-all active:scale-95"
             >
               {t("becomeStudent")}
             </Link>

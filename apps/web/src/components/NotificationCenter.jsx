@@ -224,7 +224,7 @@ export function NotificationCenter() {
                         <Link
                             to="/dashboard"
                             onClick={() => setOpen(false)}
-                            className="text-xs font-bold text-[#0066ff] hover:underline"
+                            className="text-xs font-bold text-[var(--tlh-blue-primary)] hover:underline"
                         >
                             Go to Dashboard →
                         </Link>

@@ -136,7 +136,7 @@ export function HelpCenterPage() {
                 onClick={() => setActiveSection(sec.id)}
                 className={`rounded-xl px-4 py-2 text-xs font-bold transition ${
                   activeSection === sec.id
-                    ? "bg-gradient-to-r from-[#0066ff] to-[#0099ff] text-white shadow-md shadow-blue-500/25"
+                    ? "bg-gradient-to-r from-[var(--tlh-blue-primary)] to-[var(--tlh-sky)] text-white shadow-md shadow-blue-500/25"
                     : "bg-white text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50"
                 }`}
               >
@@ -242,7 +242,7 @@ export function HelpCenterPage() {
             <button
               type="submit"
               disabled={submitting}
-              className="w-full rounded-2xl bg-gradient-to-r from-[#0066ff] to-[#0099ff] py-3.5 text-xs font-black uppercase tracking-wider text-white shadow-md shadow-blue-500/25 hover:from-[#0052cc] hover:to-[#0088e6] disabled:opacity-50 transition-all hover:scale-[1.01]"
+              className="w-full rounded-2xl bg-gradient-to-r from-[var(--tlh-blue-primary)] to-[var(--tlh-sky)] py-3.5 text-xs font-black uppercase tracking-wider text-white shadow-md shadow-blue-500/25 hover:from-[var(--tlh-blue-hover)] hover:to-[var(--tlh-sky)] disabled:opacity-50 transition-all hover:scale-[1.01]"
             >
               {submitting ? t("helpContactSending") : t("helpContactSubmit")}
             </button>

@@ -40,9 +40,9 @@ export function LiveSessionButton({ session, className = "", compact = false }) 
                 href={session.meetingUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className={`group relative inline-flex items-center justify-center gap-2.5 rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 px-5 ${
+                className={`group relative inline-flex items-center justify-center gap-2.5 rounded-2xl bg-gradient-to-r from-[var(--tlh-blue-primary)] via-[var(--tlh-sky)] to-[var(--tlh-cyan)] px-5 ${
                     compact ? "py-2.5 text-xs" : "py-3.5 text-sm"
-                } font-black uppercase tracking-wider text-white shadow-xl shadow-teal-500/30 ring-2 ring-emerald-400/50 transition-all duration-300 hover:scale-[1.03] hover:from-emerald-500 hover:to-cyan-500 active:scale-[0.98] ${className}`}
+                } font-black uppercase tracking-wider text-white shadow-xl shadow-blue-500/30 ring-2 ring-[var(--tlh-cyan)]/50 transition-all duration-300 hover:scale-[1.03] hover:from-[var(--tlh-blue-hover)] hover:to-[var(--tlh-cyan)] active:scale-[0.98] ${className}`}
                 id={`live-session-join-${session._id || "btn"}`}
             >
                 <span className="relative flex h-3 w-3">
@@ -62,17 +62,17 @@ export function LiveSessionButton({ session, className = "", compact = false }) 
         const msUntilUnlock = unlockTime - now;
         return (
             <div
-                className={`inline-flex flex-col sm:flex-row items-center justify-center gap-2 rounded-2xl border border-amber-300/80 bg-gradient-to-r from-amber-50 to-orange-50/70 px-4 ${
+                className={`inline-flex flex-col sm:flex-row items-center justify-center gap-2 rounded-2xl border border-amber-300/80 dark:border-amber-500/40 bg-gradient-to-r from-amber-50 to-orange-50/70 dark:from-slate-900 dark:to-slate-800 px-4 ${
                     compact ? "py-2 text-xs" : "py-3 text-xs"
-                } font-bold text-amber-900 shadow-sm cursor-not-allowed select-none ${className}`}
+                } font-bold text-amber-900 dark:text-amber-300 shadow-sm cursor-not-allowed select-none ${className}`}
                 title="Session link activates exactly 10 minutes before class start"
                 id={`live-session-locked-${session._id || "btn"}`}
             >
                 <div className="flex items-center gap-1.5">
-                    <span className="text-amber-600 text-sm">🔒</span>
-                    <span className="text-amber-800">Opens 10m before class in:</span>
+                    <span className="text-amber-600 dark:text-amber-400 text-sm">🔒</span>
+                    <span className="text-amber-800 dark:text-amber-200">Opens 10m before class in:</span>
                 </div>
-                <span className="font-mono font-black text-amber-950 bg-amber-200/90 px-2.5 py-0.5 rounded-lg border border-amber-300">
+                <span className="font-mono font-black text-amber-950 dark:text-amber-200 bg-amber-200/90 dark:bg-amber-500/20 px-2.5 py-0.5 rounded-lg border border-amber-300 dark:border-amber-500/40">
                     {formatCountdown(msUntilUnlock)}
                 </span>
             </div>
