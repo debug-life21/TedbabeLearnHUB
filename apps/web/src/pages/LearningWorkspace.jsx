@@ -7,6 +7,7 @@ import { LiveSessionButton } from "../components/LiveSessionButton";
 import { formatSessionTime } from "../lib/sessionTime";
 import { OfficeDocumentPreview } from "../components/OfficeDocumentPreview";
 import { DashboardSidebar } from "../components/DashboardSidebar";
+import { AIChatAssistant } from "../components/AIChatAssistant";
 
 export function getYouTubeVideoId(url) {
     if (!url) return null;
@@ -784,12 +785,12 @@ export function LearningWorkspace() {
 
                 {/* Prominent Live Session Spotlight */}
                 {nextSession && (
-                    <div className="mb-6 overflow-hidden rounded-3xl border border-[var(--tlh-cyan)]/30 bg-gradient-to-r from-[#071B49] via-[#050E24] to-slate-950 dark:from-[#050E24] dark:via-[#091124] dark:to-slate-950 p-6 sm:p-7 text-white shadow-2xl">
+                    <div className="mb-6 overflow-hidden rounded-3xl border border-emerald-500/30 dark:border-emerald-500/20 bg-gradient-to-r from-[#071B49] via-[#050E24] to-slate-950 dark:from-[#050E24] dark:via-[#091124] dark:to-slate-950 p-6 sm:p-7 text-white shadow-2xl">
                         <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
                             <div className="space-y-1.5">
                                 <div className="flex flex-wrap items-center gap-2.5">
-                                    <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--tlh-cyan)]/20 px-3 py-1 text-xs font-black uppercase tracking-wider text-[var(--tlh-cyan)] border border-[var(--tlh-cyan)]/30">
-                                        <span className="h-2 w-2 rounded-full bg-[var(--tlh-cyan)] animate-ping" />
+                                    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-950/60 px-3 py-1 text-xs font-black uppercase tracking-wider text-emerald-300 border border-emerald-500/40">
+                                        <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
                                         <span>Scheduled Live Session</span>
                                     </span>
                                     <span className="text-xs font-semibold text-slate-400">
@@ -801,7 +802,7 @@ export function LearningWorkspace() {
                                 </h2>
                                 <div className="flex flex-wrap items-center gap-4 text-xs text-slate-300">
                                     <span className="flex items-center gap-1.5">
-                                        <span className="text-teal-400">📅</span>
+                                        <span className="text-emerald-400">📅</span>
                                         <span>{formatSessionTime(nextSession.startsAt)} — {formatSessionTime(nextSession.endsAt)}</span>
                                     </span>
                                     <span className="text-amber-300 font-medium">
@@ -1591,6 +1592,15 @@ export function LearningWorkspace() {
                     </div>
                 </form>
             </Modal>
+
+            {/* AI Learning Assistant Drawer & Floating Button */}
+            <AIChatAssistant
+                classroom={classroom}
+                activeTab={activeTab}
+                selectedVideo={selectedVideoResource}
+                selectedDoc={selectedDoc}
+                user={user}
+            />
         </div>
     );
 }

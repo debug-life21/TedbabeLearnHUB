@@ -1098,14 +1098,10 @@ html.bluedark .editorial-hero,
 .dashboard-btn-gold,
 .card-enroll-btn,
 .editorial-button,
-button[class*="from-[var(--tlh-blue-primary)]"],
-a[class*="from-[var(--tlh-blue-primary)]"],
-button[class*="from-blue-600"],
-a[class*="from-blue-600"],
-.admin-workspace button[type="submit"],
-.teacher-workspace button[type="submit"],
-.student-workspace button[type="submit"],
-.learning-workspace button[type="submit"] {
+.admin-workspace button[type="submit"]:not(aside *),
+.teacher-workspace button[type="submit"]:not(aside *),
+.student-workspace button[type="submit"]:not(aside *),
+.learning-workspace button[type="submit"]:not(aside *) {
   border-radius: 9999px !important;
   background: #071B49 !important;
   background-color: #071B49 !important;
@@ -1129,14 +1125,10 @@ a[class*="from-blue-600"],
 .dashboard-btn-gold *,
 .card-enroll-btn *,
 .editorial-button *,
-button[class*="from-[var(--tlh-blue-primary)]"] *,
-a[class*="from-[var(--tlh-blue-primary)]"] *,
-button[class*="from-blue-600"] *,
-a[class*="from-blue-600"] *,
-.admin-workspace button[type="submit"] *,
-.teacher-workspace button[type="submit"] *,
-.student-workspace button[type="submit"] *,
-.learning-workspace button[type="submit"] * {
+.admin-workspace button[type="submit"]:not(aside *) *,
+.teacher-workspace button[type="submit"]:not(aside *) *,
+.student-workspace button[type="submit"]:not(aside *) *,
+.learning-workspace button[type="submit"]:not(aside *) * {
   color: #FFFFFF !important;
 }
 
@@ -1146,14 +1138,10 @@ a[class*="from-blue-600"] *,
 .dashboard-btn-gold:hover,
 .card-enroll-btn:hover,
 .editorial-button:hover,
-button[class*="from-[var(--tlh-blue-primary)]"]:hover,
-a[class*="from-[var(--tlh-blue-primary)]"]:hover,
-button[class*="from-blue-600"]:hover,
-a[class*="from-blue-600"]:hover,
-.admin-workspace button[type="submit"]:hover,
-.teacher-workspace button[type="submit"]:hover,
-.student-workspace button[type="submit"]:hover,
-.learning-workspace button[type="submit"]:hover {
+.admin-workspace button[type="submit"]:not(aside *):hover,
+.teacher-workspace button[type="submit"]:not(aside *):hover,
+.student-workspace button[type="submit"]:not(aside *):hover,
+.learning-workspace button[type="submit"]:not(aside *):hover {
   transform: translateY(-1px) !important;
   background: #0B2D70 !important;
   background-color: #0B2D70 !important;
@@ -1168,14 +1156,10 @@ a[class*="from-blue-600"]:hover,
 .dashboard-btn-gold:active,
 .card-enroll-btn:active,
 .editorial-button:active,
-button[class*="from-[var(--tlh-blue-primary)]"]:active,
-a[class*="from-[var(--tlh-blue-primary)]"]:active,
-button[class*="from-blue-600"]:active,
-a[class*="from-blue-600"]:active,
-.admin-workspace button[type="submit"]:active,
-.teacher-workspace button[type="submit"]:active,
-.student-workspace button[type="submit"]:active,
-.learning-workspace button[type="submit"]:active {
+.admin-workspace button[type="submit"]:not(aside *):active,
+.teacher-workspace button[type="submit"]:not(aside *):active,
+.student-workspace button[type="submit"]:not(aside *):active,
+.learning-workspace button[type="submit"]:not(aside *):active {
   transform: translateY(0) scale(0.98) !important;
   background: #050E24 !important;
   background-color: #050E24 !important;
@@ -1194,28 +1178,20 @@ html.dark .btn-theme-action,
 html.dark .dashboard-btn-gold,
 html.dark .card-enroll-btn,
 html.dark .editorial-button,
-html.dark button[class*="from-[var(--tlh-blue-primary)]"],
-html.dark a[class*="from-[var(--tlh-blue-primary)]"],
-html.dark button[class*="from-blue-600"],
-html.dark a[class*="from-blue-600"],
-html.dark .admin-workspace button[type="submit"],
-html.dark .teacher-workspace button[type="submit"],
-html.dark .student-workspace button[type="submit"],
-html.dark .learning-workspace button[type="submit"],
+html.dark .admin-workspace button[type="submit"]:not(aside *),
+html.dark .teacher-workspace button[type="submit"]:not(aside *),
+html.dark .student-workspace button[type="submit"]:not(aside *),
+html.dark .learning-workspace button[type="submit"]:not(aside *),
 [data-theme="dark"] .golden-btn,
 [data-theme="dark"] .btn-gold,
 [data-theme="dark"] .btn-theme-action,
 [data-theme="dark"] .dashboard-btn-gold,
 [data-theme="dark"] .card-enroll-btn,
 [data-theme="dark"] .editorial-button,
-[data-theme="dark"] button[class*="from-[var(--tlh-blue-primary)]"],
-[data-theme="dark"] a[class*="from-[var(--tlh-blue-primary)]"],
-[data-theme="dark"] button[class*="from-blue-600"],
-[data-theme="dark"] a[class*="from-blue-600"],
-[data-theme="dark"] .admin-workspace button[type="submit"],
-[data-theme="dark"] .teacher-workspace button[type="submit"],
-[data-theme="dark"] .student-workspace button[type="submit"],
-[data-theme="dark"] .learning-workspace button[type="submit"] {
+[data-theme="dark"] .admin-workspace button[type="submit"]:not(aside *),
+[data-theme="dark"] .teacher-workspace button[type="submit"]:not(aside *),
+[data-theme="dark"] .student-workspace button[type="submit"]:not(aside *),
+[data-theme="dark"] .learning-workspace button[type="submit"]:not(aside *) {
   border-radius: 9999px !important;
   background: #C59B27 !important;
   background-color: #C59B27 !important;
@@ -1231,28 +1207,20 @@ html.dark .btn-theme-action:hover,
 html.dark .dashboard-btn-gold:hover,
 html.dark .card-enroll-btn:hover,
 html.dark .editorial-button:hover,
-html.dark button[class*="from-[var(--tlh-blue-primary)]"]:hover,
-html.dark a[class*="from-[var(--tlh-blue-primary)]"]:hover,
-html.dark button[class*="from-blue-600"]:hover,
-html.dark a[class*="from-blue-600"]:hover,
-html.dark .admin-workspace button[type="submit"]:hover,
-html.dark .teacher-workspace button[type="submit"]:hover,
-html.dark .student-workspace button[type="submit"]:hover,
-html.dark .learning-workspace button[type="submit"]:hover,
+html.dark .admin-workspace button[type="submit"]:not(aside *):hover,
+html.dark .teacher-workspace button[type="submit"]:not(aside *):hover,
+html.dark .student-workspace button[type="submit"]:not(aside *):hover,
+html.dark .learning-workspace button[type="submit"]:not(aside *):hover,
 [data-theme="dark"] .golden-btn:hover,
 [data-theme="dark"] .btn-gold:hover,
 [data-theme="dark"] .btn-theme-action:hover,
 [data-theme="dark"] .dashboard-btn-gold:hover,
 [data-theme="dark"] .card-enroll-btn:hover,
 [data-theme="dark"] .editorial-button:hover,
-[data-theme="dark"] button[class*="from-[var(--tlh-blue-primary)]"]:hover,
-[data-theme="dark"] a[class*="from-[var(--tlh-blue-primary)]"]:hover,
-[data-theme="dark"] button[class*="from-blue-600"]:hover,
-[data-theme="dark"] a[class*="from-blue-600"]:hover,
-[data-theme="dark"] .admin-workspace button[type="submit"]:hover,
-[data-theme="dark"] .teacher-workspace button[type="submit"]:hover,
-[data-theme="dark"] .student-workspace button[type="submit"]:hover,
-[data-theme="dark"] .learning-workspace button[type="submit"]:hover {
+[data-theme="dark"] .admin-workspace button[type="submit"]:not(aside *):hover,
+[data-theme="dark"] .teacher-workspace button[type="submit"]:not(aside *):hover,
+[data-theme="dark"] .student-workspace button[type="submit"]:not(aside *):hover,
+[data-theme="dark"] .learning-workspace button[type="submit"]:not(aside *):hover {
   transform: translateY(-1px) !important;
   background: #A8741A !important;
   background-color: #A8741A !important;
@@ -1266,31 +1234,54 @@ html.dark .btn-theme-action:active,
 html.dark .dashboard-btn-gold:active,
 html.dark .card-enroll-btn:active,
 html.dark .editorial-button:active,
-html.dark button[class*="from-[var(--tlh-blue-primary)]"]:active,
-html.dark a[class*="from-[var(--tlh-blue-primary)]"]:active,
-html.dark button[class*="from-blue-600"]:active,
-html.dark a[class*="from-blue-600"]:active,
-html.dark .admin-workspace button[type="submit"]:active,
-html.dark .teacher-workspace button[type="submit"]:active,
-html.dark .student-workspace button[type="submit"]:active,
-html.dark .learning-workspace button[type="submit"]:active,
+html.dark .admin-workspace button[type="submit"]:not(aside *):active,
+html.dark .teacher-workspace button[type="submit"]:not(aside *):active,
+html.dark .student-workspace button[type="submit"]:not(aside *):active,
+html.dark .learning-workspace button[type="submit"]:not(aside *):active,
 [data-theme="dark"] .golden-btn:active,
 [data-theme="dark"] .btn-gold:active,
 [data-theme="dark"] .btn-theme-action:active,
 [data-theme="dark"] .dashboard-btn-gold:active,
 [data-theme="dark"] .card-enroll-btn:active,
 [data-theme="dark"] .editorial-button:active,
-[data-theme="dark"] button[class*="from-[var(--tlh-blue-primary)]"]:active,
-[data-theme="dark"] a[class*="from-[var(--tlh-blue-primary)]"]:active,
-[data-theme="dark"] button[class*="from-blue-600"]:active,
-[data-theme="dark"] a[class*="from-blue-600"]:active,
-[data-theme="dark"] .admin-workspace button[type="submit"]:active,
-[data-theme="dark"] .teacher-workspace button[type="submit"]:active,
-[data-theme="dark"] .student-workspace button[type="submit"]:active,
-[data-theme="dark"] .learning-workspace button[type="submit"]:active {
+[data-theme="dark"] .admin-workspace button[type="submit"]:not(aside *):active,
+[data-theme="dark"] .teacher-workspace button[type="submit"]:not(aside *):active,
+[data-theme="dark"] .student-workspace button[type="submit"]:not(aside *):active,
+[data-theme="dark"] .learning-workspace button[type="submit"]:not(aside *):active {
   transform: translateY(0) scale(0.98) !important;
   background: #8C5F10 !important;
   background-color: #8C5F10 !important;
+}
+
+/* ============================================================
+   DASHBOARD SIDEBAR NAVIGATION ITEMS (PROTECTED FROM BUTTON STYLING)
+   ============================================================ */
+aside nav button,
+aside nav button[aria-current="page"] {
+  border-radius: 0.75rem !important;
+  letter-spacing: normal !important;
+  text-transform: none !important;
+}
+
+aside nav button[aria-current="page"] {
+  background: linear-gradient(135deg, #071B49 0%, #0B2D70 100%) !important;
+  color: #FFFFFF !important;
+  border: 1px solid rgba(7, 27, 73, 0.3) !important;
+  box-shadow: 0 2px 10px rgba(7, 27, 73, 0.2) !important;
+}
+
+html.dark aside nav button[aria-current="page"],
+[data-theme="dark"] aside nav button[aria-current="page"] {
+  background: rgba(30, 41, 59, 0.95) !important;
+  background-color: rgba(30, 41, 59, 0.95) !important;
+  color: #FFFFFF !important;
+  border: 1px solid rgba(197, 155, 39, 0.5) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4) !important;
+}
+
+html.dark aside nav button[aria-current="page"] *,
+[data-theme="dark"] aside nav button[aria-current="page"] * {
+  color: #FFFFFF !important;
 }
 
 /* ============================================================

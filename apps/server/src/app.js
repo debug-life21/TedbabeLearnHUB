@@ -18,6 +18,7 @@ import { publicRouter } from "./routes/publicRoutes.js";
 import { studentRouter } from "./routes/studentRoutes.js";
 import { teacherRouter } from "./routes/teacherRoutes.js";
 import { resourceRouter } from "./routes/resourceRoutes.js";
+import { aiRouter } from "./routes/aiRoutes.js";
 
 export const app = express();
 
@@ -107,4 +108,5 @@ app.use("/api/payments", paymentRouter);
 app.use("/api/teacher", teacherRouter);
 app.use("/api/student", studentRouter);
 app.use("/api/resources", resourceRouter);
+app.use("/api/ai", aiRouter);
 app.use(errorHandler);

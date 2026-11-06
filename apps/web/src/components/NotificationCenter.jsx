@@ -148,12 +148,12 @@ export function NotificationCenter() {
                     setOpen(!open);
                     if (!open) setUnreadCount(0);
                 }}
-                className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 transition hover:bg-slate-50 hover:border-slate-300 focus:outline-none"
+                className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-slate-800/90 text-slate-700 dark:text-slate-200 transition hover:bg-slate-50 dark:hover:bg-slate-700/80 hover:border-slate-300 dark:hover:border-slate-600 focus:outline-none shadow-xs"
                 aria-label="View notifications and cohort alerts"
             >
                 <span className="text-lg">🔔</span>
                 {unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-rose-600 text-[10px] font-black text-white shadow-sm animate-pulse">
+                    <span className="absolute -top-1 -right-1 flex h-5 min-w-[20px] px-1 items-center justify-center rounded-full bg-rose-600 text-[10px] font-black text-white shadow-sm ring-2 ring-white dark:ring-slate-900 animate-pulse">
                         {unreadCount > 9 ? "9+" : unreadCount}
                     </span>
                 )}
@@ -161,31 +161,31 @@ export function NotificationCenter() {
 
             {/* Floating Dropdown Panel */}
             {open && (
-                <div className="absolute right-0 mt-2 w-80 sm:w-96 rounded-2xl border border-slate-200 bg-white p-4 shadow-2xl z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-                    <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div className="absolute right-0 mt-2 w-80 sm:w-96 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0c1322] p-4 shadow-2xl z-50 animate-in fade-in slide-in-from-top-2 duration-200 text-slate-900 dark:text-white">
+                    <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800/80">
                         <div className="flex items-center gap-2">
                             <span className="text-base">📢</span>
-                            <h3 className="text-xs font-black uppercase tracking-wider text-slate-900">
+                            <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white">
                                 {isAdmin ? "Admin Alerts" : "Class Alerts & Notices"}
                             </h3>
                         </div>
                         <div className="flex items-center gap-2">
-                            <span className="text-[10px] text-slate-400 font-mono">
+                            <span className="text-[10px] text-slate-400 dark:text-slate-500 font-mono">
                                 {notifications.length}/{cap} max
                             </span>
                             <button
                                 type="button"
                                 onClick={() => setUnreadCount(0)}
-                                className="text-[11px] font-semibold text-blue-600 hover:underline"
+                                className="text-[11px] font-semibold text-blue-600 dark:text-amber-400 hover:underline"
                             >
                                 Mark all read
                             </button>
                         </div>
                     </div>
 
-                    <div className="mt-3 max-h-80 overflow-y-auto space-y-2.5 divide-y divide-slate-50">
+                    <div className="mt-3 max-h-80 overflow-y-auto space-y-2.5 divide-y divide-slate-100 dark:divide-slate-800/60">
                         {notifications.length === 0 ? (
-                            <div className="py-8 text-center text-xs text-slate-400">
+                            <div className="py-8 text-center text-xs text-slate-400 dark:text-slate-500">
                                 No new notifications or class alerts.
                             </div>
                         ) : (
@@ -194,22 +194,22 @@ export function NotificationCenter() {
                                     key={item._id}
                                     to={item.link || "/dashboard"}
                                     onClick={() => setOpen(false)}
-                                    className="block pt-2.5 first:pt-0 group hover:bg-slate-50 p-2 rounded-xl transition"
+                                    className="block pt-2.5 first:pt-0 group hover:bg-slate-50 dark:hover:bg-slate-800/70 p-2 rounded-xl transition"
                                 >
                                     <div className="flex items-start justify-between gap-2">
-                                        <h4 className="text-xs font-bold text-slate-900 group-hover:text-blue-600 leading-snug">
+                                        <h4 className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-amber-400 leading-snug">
                                             {item.title}
                                         </h4>
                                         {item.priority === "urgent" && (
-                                            <span className="shrink-0 rounded bg-rose-100 px-1.5 py-0.5 text-[9px] font-black text-rose-700">
+                                            <span className="shrink-0 rounded bg-rose-100 dark:bg-rose-950/80 px-1.5 py-0.5 text-[9px] font-black text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/50">
                                                 URGENT
                                             </span>
                                         )}
                                     </div>
-                                    <p className="mt-1 text-[11px] text-slate-500 line-clamp-2 leading-relaxed">
+                                    <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-300 line-clamp-2 leading-relaxed">
                                         {item.message}
                                     </p>
-                                    <span className="mt-1 block text-[10px] text-slate-400">
+                                    <span className="mt-1 block text-[10px] text-slate-400 dark:text-slate-500">
                                         {new Date(item.createdAt || Date.now()).toLocaleTimeString([], {
                                             hour: "2-digit",
                                             minute: "2-digit",
@@ -220,11 +220,11 @@ export function NotificationCenter() {
                         )}
                     </div>
 
-                    <div className="mt-3 pt-2 border-t border-slate-100 text-center">
+                    <div className="mt-3 pt-2 border-t border-slate-100 dark:border-slate-800/80 text-center">
                         <Link
                             to="/dashboard"
                             onClick={() => setOpen(false)}
-                            className="text-xs font-bold text-[var(--tlh-blue-primary)] hover:underline"
+                            className="text-xs font-bold text-[var(--tlh-blue-primary)] dark:text-amber-400 hover:underline"
                         >
                             Go to Dashboard →
                         </Link>
@@ -234,13 +234,13 @@ export function NotificationCenter() {
 
             {/* Prompt Toast Alert Banner (Appears immediately when a notice arrives) */}
             {activeToast && (
-                <div className="fixed bottom-6 right-6 z-50 max-w-sm rounded-2xl border-2 border-blue-500 bg-slate-950 p-4 text-white shadow-2xl animate-in slide-in-from-bottom-4 duration-300">
+                <div className="fixed bottom-6 right-6 z-50 max-w-sm rounded-2xl border border-emerald-500/80 dark:border-emerald-600/60 bg-slate-950 p-4 text-white shadow-2xl animate-in slide-in-from-bottom-4 duration-300">
                     <div className="flex items-start justify-between gap-3">
                         <div className="flex items-center gap-2">
-                            <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-blue-600 text-sm">
+                            <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-emerald-600 text-sm">
                                 🔔
                             </span>
-                            <span className="text-xs font-black uppercase tracking-wider text-cyan-300">
+                            <span className="text-xs font-black uppercase tracking-wider text-emerald-300">
                                 New Class Notice
                             </span>
                         </div>
@@ -258,7 +258,7 @@ export function NotificationCenter() {
                         <Link
                             to={activeToast.link || "/dashboard"}
                             onClick={() => setActiveToast(null)}
-                            className="rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 px-3 py-1.5 text-xs font-bold text-white hover:from-blue-500 hover:to-cyan-500"
+                            className="golden-btn rounded-xl px-3 py-1.5 text-xs font-bold text-white shadow-sm"
                         >
                             Open Alert →
                         </Link>

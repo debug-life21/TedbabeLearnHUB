@@ -2442,25 +2442,25 @@ export function AdminDashboard({ user }) {
         {activeTab === "classes" ? (
           <div className="space-y-6">
             <div className="flex justify-between items-center">
-              <h3 className="text-xl font-bold text-slate-900">
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white">
                 Active cohorts
               </h3>
               <button
                 onClick={() => setCreateClassModal(true)}
-                className="rounded-xl bg-[var(--tlh-cyan)] px-3.5 py-1.5 text-xs font-bold text-white hover:bg-[var(--tlh-cyan)]"
+                className="golden-btn px-4 py-2 text-xs font-bold text-white shadow-sm"
               >
                 + {t("createClass")}
               </button>
             </div>
 
-            <div className="grid gap-6 md:grid-cols-2">
+            <div className="grid gap-6 md:grid-cols-2 items-start">
               {classes.map((cls) => (
                 <div
                   key={cls._id}
-                  className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 space-y-4"
+                  className="rounded-2xl bg-white dark:bg-slate-900 p-6 shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 space-y-4"
                 >
                   <div className="flex items-center justify-between">
-                    <h4 className="text-lg font-bold text-slate-900">
+                    <h4 className="text-lg font-bold text-slate-900 dark:text-white">
                       {cls.title}
                     </h4>
                     <Badge
@@ -2469,28 +2469,28 @@ export function AdminDashboard({ user }) {
                       {cls.status}
                     </Badge>
                   </div>
-                  <div className="space-y-1.5 text-xs text-slate-600">
+                  <div className="space-y-1.5 text-xs text-slate-600 dark:text-slate-300">
                     <p>
-                      <strong>Program:</strong>{" "}
+                      <strong className="text-slate-800 dark:text-white">Program:</strong>{" "}
                       {cls.course?.title || "Unassigned"}
                     </p>
                     <p>
-                      <strong>Instructor:</strong>{" "}
+                      <strong className="text-slate-800 dark:text-white">Instructor:</strong>{" "}
                       {cls.teacher?.fullName || "Unassigned"}
                     </p>
                     <p>
-                      <strong>Learners:</strong> {cls.students?.length || 0} /{" "}
+                      <strong className="text-slate-800 dark:text-white">Learners:</strong> {cls.students?.length || 0} /{" "}
                       {cls.capacity} (capacity)
                     </p>
                     <p>
-                      <strong>Time zone:</strong> {cls.timeZone}
+                      <strong className="text-slate-800 dark:text-white">Time zone:</strong> {cls.timeZone}
                     </p>
                   </div>
-                  <details className="rounded-xl border border-slate-200 px-3 py-2">
-                    <summary className="cursor-pointer text-xs font-bold text-slate-700">
+                  <details className="rounded-xl border border-slate-200 dark:border-slate-800 px-3 py-2">
+                    <summary className="cursor-pointer text-xs font-bold text-slate-700 dark:text-slate-200">
                       Manage learner roster ({cls.students?.length || 0})
                     </summary>
-                    <div className="mt-3 divide-y divide-slate-100">
+                    <div className="mt-3 divide-y divide-slate-100 dark:divide-slate-800">
                       {cls.students?.length ? (
                         cls.students.map((student) => (
                           <div
@@ -2498,10 +2498,10 @@ export function AdminDashboard({ user }) {
                             className="flex flex-wrap items-center justify-between gap-2 py-2"
                           >
                             <div className="min-w-0">
-                              <p className="truncate text-xs font-bold text-slate-800">
+                              <p className="truncate text-xs font-bold text-slate-800 dark:text-white">
                                 {student.fullName}
                               </p>
-                              <p className="truncate text-[11px] text-slate-500">
+                              <p className="truncate text-[11px] text-slate-500 dark:text-slate-400">
                                 {student.email}
                               </p>
                             </div>
@@ -2511,7 +2511,7 @@ export function AdminDashboard({ user }) {
                               onClick={() =>
                                 void handleRemoveStudentFromClass(cls, student)
                               }
-                              className="shrink-0 rounded-lg border border-rose-200 px-2.5 py-1.5 text-[11px] font-bold text-rose-700 hover:bg-rose-50 disabled:cursor-wait disabled:opacity-50"
+                              className="shrink-0 rounded-lg border border-rose-200 dark:border-rose-500/40 px-2.5 py-1.5 text-[11px] font-bold text-rose-700 dark:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-950/40 disabled:cursor-wait disabled:opacity-50 transition"
                             >
                               {removingStudentId === student._id
                                 ? "Removing…"
@@ -2520,19 +2520,19 @@ export function AdminDashboard({ user }) {
                           </div>
                         ))
                       ) : (
-                        <p className="py-2 text-xs text-slate-500">
+                        <p className="py-2 text-xs text-slate-500 dark:text-slate-400">
                           No learners are assigned.
                         </p>
                       )}
                     </div>
-                    <p className="mt-2 text-[11px] text-slate-500">
+                    <p className="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
                       To move a learner, remove them here, then use Assign to
                       class in the Students tab.
                     </p>
                   </details>
                   <a
                     href={`${(import.meta.env.VITE_PUBLIC_URL || "").replace(/\/$/, "")}/workspace/${cls._id}?tab=tracking`}
-                    className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[var(--tlh-blue-primary)] to-[var(--tlh-sky)] px-4 py-2.5 text-xs font-black uppercase tracking-wider text-white shadow-md shadow-blue-500/25 transition hover:from-[var(--tlh-blue-hover)] hover:to-[var(--tlh-sky)] active:scale-[0.99]"
+                    className="golden-btn flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-white shadow-sm transition active:scale-[0.99]"
                   >
                     <span>🎓 Enter Learning Space & Track Cohort</span>
                     <span className="text-sm">→</span>
@@ -2608,7 +2608,7 @@ export function AdminDashboard({ user }) {
                           });
                           setCreateSessionModal(true);
                         }}
-                        className="text-xs font-bold text-[var(--tlh-blue-primary)] hover:underline disabled:cursor-not-allowed disabled:opacity-40"
+                        className="golden-btn rounded-lg px-2.5 py-1 text-[11px] font-bold text-white shadow-xs transition disabled:cursor-not-allowed disabled:opacity-40"
                       >
                         + Schedule
                       </button>
@@ -2686,12 +2686,13 @@ export function AdminDashboard({ user }) {
                                     href={session.meetingUrl}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="rounded-md bg-[var(--tlh-cyan)] px-2.5 py-1.5 text-[11px] font-bold text-white hover:bg-cyan-800"
+                                    className="golden-btn px-3 py-1.5 text-[11px] font-bold text-white shadow-sm inline-flex items-center gap-1"
                                   >
-                                    Open Meet
+                                    <span>📹</span>
+                                    <span>Open Meet</span>
                                   </a>
                                 ) : (
-                                  <span className="text-[10px] font-semibold text-amber-700">
+                                  <span className="text-[10px] font-semibold text-amber-700 dark:text-amber-400">
                                     Meet link missing
                                   </span>
                                 )}
@@ -2721,7 +2722,7 @@ export function AdminDashboard({ user }) {
                                     });
                                     setCreateSessionModal(true);
                                   }}
-                                  className="rounded-md border border-stone-200 px-2 py-1 text-[11px] font-bold text-slate-700"
+                                  className="rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-2 py-1 text-[11px] font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition"
                                 >
                                   Edit / control
                                 </button>
@@ -2738,7 +2739,7 @@ export function AdminDashboard({ user }) {
                                           "completed",
                                         )
                                       }
-                                      className="rounded-md border border-sky-300 px-2 py-1 text-[11px] font-bold text-[var(--tlh-blue-primary)] hover:bg-sky-50 disabled:opacity-50"
+                                      className="rounded-md border border-emerald-400 dark:border-emerald-500/40 bg-emerald-50/60 dark:bg-emerald-950/40 px-2 py-1 text-[11px] font-bold text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 disabled:opacity-50 transition"
                                     >
                                       Mark complete
                                     </button>
@@ -2753,7 +2754,7 @@ export function AdminDashboard({ user }) {
                                           "cancelled",
                                         )
                                       }
-                                      className="rounded-md border border-amber-200 px-2 py-1 text-[11px] font-bold text-amber-800 disabled:opacity-50"
+                                      className="rounded-md border border-amber-300 dark:border-amber-500/40 bg-amber-50/60 dark:bg-amber-950/40 px-2 py-1 text-[11px] font-bold text-amber-900 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/40 disabled:opacity-50 transition"
                                     >
                                       Cancel session
                                     </button>
@@ -2767,7 +2768,7 @@ export function AdminDashboard({ user }) {
                                       label: `Session “${session.title}” and its attendance`,
                                     })
                                   }
-                                  className="rounded-md border border-rose-200 px-2 py-1 text-[11px] font-bold text-rose-700"
+                                  className="rounded-md border border-rose-300 dark:border-rose-500/40 bg-rose-50/60 dark:bg-rose-950/40 px-2 py-1 text-[11px] font-bold text-rose-800 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900/40 transition"
                                 >
                                   Delete
                                 </button>
@@ -2780,7 +2781,7 @@ export function AdminDashboard({ user }) {
                                         label: `The entire weekly series for “${session.title}”`,
                                       })
                                     }
-                                    className="rounded-md border border-rose-300 bg-rose-50 px-2 py-1 text-[11px] font-bold text-rose-800"
+                                    className="rounded-md border border-purple-300 dark:border-purple-500/40 bg-purple-50/60 dark:bg-purple-950/40 px-2 py-1 text-[11px] font-bold text-purple-800 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/40 transition"
                                   >
                                     Delete series
                                   </button>
