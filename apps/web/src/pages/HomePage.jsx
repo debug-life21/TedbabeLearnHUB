@@ -104,6 +104,7 @@ export function HomePage() {
     const [promoVideo, setPromoVideo] = useState(null);
     const [featuredFilter, setFeaturedFilter] = useState("all");
     const [openFaqIndex, setOpenFaqIndex] = useState(0);
+    const [liveFaqs, setLiveFaqs] = useState([]);
 
     // Selected category state for interactive drill-down
     const programsRef = useRef(null);
@@ -125,6 +126,22 @@ export function HomePage() {
                 }
             })
             .catch((err) => console.error("[TedbabeLearnHUB] Error loading settings:", err));
+
+        // Load dynamic FAQs managed by Admin
+        apiRequest("/api/public/faqs")
+            .then((res) => {
+                if (Array.isArray(res?.faqs) && res.faqs.length > 0) {
+                    setLiveFaqs(res.faqs.map((f) => ({ q: f.question, a: f.answer, id: f._id })));
+                }
+            })
+            .catch(() => {});
+
+        if (window.location.hash) {
+            setTimeout(() => {
+                const el = document.querySelector(window.location.hash);
+                if (el) el.scrollIntoView({ behavior: "smooth" });
+            }, 300);
+        }
     }, []);
 
     const handleCategorySelect = async (cat) => {
@@ -746,47 +763,47 @@ export function HomePage() {
       </section>
 
       {/* 5. How LearnHUB Works: 4-Step Journey */}
-      <section className="bg-slate-50/70 border-y border-slate-200/80 py-20">
+      <section className="bg-slate-50/70 dark:bg-slate-900/60 border-y border-slate-200/80 dark:border-slate-800 py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <SectionHeading badge="STEP-BY-STEP JOURNEY" title={t("howItWorks")} subtitle={t("howItWorksSubtitle")} centered/>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            <div className="rounded-3xl bg-white p-7 shadow-sm ring-1 ring-slate-200/90 flex flex-col justify-between">
+            <div className="rounded-3xl bg-white dark:bg-slate-900 p-7 shadow-sm ring-1 ring-slate-200/90 dark:ring-slate-800 flex flex-col justify-between">
               <div>
                 <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-600 text-white font-black text-sm shadow-md shadow-blue-500/20">
                   01
                 </span>
-                <h3 className="mt-4 text-base font-bold text-slate-900">{t("step1Title")}</h3>
-                <p className="mt-2 text-xs sm:text-sm text-slate-600 leading-relaxed">{t("step1Desc")}</p>
+                <h3 className="mt-4 text-base font-bold text-slate-900 dark:text-white">{t("step1Title")}</h3>
+                <p className="mt-2 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">{t("step1Desc")}</p>
               </div>
             </div>
 
-            <div className="rounded-3xl bg-white p-7 shadow-sm ring-1 ring-slate-200/90 flex flex-col justify-between">
+            <div className="rounded-3xl bg-white dark:bg-slate-900 p-7 shadow-sm ring-1 ring-slate-200/90 dark:ring-slate-800 flex flex-col justify-between">
               <div>
                 <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-cyan-600 text-white font-black text-sm shadow-md shadow-cyan-500/20">
                   02
                 </span>
-                <h3 className="mt-4 text-base font-bold text-slate-900">{t("step2Title")}</h3>
-                <p className="mt-2 text-xs sm:text-sm text-slate-600 leading-relaxed">{t("step2Desc")}</p>
+                <h3 className="mt-4 text-base font-bold text-slate-900 dark:text-white">{t("step2Title")}</h3>
+                <p className="mt-2 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">{t("step2Desc")}</p>
               </div>
             </div>
 
-            <div className="rounded-3xl bg-white p-7 shadow-sm ring-1 ring-slate-200/90 flex flex-col justify-between">
+            <div className="rounded-3xl bg-white dark:bg-slate-900 p-7 shadow-sm ring-1 ring-slate-200/90 dark:ring-slate-800 flex flex-col justify-between">
               <div>
                 <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-r from-[var(--tlh-blue-primary)] to-[var(--tlh-sky)] text-white font-black text-sm shadow-md shadow-blue-500/20">
                   03
                 </span>
-                <h3 className="mt-4 text-base font-bold text-slate-900">{t("step3Title")}</h3>
-                <p className="mt-2 text-xs sm:text-sm text-slate-600 leading-relaxed">{t("step3Desc")}</p>
+                <h3 className="mt-4 text-base font-bold text-slate-900 dark:text-white">{t("step3Title")}</h3>
+                <p className="mt-2 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">{t("step3Desc")}</p>
               </div>
             </div>
 
-            <div className="rounded-3xl bg-white p-7 shadow-sm ring-1 ring-slate-200/90 flex flex-col justify-between">
+            <div className="rounded-3xl bg-white dark:bg-slate-900 p-7 shadow-sm ring-1 ring-slate-200/90 dark:ring-slate-800 flex flex-col justify-between">
               <div>
                 <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-indigo-600 text-white font-black text-sm shadow-md shadow-indigo-500/20">
                   04
                 </span>
-                <h3 className="mt-4 text-base font-bold text-slate-900">{t("step4Title")}</h3>
-                <p className="mt-2 text-xs sm:text-sm text-slate-600 leading-relaxed">{t("step4Desc")}</p>
+                <h3 className="mt-4 text-base font-bold text-slate-900 dark:text-white">{t("step4Title")}</h3>
+                <p className="mt-2 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">{t("step4Desc")}</p>
               </div>
             </div>
           </div>
@@ -960,67 +977,86 @@ export function HomePage() {
           <div className="mx-auto max-w-2xl text-center">
             <span className="inline-flex items-center gap-2 rounded-full bg-sky-50 dark:bg-sky-500/15 px-3.5 py-1 text-xs font-bold text-blue-700 dark:text-sky-300 border border-sky-200 dark:border-sky-500/30 shadow-sm">
               <span className="h-2 w-2 rounded-full bg-blue-500 animate-pulse" />
-              OUR GROWING COMMUNITY
+              {data?.milestones?.badge || "OUR GROWING COMMUNITY"}
             </span>
-            <h2 className="mt-4 text-2xl font-black tracking-tight text-slate-900 sm:text-3xl lg:text-4xl">
-              Proven Learning Milestones
+            <h2 className="mt-4 text-2xl font-black tracking-tight text-slate-900 dark:text-white sm:text-3xl lg:text-4xl">
+              {data?.milestones?.title || "Proven Learning Milestones"}
             </h2>
-            <p className="mt-2 text-sm leading-relaxed text-slate-600 sm:text-base">
-              Real engagement, expert mentorship, and supportive cohort-based environments driving measurable growth.
+            <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300 sm:text-base">
+              {data?.milestones?.subtitle || "Real engagement, expert mentorship, and supportive cohort-based environments driving measurable growth."}
             </p>
           </div>
 
-          <div className="mt-10 grid gap-6 sm:grid-cols-3">
+          <div className={`mt-10 grid gap-6 ${data?.milestones?.stat4 ? "sm:grid-cols-2 lg:grid-cols-4" : "sm:grid-cols-3"}`}>
             {/* Active Learners */}
-            <div className="group relative overflow-hidden rounded-2xl border border-[var(--tlh-blue-primary)]/20 bg-white p-7 text-center shadow-sm transition hover:-translate-y-1 hover:shadow-lg hover:border-[var(--tlh-blue-primary)]">
+            <div className="group relative overflow-hidden rounded-2xl border border-[var(--tlh-blue-primary)]/20 bg-white dark:bg-slate-900 p-7 text-center shadow-sm transition hover:-translate-y-1 hover:shadow-lg hover:border-[var(--tlh-blue-primary)]">
               <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[var(--tlh-blue-primary)] to-[var(--tlh-sky)]" />
               <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--primary-light)] text-2xl shadow-inner border border-[var(--tlh-blue-primary)]/10 text-[var(--tlh-blue-primary)]">
                 🎓
               </div>
-              <div className="mt-5 font-mono text-4xl font-black tracking-tight text-[var(--tlh-navy)] sm:text-5xl">
-                {data?.stats?.activeStudents != null ? `${data.stats.activeStudents}+` : "—"}
+              <div className="mt-5 font-mono text-4xl font-black tracking-tight text-[var(--tlh-navy)] dark:text-white sm:text-5xl">
+                {data?.milestones?.stat1 || (data?.stats?.activeStudents != null ? `${data.stats.activeStudents}+` : "200+")}
               </div>
-              <h3 className="mt-2 text-base font-bold text-[var(--tlh-navy)]">
-                Active Learners
+              <h3 className="mt-2 text-base font-bold text-[var(--tlh-navy)] dark:text-white">
+                {data?.milestones?.title1 || "Active Learners"}
               </h3>
-              <p className="mt-1 text-xs text-[var(--text-secondary)] leading-relaxed">
-                Students actively acquiring modern digital & technical capabilities.
+              <p className="mt-1 text-xs text-[var(--text-secondary)] dark:text-slate-400 leading-relaxed">
+                {data?.milestones?.desc1 || "Students actively acquiring modern digital & technical capabilities."}
               </p>
             </div>
 
             {/* Instructors */}
-            <div className="group relative overflow-hidden rounded-2xl border border-[var(--tlh-orange)]/20 bg-white p-7 text-center shadow-sm transition hover:-translate-y-1 hover:shadow-lg hover:border-[var(--tlh-orange)]">
+            <div className="group relative overflow-hidden rounded-2xl border border-[var(--tlh-orange)]/20 bg-white dark:bg-slate-900 p-7 text-center shadow-sm transition hover:-translate-y-1 hover:shadow-lg hover:border-[var(--tlh-orange)]">
               <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[var(--tlh-orange)] to-amber-400" />
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-50 text-2xl shadow-inner border border-amber-100 text-[var(--tlh-orange)]">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-50 dark:bg-amber-950/40 text-2xl shadow-inner border border-amber-100 dark:border-amber-800/40 text-[var(--tlh-orange)]">
                 👨‍🏫
               </div>
-              <div className="mt-5 font-mono text-4xl font-black tracking-tight text-[var(--tlh-navy)] sm:text-5xl">
-                {data?.stats?.activeTeachers != null ? `${data.stats.activeTeachers}+` : "—"}
+              <div className="mt-5 font-mono text-4xl font-black tracking-tight text-[var(--tlh-navy)] dark:text-white sm:text-5xl">
+                {data?.milestones?.stat2 || (data?.stats?.activeTeachers != null ? `${data.stats.activeTeachers}+` : "15+")}
               </div>
-              <h3 className="mt-2 text-base font-bold text-[var(--tlh-navy)]">
-                Instructors
+              <h3 className="mt-2 text-base font-bold text-[var(--tlh-navy)] dark:text-white">
+                {data?.milestones?.title2 || "Instructors"}
               </h3>
-              <p className="mt-1 text-xs text-[var(--text-secondary)] leading-relaxed">
-                Industry veterans, certified mentors, and passionate subject educators.
+              <p className="mt-1 text-xs text-[var(--text-secondary)] dark:text-slate-400 leading-relaxed">
+                {data?.milestones?.desc2 || "Industry veterans, certified mentors, and passionate subject educators."}
               </p>
             </div>
 
             {/* Cohorts */}
-            <div className="group relative overflow-hidden rounded-2xl border border-[var(--tlh-cyan)]/25 bg-white p-7 text-center shadow-sm transition hover:-translate-y-1 hover:shadow-lg hover:border-[var(--tlh-cyan)]">
+            <div className="group relative overflow-hidden rounded-2xl border border-[var(--tlh-cyan)]/25 bg-white dark:bg-slate-900 p-7 text-center shadow-sm transition hover:-translate-y-1 hover:shadow-lg hover:border-[var(--tlh-cyan)]">
               <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[var(--tlh-blue-primary)] to-[var(--tlh-cyan)]" />
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-cyan-50 text-2xl shadow-inner border border-cyan-100 text-[var(--tlh-cyan)]">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-cyan-50 dark:bg-cyan-950/40 text-2xl shadow-inner border border-cyan-100 dark:border-cyan-800/40 text-[var(--tlh-cyan)]">
                 📚
               </div>
-              <div className="mt-5 font-mono text-4xl font-black tracking-tight text-[var(--tlh-navy)] sm:text-5xl">
-                {data?.stats?.activeClasses != null ? `${data.stats.activeClasses}+` : "—"}
+              <div className="mt-5 font-mono text-4xl font-black tracking-tight text-[var(--tlh-navy)] dark:text-white sm:text-5xl">
+                {data?.milestones?.stat3 || (data?.stats?.activeClasses != null ? `${data.stats.activeClasses}+` : "10+")}
               </div>
-              <h3 className="mt-2 text-base font-bold text-[var(--tlh-navy)]">
-                Cohorts
+              <h3 className="mt-2 text-base font-bold text-[var(--tlh-navy)] dark:text-white">
+                {data?.milestones?.title3 || "Cohorts"}
               </h3>
-              <p className="mt-1 text-xs text-[var(--text-secondary)] leading-relaxed">
-                Interactive live classroom groups learning and practicing together.
+              <p className="mt-1 text-xs text-[var(--text-secondary)] dark:text-slate-400 leading-relaxed">
+                {data?.milestones?.desc3 || "Interactive live classroom groups learning and practicing together."}
               </p>
             </div>
+
+            {/* Optional Metric 4 (if configured by admin) */}
+            {data?.milestones?.stat4 && (
+              <div className="group relative overflow-hidden rounded-2xl border border-emerald-500/25 bg-white dark:bg-slate-900 p-7 text-center shadow-sm transition hover:-translate-y-1 hover:shadow-lg hover:border-emerald-500">
+                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500 to-teal-400" />
+                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-2xl shadow-inner border border-emerald-100 dark:border-emerald-800/40 text-emerald-600">
+                  ✨
+                </div>
+                <div className="mt-5 font-mono text-4xl font-black tracking-tight text-[var(--tlh-navy)] dark:text-white sm:text-5xl">
+                  {data.milestones.stat4}
+                </div>
+                <h3 className="mt-2 text-base font-bold text-[var(--tlh-navy)] dark:text-white">
+                  {data.milestones.title4 || "Mastery Rate"}
+                </h3>
+                <p className="mt-1 text-xs text-[var(--text-secondary)] dark:text-slate-400 leading-relaxed">
+                  {data.milestones.desc4 || "Proven learner completion, practical portfolio builds, and verified skills."}
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </section>
@@ -1096,26 +1132,52 @@ export function HomePage() {
             centered
           />
           
-          <div className="grid gap-8 md:grid-cols-3 mt-12">
-            {(data?.instructors ?? []).slice(0, 3).map((teacher, idx) => (
-              <div key={teacher._id || idx} className="group rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200/80 hover:shadow-xl hover:ring-[var(--tlh-blue-primary)]/30 transition-all text-center">
-                <div className="relative mx-auto h-24 w-24 mb-6">
-                  <div className="absolute -inset-2 bg-gradient-to-tr from-[var(--tlh-blue-primary)] to-[var(--tlh-cyan)] rounded-full opacity-0 group-hover:opacity-100 blur-md transition-opacity" />
-                  <img src={teacher.avatar || "/learnhub-icon.png"} alt={teacher.fullName} className="relative h-full w-full rounded-full object-cover border-4 border-white shadow-md" />
+          {(data?.instructors ?? []).length === 0 ? (
+            <div className="mt-12 rounded-3xl bg-white dark:bg-slate-900 p-10 text-center ring-1 ring-slate-200/80 dark:ring-slate-800 shadow-sm">
+              <span className="text-3xl block mb-2">👩‍🏫</span>
+              <p className="text-sm font-bold text-slate-700 dark:text-slate-200">
+                Instructor profiles are being published soon.
+              </p>
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                Our verified industry professionals will appear here shortly.
+              </p>
+            </div>
+          ) : (
+            <div className="mt-12 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+              {(data?.instructors ?? []).map((teacher, idx) => (
+                <div key={teacher._id || idx} className="group flex flex-col justify-between rounded-2xl bg-white dark:bg-slate-900 p-4 text-center shadow-sm ring-1 ring-slate-200/80 dark:ring-slate-800 transition-all hover:shadow-lg hover:ring-[var(--tlh-blue-primary)]/30">
+                  <div>
+                    <div className="relative mx-auto mb-3 h-16 w-16">
+                      <div className="absolute -inset-1.5 rounded-full bg-gradient-to-tr from-[var(--tlh-blue-primary)] to-[var(--tlh-cyan)] opacity-0 blur-md transition-opacity group-hover:opacity-100" />
+                      <img
+                        src={teacher.avatar || "/learnhub-icon.png"}
+                        alt={teacher.fullName}
+                        className="relative h-full w-full rounded-full border-2 border-white object-cover shadow-md dark:border-slate-800"
+                        onError={(e) => { e.currentTarget.src = "/learnhub-icon.png"; }}
+                      />
+                    </div>
+                    <h3 className="text-sm font-bold leading-snug text-[var(--tlh-navy)] dark:text-white">{teacher.fullName}</h3>
+                    <p className="mt-0.5 text-[10px] font-black uppercase tracking-wider text-[var(--tlh-blue-primary)] dark:text-amber-400">
+                      {teacher.expertise || "Senior Instructor"}
+                    </p>
+                    {teacher.experience && (
+                      <p className="mt-1 text-[10px] font-bold text-slate-500 dark:text-slate-400">
+                        🎖️ {teacher.experience}
+                      </p>
+                    )}
+                    <p className="mt-2 text-[11px] leading-relaxed text-slate-500 dark:text-slate-300 line-clamp-2">
+                      {teacher.bio || "Dedicated educator committed to student success."}
+                    </p>
+                  </div>
+                  <div className="mt-3 flex justify-center">
+                    <span className="rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-[9px] font-bold text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                      {teacher.languages?.join(" / ") || "English / Amharic"}
+                    </span>
+                  </div>
                 </div>
-                <h3 className="text-xl font-bold text-[var(--tlh-navy)]">{teacher.fullName}</h3>
-                <p className="text-xs font-black text-[var(--tlh-blue-primary)] uppercase tracking-wider mt-1">{teacher.expertise || "Senior Instructor"}</p>
-                <p className="mt-4 text-sm text-slate-500 leading-relaxed line-clamp-2">
-                  {teacher.bio || "Dedicated educator committed to student success and practical skill development."}
-                </p>
-                <div className="mt-6 flex justify-center gap-2">
-                  <span className="rounded-lg bg-slate-50 px-3 py-1 text-[10px] font-bold text-slate-600 border border-slate-200">
-                    {teacher.languages?.join(" / ") || "English / Amharic"}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
 
           <div className="mt-12 text-center">
             <Link to="/instructors" className="inline-flex items-center gap-2 text-sm font-black text-[var(--tlh-blue-primary)] hover:text-[var(--tlh-navy)] transition-colors">
@@ -1135,7 +1197,7 @@ export function HomePage() {
         />
         
         <div className="mt-10 space-y-4">
-          {[
+          {(liveFaqs.length > 0 ? liveFaqs : [
             {
               q: "How does cohort placement work?",
               a: "After registration, our academic team reviews your profile, learning goals, and schedule preferences to place you in the most suitable cohort with an expert instructor."
@@ -1156,11 +1218,11 @@ export function HomePage() {
               q: "Can I learn while working full-time?",
               a: "Yes. Cohorts feature flexible morning, evening, and weekend scheduling across Ethiopian Time (EAT) and international time zones to fit your daily life."
             }
-          ].map((item, i) => {
+          ]).map((item, i) => {
             const isOpen = openFaqIndex === i;
             return (
               <div 
-                key={i} 
+                key={item.id || i} 
                 className="overflow-hidden rounded-3xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm transition-all hover:shadow-md"
               >
                 <button

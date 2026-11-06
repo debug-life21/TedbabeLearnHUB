@@ -4,16 +4,16 @@ export function SectionHeading({ title, subtitle, badge, centered = false }) {
     return (
         <div className={`mb-10 ${centered ? "text-center max-w-3xl mx-auto" : ""}`}>
             {badge ? (
-                <div className="public-heading-badge inline-flex items-center gap-2 rounded-full border px-3.5 py-1 text-xs font-extrabold mb-3 tracking-wider">
-                    <span className="h-1.5 w-1.5 rounded-full bg-current" aria-hidden="true" />
-                    <span>{badge}</span>
+                <div className="public-heading-badge inline-flex items-center gap-2 rounded-full px-3.5 py-1 text-xs font-black mb-3 tracking-wider border">
+                    <span className="h-1.5 w-1.5 rounded-full bg-current shrink-0" aria-hidden="true" />
+                    <span className="tracking-widest uppercase">{badge}</span>
                 </div>
             ) : null}
-            <h2 className="public-heading text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-[var(--text-main)] leading-tight">
+            <h2 className="public-heading text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-[var(--text-main)] dark:text-white leading-tight">
                 {title}
             </h2>
             {subtitle ? (
-                <p className="mt-3 text-sm sm:text-base text-slate-500 leading-relaxed font-normal max-w-2xl">
+                <p className="mt-3 text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed font-normal max-w-2xl mx-auto">
                     {subtitle}
                 </p>
             ) : null}

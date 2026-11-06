@@ -448,10 +448,10 @@ export function TeacherDashboard({ user }) {
       const blob = await apiRequest(fileUrl, { responseType: "blob" });
       const typed =
         blob instanceof Blob &&
-        (!blob.type || blob.type === "application/octet-stream")
+          (!blob.type || blob.type === "application/octet-stream")
           ? new Blob([blob], {
-              type: file?.mimeType || "application/octet-stream",
-            })
+            type: file?.mimeType || "application/octet-stream",
+          })
           : blob;
       const objectUrl = URL.createObjectURL(typed);
       setFilePreview((prev) => {
@@ -483,13 +483,13 @@ export function TeacherDashboard({ user }) {
         quizForm.assessmentType === "selfAssessment"
           ? []
           : quizForm.questions
-              .filter((question) => question.prompt.trim())
-              .map((question) => ({
-                ...question,
-                options: question.options
-                  .map((option) => option.trim())
-                  .filter(Boolean),
-              }));
+            .filter((question) => question.prompt.trim())
+            .map((question) => ({
+              ...question,
+              options: question.options
+                .map((option) => option.trim())
+                .filter(Boolean),
+            }));
       await apiRequest("/api/teacher/assessments", {
         method: "POST",
         body: JSON.stringify({
@@ -541,15 +541,15 @@ export function TeacherDashboard({ user }) {
           sourceType: uploadForm.sourceType || "upload",
           ...(isExternal
             ? {
-                sourceUrl: uploadForm.sourceUrl,
-              }
+              sourceUrl: uploadForm.sourceUrl,
+            }
             : {
-                originalFilename: uploadForm.originalFilename || "document.pdf",
-                mimeType: uploadForm.mimeType || "application/pdf",
-                base64Data:
-                  uploadForm.base64Data ||
-                  btoa("TedbabeLearnHUB Sample Resource Content"),
-              }),
+              originalFilename: uploadForm.originalFilename || "document.pdf",
+              mimeType: uploadForm.mimeType || "application/pdf",
+              base64Data:
+                uploadForm.base64Data ||
+                btoa("TedbabeLearnHUB Sample Resource Content"),
+            }),
           visibility: "class_only",
         }),
       });
@@ -716,7 +716,7 @@ export function TeacherDashboard({ user }) {
           aria-hidden="true"
           className="pointer-events-none absolute -left-20 -bottom-24 h-64 w-64 rounded-full bg-[var(--tlh-cyan)]/5 blur-[80px]"
         />
-        
+
         <div className="relative flex items-center gap-6 sm:gap-8">
           <div className="relative">
             {profileForm.avatarUrl ? (
@@ -734,7 +734,7 @@ export function TeacherDashboard({ user }) {
               <span className="text-xs">✨</span>
             </div>
           </div>
-          
+
           <div className="space-y-1">
             <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.2em] text-[var(--tlh-cyan)] backdrop-blur-md border border-white/10">
               <span className="h-1.5 w-1.5 rounded-full bg-[var(--tlh-cyan)] animate-pulse"></span>
@@ -785,7 +785,7 @@ export function TeacherDashboard({ user }) {
         <div className="group relative overflow-hidden rounded-[var(--radius-3xl)] bg-slate-950 p-6 sm:p-8 text-white shadow-[var(--shadow-xl)] border border-emerald-500/20">
           <div className="absolute inset-0 bg-gradient-to-r from-emerald-950/80 via-slate-950 to-slate-950 opacity-90" />
           <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-emerald-500/10 blur-[80px] transition-transform group-hover:scale-110" />
-          
+
           <div className="relative flex flex-wrap items-center justify-between gap-8">
             <div className="space-y-4">
               <div className="inline-flex items-center gap-2.5 rounded-full bg-emerald-500/10 px-4 py-1.5 text-xs font-black text-emerald-400 border border-emerald-500/20 backdrop-blur-md">
@@ -795,7 +795,7 @@ export function TeacherDashboard({ user }) {
                 </span>
                 <span className="uppercase tracking-widest">Next Live Session</span>
               </div>
-              
+
               <div className="space-y-1">
                 <h2 className="text-2xl font-black text-white sm:text-3xl lg:text-4xl tracking-tight">
                   {upcomingLessons[0].title}
@@ -813,7 +813,7 @@ export function TeacherDashboard({ user }) {
                 </div>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-4">
               {upcomingLessons[0].meetingUrl ? (
                 <LiveSessionButton session={upcomingLessons[0]} />
@@ -954,7 +954,7 @@ export function TeacherDashboard({ user }) {
                   </div>
                 </div>
               </div>
-              
+
               <div className="grid gap-4 md:grid-cols-2">
                 {announcements.slice(0, 4).map((ann) => (
                   <div
@@ -1016,7 +1016,7 @@ export function TeacherDashboard({ user }) {
                     {cls.status.toUpperCase()}
                   </Badge>
                 </div>
-                
+
                 <div className="space-y-4">
                   <div>
                     <h4 className="text-xl font-black text-[var(--text-main)] tracking-tight">
@@ -1140,17 +1140,16 @@ export function TeacherDashboard({ user }) {
                                       key={st}
                                       type="button"
                                       onClick={() => setStudentAttendance(stud._id, st)}
-                                      className={`rounded-xl px-4 py-2 text-[10px] font-black uppercase tracking-widest transition-all ${
-                                        currentStatus === st
-                                          ? st === "present"
-                                            ? "bg-[var(--tlh-blue-primary)] text-white shadow-lg shadow-blue-500/25"
-                                            : st === "absent"
-                                              ? "bg-rose-600 text-white shadow-lg shadow-rose-500/25"
-                                              : st === "late"
-                                                ? "bg-amber-500 text-white shadow-lg shadow-amber-500/25"
-                                                : "bg-[var(--tlh-cyan)] text-white shadow-lg shadow-cyan-500/25"
-                                          : "bg-[var(--surface-page)] text-[var(--text-secondary)] border border-[var(--surface-border)] hover:bg-white"
-                                      }`}
+                                      className={`rounded-xl px-4 py-2 text-[10px] font-black uppercase tracking-widest transition-all ${currentStatus === st
+                                        ? st === "present"
+                                          ? "bg-[var(--tlh-blue-primary)] text-white shadow-lg shadow-blue-500/25"
+                                          : st === "absent"
+                                            ? "bg-rose-600 text-white shadow-lg shadow-rose-500/25"
+                                            : st === "late"
+                                              ? "bg-amber-500 text-white shadow-lg shadow-amber-500/25"
+                                              : "bg-[var(--tlh-cyan)] text-white shadow-lg shadow-cyan-500/25"
+                                        : "bg-[var(--surface-page)] text-[var(--text-secondary)] border border-[var(--surface-border)] hover:bg-white"
+                                        }`}
                                     >
                                       {t(st)}
                                     </button>
@@ -1259,7 +1258,7 @@ export function TeacherDashboard({ user }) {
                               <td className="px-6 py-4 text-right">
                                 <div className="inline-flex items-center gap-2">
                                   <div className="h-2 w-16 rounded-full bg-slate-100 overflow-hidden">
-                                    <div 
+                                    <div
                                       className={`h-full rounded-full ${Number(row.attendanceRate) > 75 ? 'bg-emerald-500' : Number(row.attendanceRate) > 50 ? 'bg-amber-500' : 'bg-rose-500'}`}
                                       style={{ width: `${row.attendanceRate}%` }}
                                     />
@@ -1313,14 +1312,14 @@ export function TeacherDashboard({ user }) {
                     Due: {new Date(asgn.dueDate).toLocaleDateString()}
                   </div>
                 </div>
-                
+
                 <h4 className="text-xl font-black text-[var(--text-main)] group-hover:text-[var(--tlh-blue-primary)] transition-colors line-clamp-1 mb-2">
                   {asgn.title}
                 </h4>
                 <p className="text-xs font-medium text-[var(--text-secondary)] line-clamp-2 mb-6 leading-relaxed">
                   {asgn.instructions}
                 </p>
-                
+
                 <div className="mt-auto space-y-6">
                   <div className="grid grid-cols-2 gap-4 pt-6 border-t border-[var(--surface-border)]">
                     <div className="text-center">
@@ -1377,14 +1376,14 @@ export function TeacherDashboard({ user }) {
                     {qz.questions?.length || 0} Questions
                   </div>
                 </div>
-                
+
                 <h4 className="text-xl font-black text-[var(--text-main)] group-hover:text-[var(--tlh-cyan)] transition-colors line-clamp-1 mb-2">
                   {qz.title}
                 </h4>
                 <p className="text-xs font-medium text-[var(--text-secondary)] line-clamp-2 mb-6 leading-relaxed">
                   {qz.description}
                 </p>
-                
+
                 <div className="mt-auto space-y-6">
                   <div className="flex items-center justify-between text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest border-t border-[var(--surface-border)] pt-6">
                     <span>Pass: {qz.passingScorePercentage}%</span>
@@ -1457,11 +1456,10 @@ export function TeacherDashboard({ user }) {
                         <button
                           key={student._id}
                           onClick={() => handleProgressStudentChange(student._id)}
-                          className={`w-full text-left rounded-2xl p-4 transition-all border ${
-                            isSelected 
-                              ? "bg-[var(--tlh-blue-primary)] border-[var(--tlh-blue-primary)] text-white shadow-lg" 
-                              : "bg-[var(--surface-page)] border-[var(--surface-border)] text-[var(--text-main)] hover:border-[var(--tlh-blue-primary)]/30"
-                          }`}
+                          className={`w-full text-left rounded-2xl p-4 transition-all border ${isSelected
+                            ? "bg-[var(--tlh-blue-primary)] border-[var(--tlh-blue-primary)] text-white shadow-lg"
+                            : "bg-[var(--surface-page)] border-[var(--surface-border)] text-[var(--text-main)] hover:border-[var(--tlh-blue-primary)]/30"
+                            }`}
                         >
                           <div className="flex items-center justify-between">
                             <span className="font-black text-sm">{student.fullName}</span>
@@ -1586,7 +1584,7 @@ export function TeacherDashboard({ user }) {
             </h3>
             <button
               onClick={() => setUploadModal(true)}
-              className="rounded-xl bg-blue-600 px-3.5 py-1.5 text-xs font-bold text-white hover:bg-blue-700"
+              className="golden-btn rounded-xl px-3.5 py-1.5 text-xs font-bold text-white shadow-sm"
             >
               + {t("uploadResource")}
             </button>
@@ -1798,7 +1796,7 @@ export function TeacherDashboard({ user }) {
                   />
                   <button
                     onClick={() => handleGradeSubmission(sub)}
-                    className="rounded-lg bg-blue-600 px-3 py-1 text-xs font-bold text-white hover:bg-blue-700"
+                    className="golden-btn rounded-lg px-3.5 py-1.5 text-xs font-bold text-white shadow-xs"
                   >
                     {sub.status === "graded"
                       ? "Update & publish"
@@ -2198,7 +2196,7 @@ export function TeacherDashboard({ user }) {
           </div>
           <button
             type="submit"
-            className="w-full rounded-xl bg-blue-600 py-2.5 text-xs font-bold text-white"
+            className="golden-btn w-full rounded-xl py-2.5 text-xs font-bold text-white shadow-sm"
           >
             {t("createAssignment")}
           </button>
@@ -2287,7 +2285,7 @@ export function TeacherDashboard({ user }) {
               }
               minLength={
                 quizForm.assessmentType === "selfAssessment" ||
-                quizForm.questions.length === 0
+                  quizForm.questions.length === 0
                   ? 5
                   : undefined
               }
@@ -2301,7 +2299,7 @@ export function TeacherDashboard({ user }) {
             />
           </label>
           {quizForm.assessmentType === "selfAssessment" ||
-          quizForm.questions.length === 0 ? (
+            quizForm.questions.length === 0 ? (
             <div className="space-y-3">
               <p className="rounded-xl border border-blue-200 bg-blue-50 p-3 text-xs leading-5 text-blue-900">
                 Learners submit written work. You review it and release the
@@ -2379,14 +2377,14 @@ export function TeacherDashboard({ user }) {
                             questions: form.questions.map((item, index) =>
                               index === questionIndex
                                 ? {
-                                    ...item,
-                                    options: item.options.map(
-                                      (entry, entryIndex) =>
-                                        entryIndex === optionIndex
-                                          ? event.target.value
-                                          : entry,
-                                    ),
-                                  }
+                                  ...item,
+                                  options: item.options.map(
+                                    (entry, entryIndex) =>
+                                      entryIndex === optionIndex
+                                        ? event.target.value
+                                        : entry,
+                                  ),
+                                }
                                 : item,
                             ),
                           }))
@@ -2405,11 +2403,11 @@ export function TeacherDashboard({ user }) {
                           questions: form.questions.map((item, index) =>
                             index === questionIndex
                               ? {
-                                  ...item,
-                                  correctOptionIndex: Number(
-                                    event.target.value,
-                                  ),
-                                }
+                                ...item,
+                                correctOptionIndex: Number(
+                                  event.target.value,
+                                ),
+                              }
                               : item,
                           ),
                         }))
@@ -2530,11 +2528,10 @@ export function TeacherDashboard({ user }) {
                       mimeType: "application/pdf",
                     })
                   }
-                  className={`flex-1 rounded-xl border py-2 px-2 text-[11px] font-bold transition-all ${
-                    uploadForm.sourceType === opt.value
-                      ? "border-blue-500 bg-blue-50 text-blue-700"
-                      : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
-                  }`}
+                  className={`flex-1 rounded-xl border py-2 px-2 text-[11px] font-bold transition-all ${uploadForm.sourceType === opt.value
+                    ? "border-blue-500 bg-blue-50 text-blue-700"
+                    : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
+                    }`}
                 >
                   {opt.label}
                 </button>

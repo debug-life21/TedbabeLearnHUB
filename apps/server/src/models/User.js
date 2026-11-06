@@ -29,6 +29,21 @@ const teacherProfileSchema = new Schema({
     linkedInUrl: { type: String, default: "" },
     teachingLanguages: { type: [String], default: [] },
 }, { _id: false });
+
+/**
+ * Public showcase profile customized and published by the Admin.
+ * Displays on the public homepage ("Industry Professionals") and /instructors.
+ * Completely separate from the teacher's personal account dashboard profile.
+ */
+const showcaseProfileSchema = new Schema({
+    displayName: { type: String, default: "" },
+    photoUrl: { type: String, default: "" },
+    subjectTitle: { type: String, default: "" },
+    experience: { type: String, default: "" },
+    bio: { type: String, default: "" },
+    isPublished: { type: Boolean, default: false },
+    displayOrder: { type: Number, default: 0 },
+}, { _id: false });
 const userSchema = new Schema({
     name: { type: String, trim: true, default: "" },
     fullName: { type: String, required: true, trim: true },
@@ -87,5 +102,6 @@ const userSchema = new Schema({
     deletedAt: { type: Date, default: null },
     studentProfile: { type: studentProfileSchema, default: undefined },
     teacherProfile: { type: teacherProfileSchema, default: undefined },
+    showcaseProfile: { type: showcaseProfileSchema, default: () => ({}) },
 }, { timestamps: true });
 export const UserModel = mongoose.model("User", userSchema);

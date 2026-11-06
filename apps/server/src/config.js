@@ -19,7 +19,10 @@ const envSchema = z
     SMTP_PORT: z.coerce.number().default(465), // 465=SSL (secure:true), 587=STARTTLS (secure:false)
     SMTP_USER: z.string().default(""),
     SMTP_PASS: z.string().default(""),
-    SMTP_FROM: z.string().default("TedbabeLearnHUB <noreply@learnhub.et>"),
+    // Empty by default: the From address then falls back to the authenticated
+    // sender (SMTP_USER). Sending as a domain you do not own makes Gmail and
+    // most providers reject the message outright.
+    SMTP_FROM: z.string().default(""),
     STORAGE_PROVIDER: z.enum(["local", "r2"]).default("local"),
     R2_ACCOUNT_ID: z.string().default(""),
     R2_BUCKET: z.string().default(""),

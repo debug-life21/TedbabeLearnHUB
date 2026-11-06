@@ -73,6 +73,8 @@ Here's the recommended free stack:
    | `RESEND_API_KEY` *(Recommended)* | Free HTTPS email API from [resend.com](https://resend.com). **100% immune to cloud port firewalls**. |
    | `BREVO_API_KEY` *(Alternative)* | Free HTTPS email API from [brevo.com](https://brevo.com) (300 emails/day, no credit card needed). |
    | `STORAGE_PROVIDER` | `r2` or `local` |
+   | `GEMINI_API_KEY` *(Required for AI)* | Your Google Gemini API Key from [aistudio.google.com](https://aistudio.google.com/app/apikey) |
+   | `OPENAI_API_KEY` *(Alternative)* | OpenAI API Key if using ChatGPT |
 
 > [!IMPORTANT]
 > **Why do OTP emails need Resend or Brevo on Render?**

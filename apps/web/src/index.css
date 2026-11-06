@@ -301,26 +301,33 @@
 
 /* Badge styled exactly like the [ TLH ] badge in the logo */
 .public-heading-badge {
-  border: 1px solid rgba(7, 27, 73, 0.2);
-  background: #F0F6FF;
-  color: #071B49;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  box-shadow: 0 2px 6px rgba(7, 27, 73, 0.06);
+  border: 1px solid rgba(7, 27, 73, 0.25) !important;
+  background: #F0F6FF !important;
+  color: #071B49 !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.08em !important;
+  box-shadow: 0 2px 6px rgba(7, 27, 73, 0.06) !important;
+}
+
+.public-heading-badge * {
+  color: #071B49 !important;
 }
 
 html.dark .public-heading-badge,
 [data-theme="dark"] .public-heading-badge {
-  background: rgba(18, 102, 232, 0.2) !important;
-  background-color: rgba(18, 102, 232, 0.2) !important;
-  border-color: rgba(18, 188, 235, 0.45) !important;
-  color: #38BDF8 !important;
+  background: rgba(197, 155, 39, 0.16) !important;
+  background-color: rgba(197, 155, 39, 0.16) !important;
+  border: 1px solid rgba(197, 155, 39, 0.5) !important;
+  border-color: rgba(197, 155, 39, 0.5) !important;
+  color: #E8C766 !important;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4) !important;
 }
 
 html.dark .public-heading-badge *,
-[data-theme="dark"] .public-heading-badge * {
-  color: #38BDF8 !important;
+html.dark .public-heading-badge span,
+[data-theme="dark"] .public-heading-badge *,
+[data-theme="dark"] .public-heading-badge span {
+  color: #E8C766 !important;
 }
 
 @keyframes public-heading-in {
@@ -928,6 +935,22 @@ html.dark span:not(.golden-btn *):not(.btn-gold *):not([class*="golden-btn"] *):
 html.dark a:not(.golden-btn):not([class*="golden-btn"]):not([class*="bg-"]):not([class*="text-cyan-"]):not([class*="text-sky-"]):not([class*="text-emerald-"]):not([class*="text-amber-"]),
 [data-theme="dark"] a:not(.golden-btn):not([class*="golden-btn"]):not([class*="bg-"]):not([class*="text-cyan-"]):not([class*="text-sky-"]):not([class*="text-emerald-"]):not([class*="text-amber-"]) {
   color: #FFFFFF !important;
+}
+
+/* Explicit Badge Protections in Dark Mode: Prevent white-on-white badge text */
+html.dark .public-heading-badge,
+[data-theme="dark"] .public-heading-badge {
+  background: rgba(197, 155, 39, 0.16) !important;
+  background-color: rgba(197, 155, 39, 0.16) !important;
+  border-color: rgba(197, 155, 39, 0.5) !important;
+  color: #E8C766 !important;
+}
+
+html.dark .public-heading-badge *,
+html.dark .public-heading-badge span,
+[data-theme="dark"] .public-heading-badge *,
+[data-theme="dark"] .public-heading-badge span {
+  color: #E8C766 !important;
 }
 
 /* Comprehensive text utility mapping in dark mode to #FFFFFF */

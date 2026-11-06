@@ -63,7 +63,28 @@ export function DashboardSettings({ user, sessions = [], onSaved, onNavigateTab 
     const [promoVideoFeedback, setPromoVideoFeedback] = useState("");
     const [savingPromoVideo, setSavingPromoVideo] = useState(false);
 
-    // Load existing promo video from backend (admin only)
+    // Proven Learning Milestones state (Admin customizable)
+    const [milestonesForm, setMilestonesForm] = useState({
+        badge: "OUR GROWING COMMUNITY",
+        title: "Proven Learning Milestones",
+        subtitle: "Real engagement, expert mentorship, and supportive cohort-based environments driving measurable growth.",
+        stat1: "",
+        title1: "Active Learners",
+        desc1: "Students actively acquiring modern digital & technical capabilities.",
+        stat2: "",
+        title2: "Instructors",
+        desc2: "Industry veterans, certified mentors, and passionate subject educators.",
+        stat3: "",
+        title3: "Cohorts",
+        desc3: "Interactive live classroom groups learning and practicing together.",
+        stat4: "",
+        title4: "Mastery Rate",
+        desc4: "Proven learner completion, practical portfolio builds, and verified skills.",
+    });
+    const [savingMilestones, setSavingMilestones] = useState(false);
+    const [milestonesFeedback, setMilestonesFeedback] = useState("");
+
+    // Load existing promo video and milestones from backend (admin only)
     const loadPromoSettings = async () => {
         if (!["admin", "hub_admin"].includes(user?.role)) return;
         try {
@@ -78,6 +99,11 @@ export function DashboardSettings({ user, sessions = [], onSaved, onNavigateTab 
             setPromoVideoLabel(normalized.label);
             setPromoVideoInput(normalized.url);
             setPromoVideoSaved(normalized.url ? normalized : null);
+
+            const rawMilestones = res?.settings?.proven_milestones;
+            if (rawMilestones && typeof rawMilestones === "object") {
+                setMilestonesForm((prev) => ({ ...prev, ...rawMilestones }));
+            }
         } catch (err) {
             console.error("Error loading promo settings:", err);
         }
@@ -266,6 +292,68 @@ export function DashboardSettings({ user, sessions = [], onSaved, onNavigateTab 
         }
     };
 
+    const handleSaveMilestones = async (e) => {
+        e?.preventDefault();
+        setSavingMilestones(true);
+        setMilestonesFeedback("");
+        try {
+            await apiRequest("/api/admin/settings", {
+                method: "POST",
+                body: JSON.stringify({
+                    key: "proven_milestones",
+                    value: milestonesForm,
+                    description: "Customized Proven Learning Milestones on public homepage",
+                }),
+            });
+            setMilestonesFeedback("✅ Proven learning milestones updated successfully on homepage!");
+            setTimeout(() => setMilestonesFeedback(""), 4000);
+            onSaved?.();
+        } catch (err) {
+            setMilestonesFeedback("❌ " + (err?.message || "Failed to save milestones."));
+        } finally {
+            setSavingMilestones(false);
+        }
+    };
+
+    const handleResetMilestones = async () => {
+        if (!window.confirm("Reset milestones to automatic live platform counts?")) return;
+        setSavingMilestones(true);
+        try {
+            await apiRequest("/api/admin/settings", {
+                method: "POST",
+                body: JSON.stringify({
+                    key: "proven_milestones",
+                    value: null,
+                    description: "Reset to auto stats",
+                }),
+            });
+            setMilestonesForm({
+                badge: "OUR GROWING COMMUNITY",
+                title: "Proven Learning Milestones",
+                subtitle: "Real engagement, expert mentorship, and supportive cohort-based environments driving measurable growth.",
+                stat1: "",
+                title1: "Active Learners",
+                desc1: "Students actively acquiring modern digital & technical capabilities.",
+                stat2: "",
+                title2: "Instructors",
+                desc2: "Industry veterans, certified mentors, and passionate subject educators.",
+                stat3: "",
+                title3: "Cohorts",
+                desc3: "Interactive live classroom groups learning and practicing together.",
+                stat4: "",
+                title4: "Mastery Rate",
+                desc4: "Proven learner completion, practical portfolio builds, and verified skills.",
+            });
+            setMilestonesFeedback("🔄 Reset to live platform database counts.");
+            setTimeout(() => setMilestonesFeedback(""), 4000);
+            onSaved?.();
+        } catch (err) {
+            setMilestonesFeedback("❌ " + (err?.message || "Could not reset milestones."));
+        } finally {
+            setSavingMilestones(false);
+        }
+    };
+
     return (
         <div className="grid max-w-4xl gap-6">
             {/* Promo Video Management — admin only */}
@@ -385,6 +473,202 @@ export function DashboardSettings({ user, sessions = [], onSaved, onNavigateTab 
                             )}
                         </div>
                     </div>
+                </DashboardCard>
+            )}
+
+            {/* Proven Learning Milestones Management — admin only */}
+            {["admin", "hub_admin"].includes(user?.role) && (
+                <DashboardCard
+                    title="🏆 Proven Learning Milestones (Homepage Customization)"
+                    subtitle="Customize the public impact numbers, titles, and descriptions shown in the “Proven Learning Milestones” section on the homepage. Leave stats blank to use live automatic database counts."
+                >
+                    <form onSubmit={handleSaveMilestones} className="space-y-5">
+                        {milestonesFeedback && (
+                            <div className={`rounded-xl px-4 py-3 text-sm font-medium ${
+                                milestonesFeedback.startsWith("✅") || milestonesFeedback.startsWith("🔄")
+                                    ? "bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200"
+                                    : "bg-red-50 text-red-800 ring-1 ring-red-200"
+                            }`}>
+                                {milestonesFeedback}
+                            </div>
+                        )}
+
+                        {/* Heading & Subtitle */}
+                        <div className="grid gap-3 sm:grid-cols-2">
+                            <div>
+                                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                                    Section Badge
+                                </label>
+                                <input
+                                    type="text"
+                                    value={milestonesForm.badge}
+                                    onChange={(e) => setMilestonesForm({ ...milestonesForm, badge: e.target.value })}
+                                    placeholder="e.g. OUR GROWING COMMUNITY"
+                                    className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-xs focus:border-blue-500 focus:outline-none"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                                    Section Title
+                                </label>
+                                <input
+                                    type="text"
+                                    value={milestonesForm.title}
+                                    onChange={(e) => setMilestonesForm({ ...milestonesForm, title: e.target.value })}
+                                    placeholder="e.g. Proven Learning Milestones"
+                                    className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-xs focus:border-blue-500 focus:outline-none"
+                                />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                                Section Subtitle
+                            </label>
+                            <input
+                                type="text"
+                                value={milestonesForm.subtitle}
+                                onChange={(e) => setMilestonesForm({ ...milestonesForm, subtitle: e.target.value })}
+                                placeholder="Real engagement, expert mentorship, and supportive cohort-based environments driving measurable growth."
+                                className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-xs focus:border-blue-500 focus:outline-none"
+                            />
+                        </div>
+
+                        {/* Milestone Cards Editor */}
+                        <div className="border-t border-slate-100 dark:border-slate-800 pt-4 space-y-4">
+                            <h4 className="text-xs font-black uppercase tracking-wider text-slate-500">Milestone Cards (Stats & Text)</h4>
+
+                            {/* Card 1: Active Learners */}
+                            <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-2">
+                                <span className="text-xs font-bold text-slate-800 dark:text-slate-200">🎓 Metric 1: Learners</span>
+                                <div className="grid gap-2 sm:grid-cols-3">
+                                    <input
+                                        type="text"
+                                        value={milestonesForm.stat1}
+                                        onChange={(e) => setMilestonesForm({ ...milestonesForm, stat1: e.target.value })}
+                                        placeholder="Stat (e.g. 200+ or blank for auto)"
+                                        className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-xs font-bold"
+                                    />
+                                    <input
+                                        type="text"
+                                        value={milestonesForm.title1}
+                                        onChange={(e) => setMilestonesForm({ ...milestonesForm, title1: e.target.value })}
+                                        placeholder="Card Title (Active Learners)"
+                                        className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-xs"
+                                    />
+                                    <input
+                                        type="text"
+                                        value={milestonesForm.desc1}
+                                        onChange={(e) => setMilestonesForm({ ...milestonesForm, desc1: e.target.value })}
+                                        placeholder="Description"
+                                        className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-xs"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Card 2: Instructors */}
+                            <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-2">
+                                <span className="text-xs font-bold text-slate-800 dark:text-slate-200">👨‍🏫 Metric 2: Instructors</span>
+                                <div className="grid gap-2 sm:grid-cols-3">
+                                    <input
+                                        type="text"
+                                        value={milestonesForm.stat2}
+                                        onChange={(e) => setMilestonesForm({ ...milestonesForm, stat2: e.target.value })}
+                                        placeholder="Stat (e.g. 20+ or blank for auto)"
+                                        className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-xs font-bold"
+                                    />
+                                    <input
+                                        type="text"
+                                        value={milestonesForm.title2}
+                                        onChange={(e) => setMilestonesForm({ ...milestonesForm, title2: e.target.value })}
+                                        placeholder="Card Title (Instructors)"
+                                        className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-xs"
+                                    />
+                                    <input
+                                        type="text"
+                                        value={milestonesForm.desc2}
+                                        onChange={(e) => setMilestonesForm({ ...milestonesForm, desc2: e.target.value })}
+                                        placeholder="Description"
+                                        className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-xs"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Card 3: Cohorts */}
+                            <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-2">
+                                <span className="text-xs font-bold text-slate-800 dark:text-slate-200">📚 Metric 3: Cohorts</span>
+                                <div className="grid gap-2 sm:grid-cols-3">
+                                    <input
+                                        type="text"
+                                        value={milestonesForm.stat3}
+                                        onChange={(e) => setMilestonesForm({ ...milestonesForm, stat3: e.target.value })}
+                                        placeholder="Stat (e.g. 15+ or blank for auto)"
+                                        className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-xs font-bold"
+                                    />
+                                    <input
+                                        type="text"
+                                        value={milestonesForm.title3}
+                                        onChange={(e) => setMilestonesForm({ ...milestonesForm, title3: e.target.value })}
+                                        placeholder="Card Title (Cohorts)"
+                                        className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-xs"
+                                    />
+                                    <input
+                                        type="text"
+                                        value={milestonesForm.desc3}
+                                        onChange={(e) => setMilestonesForm({ ...milestonesForm, desc3: e.target.value })}
+                                        placeholder="Description"
+                                        className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-xs"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Card 4 (Optional): Completion / Custom */}
+                            <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-2">
+                                <span className="text-xs font-bold text-slate-800 dark:text-slate-200">✨ Metric 4: Custom / Mastery (Optional)</span>
+                                <div className="grid gap-2 sm:grid-cols-3">
+                                    <input
+                                        type="text"
+                                        value={milestonesForm.stat4}
+                                        onChange={(e) => setMilestonesForm({ ...milestonesForm, stat4: e.target.value })}
+                                        placeholder="Stat (e.g. 98% or leave blank)"
+                                        className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-xs font-bold"
+                                    />
+                                    <input
+                                        type="text"
+                                        value={milestonesForm.title4}
+                                        onChange={(e) => setMilestonesForm({ ...milestonesForm, title4: e.target.value })}
+                                        placeholder="Card Title (Mastery Rate)"
+                                        className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-xs"
+                                    />
+                                    <input
+                                        type="text"
+                                        value={milestonesForm.desc4}
+                                        onChange={(e) => setMilestonesForm({ ...milestonesForm, desc4: e.target.value })}
+                                        placeholder="Description"
+                                        className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-xs"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+                            <button
+                                type="button"
+                                onClick={handleResetMilestones}
+                                disabled={savingMilestones}
+                                className="rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-2 text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100"
+                            >
+                                Reset to Live Counts
+                            </button>
+                            <button
+                                type="submit"
+                                disabled={savingMilestones}
+                                className="golden-btn rounded-xl px-6 py-2.5 text-xs font-bold text-white shadow-md disabled:opacity-50"
+                            >
+                                {savingMilestones ? "Saving..." : "Save Milestones to Homepage"}
+                            </button>
+                        </div>
+                    </form>
                 </DashboardCard>
             )}
 
@@ -640,6 +924,202 @@ export function DashboardSettings({ user, sessions = [], onSaved, onNavigateTab 
                 </DashboardCard>
             )}
 
+            {/* Proven Learning Milestones Management — admin only */}
+            {["admin", "hub_admin"].includes(user?.role) && (
+                <DashboardCard
+                    title="🏆 Proven Learning Milestones (Homepage Customization)"
+                    subtitle="Customize the public impact numbers, titles, and descriptions shown in the “Proven Learning Milestones” section on the homepage. Leave stats blank to use live automatic database counts."
+                >
+                    <form onSubmit={handleSaveMilestones} className="space-y-5">
+                        {milestonesFeedback && (
+                            <div className={`rounded-xl px-4 py-3 text-sm font-medium ${
+                                milestonesFeedback.startsWith("✅") || milestonesFeedback.startsWith("🔄")
+                                    ? "bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200"
+                                    : "bg-red-50 text-red-800 ring-1 ring-red-200"
+                            }`}>
+                                {milestonesFeedback}
+                            </div>
+                        )}
+
+                        {/* Heading & Subtitle */}
+                        <div className="grid gap-3 sm:grid-cols-2">
+                            <div>
+                                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                                    Section Badge
+                                </label>
+                                <input
+                                    type="text"
+                                    value={milestonesForm.badge}
+                                    onChange={(e) => setMilestonesForm({ ...milestonesForm, badge: e.target.value })}
+                                    placeholder="e.g. OUR GROWING COMMUNITY"
+                                    className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-xs focus:border-blue-500 focus:outline-none"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                                    Section Title
+                                </label>
+                                <input
+                                    type="text"
+                                    value={milestonesForm.title}
+                                    onChange={(e) => setMilestonesForm({ ...milestonesForm, title: e.target.value })}
+                                    placeholder="e.g. Proven Learning Milestones"
+                                    className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-xs focus:border-blue-500 focus:outline-none"
+                                />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                                Section Subtitle
+                            </label>
+                            <input
+                                type="text"
+                                value={milestonesForm.subtitle}
+                                onChange={(e) => setMilestonesForm({ ...milestonesForm, subtitle: e.target.value })}
+                                placeholder="Real engagement, expert mentorship, and supportive cohort-based environments driving measurable growth."
+                                className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-xs focus:border-blue-500 focus:outline-none"
+                            />
+                        </div>
+
+                        {/* Milestone Cards Editor */}
+                        <div className="border-t border-slate-100 dark:border-slate-800 pt-4 space-y-4">
+                            <h4 className="text-xs font-black uppercase tracking-wider text-slate-500">Milestone Cards (Stats & Text)</h4>
+
+                            {/* Card 1: Active Learners */}
+                            <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-2">
+                                <span className="text-xs font-bold text-slate-800 dark:text-slate-200">🎓 Metric 1: Learners</span>
+                                <div className="grid gap-2 sm:grid-cols-3">
+                                    <input
+                                        type="text"
+                                        value={milestonesForm.stat1}
+                                        onChange={(e) => setMilestonesForm({ ...milestonesForm, stat1: e.target.value })}
+                                        placeholder="Stat (e.g. 200+ or blank for auto)"
+                                        className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-xs font-bold"
+                                    />
+                                    <input
+                                        type="text"
+                                        value={milestonesForm.title1}
+                                        onChange={(e) => setMilestonesForm({ ...milestonesForm, title1: e.target.value })}
+                                        placeholder="Card Title (Active Learners)"
+                                        className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-xs"
+                                    />
+                                    <input
+                                        type="text"
+                                        value={milestonesForm.desc1}
+                                        onChange={(e) => setMilestonesForm({ ...milestonesForm, desc1: e.target.value })}
+                                        placeholder="Description"
+                                        className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-xs"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Card 2: Instructors */}
+                            <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-2">
+                                <span className="text-xs font-bold text-slate-800 dark:text-slate-200">👨‍🏫 Metric 2: Instructors</span>
+                                <div className="grid gap-2 sm:grid-cols-3">
+                                    <input
+                                        type="text"
+                                        value={milestonesForm.stat2}
+                                        onChange={(e) => setMilestonesForm({ ...milestonesForm, stat2: e.target.value })}
+                                        placeholder="Stat (e.g. 20+ or blank for auto)"
+                                        className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-xs font-bold"
+                                    />
+                                    <input
+                                        type="text"
+                                        value={milestonesForm.title2}
+                                        onChange={(e) => setMilestonesForm({ ...milestonesForm, title2: e.target.value })}
+                                        placeholder="Card Title (Instructors)"
+                                        className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-xs"
+                                    />
+                                    <input
+                                        type="text"
+                                        value={milestonesForm.desc2}
+                                        onChange={(e) => setMilestonesForm({ ...milestonesForm, desc2: e.target.value })}
+                                        placeholder="Description"
+                                        className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-xs"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Card 3: Cohorts */}
+                            <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-2">
+                                <span className="text-xs font-bold text-slate-800 dark:text-slate-200">📚 Metric 3: Cohorts</span>
+                                <div className="grid gap-2 sm:grid-cols-3">
+                                    <input
+                                        type="text"
+                                        value={milestonesForm.stat3}
+                                        onChange={(e) => setMilestonesForm({ ...milestonesForm, stat3: e.target.value })}
+                                        placeholder="Stat (e.g. 15+ or blank for auto)"
+                                        className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-xs font-bold"
+                                    />
+                                    <input
+                                        type="text"
+                                        value={milestonesForm.title3}
+                                        onChange={(e) => setMilestonesForm({ ...milestonesForm, title3: e.target.value })}
+                                        placeholder="Card Title (Cohorts)"
+                                        className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-xs"
+                                    />
+                                    <input
+                                        type="text"
+                                        value={milestonesForm.desc3}
+                                        onChange={(e) => setMilestonesForm({ ...milestonesForm, desc3: e.target.value })}
+                                        placeholder="Description"
+                                        className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-xs"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Card 4 (Optional): Completion / Custom */}
+                            <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-2">
+                                <span className="text-xs font-bold text-slate-800 dark:text-slate-200">✨ Metric 4: Custom / Mastery (Optional)</span>
+                                <div className="grid gap-2 sm:grid-cols-3">
+                                    <input
+                                        type="text"
+                                        value={milestonesForm.stat4}
+                                        onChange={(e) => setMilestonesForm({ ...milestonesForm, stat4: e.target.value })}
+                                        placeholder="Stat (e.g. 98% or leave blank)"
+                                        className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-xs font-bold"
+                                    />
+                                    <input
+                                        type="text"
+                                        value={milestonesForm.title4}
+                                        onChange={(e) => setMilestonesForm({ ...milestonesForm, title4: e.target.value })}
+                                        placeholder="Card Title (Mastery Rate)"
+                                        className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-xs"
+                                    />
+                                    <input
+                                        type="text"
+                                        value={milestonesForm.desc4}
+                                        onChange={(e) => setMilestonesForm({ ...milestonesForm, desc4: e.target.value })}
+                                        placeholder="Description"
+                                        className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-xs"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+                            <button
+                                type="button"
+                                onClick={handleResetMilestones}
+                                disabled={savingMilestones}
+                                className="rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-2 text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100"
+                            >
+                                Reset to Live Counts
+                            </button>
+                            <button
+                                type="submit"
+                                disabled={savingMilestones}
+                                className="golden-btn rounded-xl px-6 py-2.5 text-xs font-bold text-white shadow-md disabled:opacity-50"
+                            >
+                                {savingMilestones ? "Saving..." : "Save Milestones to Homepage"}
+                            </button>
+                        </div>
+                    </form>
+                </DashboardCard>
+            )}
+
             {user.role === "teacher" && (
                 <DashboardCard
                     title={language === "am" ? "የአስተማሪ የስራ ዝግጁነት ሁኔታ" : "Teaching & Availability Status"}
@@ -664,6 +1144,202 @@ export function DashboardSettings({ user, sessions = [], onSaved, onNavigateTab 
                             </select>
                         </div>
                     </div>
+                </DashboardCard>
+            )}
+
+            {/* Proven Learning Milestones Management — admin only */}
+            {["admin", "hub_admin"].includes(user?.role) && (
+                <DashboardCard
+                    title="🏆 Proven Learning Milestones (Homepage Customization)"
+                    subtitle="Customize the public impact numbers, titles, and descriptions shown in the “Proven Learning Milestones” section on the homepage. Leave stats blank to use live automatic database counts."
+                >
+                    <form onSubmit={handleSaveMilestones} className="space-y-5">
+                        {milestonesFeedback && (
+                            <div className={`rounded-xl px-4 py-3 text-sm font-medium ${
+                                milestonesFeedback.startsWith("✅") || milestonesFeedback.startsWith("🔄")
+                                    ? "bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200"
+                                    : "bg-red-50 text-red-800 ring-1 ring-red-200"
+                            }`}>
+                                {milestonesFeedback}
+                            </div>
+                        )}
+
+                        {/* Heading & Subtitle */}
+                        <div className="grid gap-3 sm:grid-cols-2">
+                            <div>
+                                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                                    Section Badge
+                                </label>
+                                <input
+                                    type="text"
+                                    value={milestonesForm.badge}
+                                    onChange={(e) => setMilestonesForm({ ...milestonesForm, badge: e.target.value })}
+                                    placeholder="e.g. OUR GROWING COMMUNITY"
+                                    className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-xs focus:border-blue-500 focus:outline-none"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                                    Section Title
+                                </label>
+                                <input
+                                    type="text"
+                                    value={milestonesForm.title}
+                                    onChange={(e) => setMilestonesForm({ ...milestonesForm, title: e.target.value })}
+                                    placeholder="e.g. Proven Learning Milestones"
+                                    className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-xs focus:border-blue-500 focus:outline-none"
+                                />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                                Section Subtitle
+                            </label>
+                            <input
+                                type="text"
+                                value={milestonesForm.subtitle}
+                                onChange={(e) => setMilestonesForm({ ...milestonesForm, subtitle: e.target.value })}
+                                placeholder="Real engagement, expert mentorship, and supportive cohort-based environments driving measurable growth."
+                                className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-xs focus:border-blue-500 focus:outline-none"
+                            />
+                        </div>
+
+                        {/* Milestone Cards Editor */}
+                        <div className="border-t border-slate-100 dark:border-slate-800 pt-4 space-y-4">
+                            <h4 className="text-xs font-black uppercase tracking-wider text-slate-500">Milestone Cards (Stats & Text)</h4>
+
+                            {/* Card 1: Active Learners */}
+                            <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-2">
+                                <span className="text-xs font-bold text-slate-800 dark:text-slate-200">🎓 Metric 1: Learners</span>
+                                <div className="grid gap-2 sm:grid-cols-3">
+                                    <input
+                                        type="text"
+                                        value={milestonesForm.stat1}
+                                        onChange={(e) => setMilestonesForm({ ...milestonesForm, stat1: e.target.value })}
+                                        placeholder="Stat (e.g. 200+ or blank for auto)"
+                                        className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-xs font-bold"
+                                    />
+                                    <input
+                                        type="text"
+                                        value={milestonesForm.title1}
+                                        onChange={(e) => setMilestonesForm({ ...milestonesForm, title1: e.target.value })}
+                                        placeholder="Card Title (Active Learners)"
+                                        className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-xs"
+                                    />
+                                    <input
+                                        type="text"
+                                        value={milestonesForm.desc1}
+                                        onChange={(e) => setMilestonesForm({ ...milestonesForm, desc1: e.target.value })}
+                                        placeholder="Description"
+                                        className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-xs"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Card 2: Instructors */}
+                            <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-2">
+                                <span className="text-xs font-bold text-slate-800 dark:text-slate-200">👨‍🏫 Metric 2: Instructors</span>
+                                <div className="grid gap-2 sm:grid-cols-3">
+                                    <input
+                                        type="text"
+                                        value={milestonesForm.stat2}
+                                        onChange={(e) => setMilestonesForm({ ...milestonesForm, stat2: e.target.value })}
+                                        placeholder="Stat (e.g. 20+ or blank for auto)"
+                                        className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-xs font-bold"
+                                    />
+                                    <input
+                                        type="text"
+                                        value={milestonesForm.title2}
+                                        onChange={(e) => setMilestonesForm({ ...milestonesForm, title2: e.target.value })}
+                                        placeholder="Card Title (Instructors)"
+                                        className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-xs"
+                                    />
+                                    <input
+                                        type="text"
+                                        value={milestonesForm.desc2}
+                                        onChange={(e) => setMilestonesForm({ ...milestonesForm, desc2: e.target.value })}
+                                        placeholder="Description"
+                                        className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-xs"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Card 3: Cohorts */}
+                            <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-2">
+                                <span className="text-xs font-bold text-slate-800 dark:text-slate-200">📚 Metric 3: Cohorts</span>
+                                <div className="grid gap-2 sm:grid-cols-3">
+                                    <input
+                                        type="text"
+                                        value={milestonesForm.stat3}
+                                        onChange={(e) => setMilestonesForm({ ...milestonesForm, stat3: e.target.value })}
+                                        placeholder="Stat (e.g. 15+ or blank for auto)"
+                                        className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-xs font-bold"
+                                    />
+                                    <input
+                                        type="text"
+                                        value={milestonesForm.title3}
+                                        onChange={(e) => setMilestonesForm({ ...milestonesForm, title3: e.target.value })}
+                                        placeholder="Card Title (Cohorts)"
+                                        className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-xs"
+                                    />
+                                    <input
+                                        type="text"
+                                        value={milestonesForm.desc3}
+                                        onChange={(e) => setMilestonesForm({ ...milestonesForm, desc3: e.target.value })}
+                                        placeholder="Description"
+                                        className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-xs"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Card 4 (Optional): Completion / Custom */}
+                            <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-2">
+                                <span className="text-xs font-bold text-slate-800 dark:text-slate-200">✨ Metric 4: Custom / Mastery (Optional)</span>
+                                <div className="grid gap-2 sm:grid-cols-3">
+                                    <input
+                                        type="text"
+                                        value={milestonesForm.stat4}
+                                        onChange={(e) => setMilestonesForm({ ...milestonesForm, stat4: e.target.value })}
+                                        placeholder="Stat (e.g. 98% or leave blank)"
+                                        className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-xs font-bold"
+                                    />
+                                    <input
+                                        type="text"
+                                        value={milestonesForm.title4}
+                                        onChange={(e) => setMilestonesForm({ ...milestonesForm, title4: e.target.value })}
+                                        placeholder="Card Title (Mastery Rate)"
+                                        className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-xs"
+                                    />
+                                    <input
+                                        type="text"
+                                        value={milestonesForm.desc4}
+                                        onChange={(e) => setMilestonesForm({ ...milestonesForm, desc4: e.target.value })}
+                                        placeholder="Description"
+                                        className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-xs"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+                            <button
+                                type="button"
+                                onClick={handleResetMilestones}
+                                disabled={savingMilestones}
+                                className="rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-2 text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100"
+                            >
+                                Reset to Live Counts
+                            </button>
+                            <button
+                                type="submit"
+                                disabled={savingMilestones}
+                                className="golden-btn rounded-xl px-6 py-2.5 text-xs font-bold text-white shadow-md disabled:opacity-50"
+                            >
+                                {savingMilestones ? "Saving..." : "Save Milestones to Homepage"}
+                            </button>
+                        </div>
+                    </form>
                 </DashboardCard>
             )}
 
@@ -693,6 +1369,202 @@ export function DashboardSettings({ user, sessions = [], onSaved, onNavigateTab 
                             />
                         </label>
                     </div>
+                </DashboardCard>
+            )}
+
+            {/* Proven Learning Milestones Management — admin only */}
+            {["admin", "hub_admin"].includes(user?.role) && (
+                <DashboardCard
+                    title="🏆 Proven Learning Milestones (Homepage Customization)"
+                    subtitle="Customize the public impact numbers, titles, and descriptions shown in the “Proven Learning Milestones” section on the homepage. Leave stats blank to use live automatic database counts."
+                >
+                    <form onSubmit={handleSaveMilestones} className="space-y-5">
+                        {milestonesFeedback && (
+                            <div className={`rounded-xl px-4 py-3 text-sm font-medium ${
+                                milestonesFeedback.startsWith("✅") || milestonesFeedback.startsWith("🔄")
+                                    ? "bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200"
+                                    : "bg-red-50 text-red-800 ring-1 ring-red-200"
+                            }`}>
+                                {milestonesFeedback}
+                            </div>
+                        )}
+
+                        {/* Heading & Subtitle */}
+                        <div className="grid gap-3 sm:grid-cols-2">
+                            <div>
+                                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                                    Section Badge
+                                </label>
+                                <input
+                                    type="text"
+                                    value={milestonesForm.badge}
+                                    onChange={(e) => setMilestonesForm({ ...milestonesForm, badge: e.target.value })}
+                                    placeholder="e.g. OUR GROWING COMMUNITY"
+                                    className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-xs focus:border-blue-500 focus:outline-none"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                                    Section Title
+                                </label>
+                                <input
+                                    type="text"
+                                    value={milestonesForm.title}
+                                    onChange={(e) => setMilestonesForm({ ...milestonesForm, title: e.target.value })}
+                                    placeholder="e.g. Proven Learning Milestones"
+                                    className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-xs focus:border-blue-500 focus:outline-none"
+                                />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                                Section Subtitle
+                            </label>
+                            <input
+                                type="text"
+                                value={milestonesForm.subtitle}
+                                onChange={(e) => setMilestonesForm({ ...milestonesForm, subtitle: e.target.value })}
+                                placeholder="Real engagement, expert mentorship, and supportive cohort-based environments driving measurable growth."
+                                className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-xs focus:border-blue-500 focus:outline-none"
+                            />
+                        </div>
+
+                        {/* Milestone Cards Editor */}
+                        <div className="border-t border-slate-100 dark:border-slate-800 pt-4 space-y-4">
+                            <h4 className="text-xs font-black uppercase tracking-wider text-slate-500">Milestone Cards (Stats & Text)</h4>
+
+                            {/* Card 1: Active Learners */}
+                            <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-2">
+                                <span className="text-xs font-bold text-slate-800 dark:text-slate-200">🎓 Metric 1: Learners</span>
+                                <div className="grid gap-2 sm:grid-cols-3">
+                                    <input
+                                        type="text"
+                                        value={milestonesForm.stat1}
+                                        onChange={(e) => setMilestonesForm({ ...milestonesForm, stat1: e.target.value })}
+                                        placeholder="Stat (e.g. 200+ or blank for auto)"
+                                        className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-xs font-bold"
+                                    />
+                                    <input
+                                        type="text"
+                                        value={milestonesForm.title1}
+                                        onChange={(e) => setMilestonesForm({ ...milestonesForm, title1: e.target.value })}
+                                        placeholder="Card Title (Active Learners)"
+                                        className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-xs"
+                                    />
+                                    <input
+                                        type="text"
+                                        value={milestonesForm.desc1}
+                                        onChange={(e) => setMilestonesForm({ ...milestonesForm, desc1: e.target.value })}
+                                        placeholder="Description"
+                                        className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-xs"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Card 2: Instructors */}
+                            <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-2">
+                                <span className="text-xs font-bold text-slate-800 dark:text-slate-200">👨‍🏫 Metric 2: Instructors</span>
+                                <div className="grid gap-2 sm:grid-cols-3">
+                                    <input
+                                        type="text"
+                                        value={milestonesForm.stat2}
+                                        onChange={(e) => setMilestonesForm({ ...milestonesForm, stat2: e.target.value })}
+                                        placeholder="Stat (e.g. 20+ or blank for auto)"
+                                        className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-xs font-bold"
+                                    />
+                                    <input
+                                        type="text"
+                                        value={milestonesForm.title2}
+                                        onChange={(e) => setMilestonesForm({ ...milestonesForm, title2: e.target.value })}
+                                        placeholder="Card Title (Instructors)"
+                                        className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-xs"
+                                    />
+                                    <input
+                                        type="text"
+                                        value={milestonesForm.desc2}
+                                        onChange={(e) => setMilestonesForm({ ...milestonesForm, desc2: e.target.value })}
+                                        placeholder="Description"
+                                        className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-xs"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Card 3: Cohorts */}
+                            <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-2">
+                                <span className="text-xs font-bold text-slate-800 dark:text-slate-200">📚 Metric 3: Cohorts</span>
+                                <div className="grid gap-2 sm:grid-cols-3">
+                                    <input
+                                        type="text"
+                                        value={milestonesForm.stat3}
+                                        onChange={(e) => setMilestonesForm({ ...milestonesForm, stat3: e.target.value })}
+                                        placeholder="Stat (e.g. 15+ or blank for auto)"
+                                        className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-xs font-bold"
+                                    />
+                                    <input
+                                        type="text"
+                                        value={milestonesForm.title3}
+                                        onChange={(e) => setMilestonesForm({ ...milestonesForm, title3: e.target.value })}
+                                        placeholder="Card Title (Cohorts)"
+                                        className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-xs"
+                                    />
+                                    <input
+                                        type="text"
+                                        value={milestonesForm.desc3}
+                                        onChange={(e) => setMilestonesForm({ ...milestonesForm, desc3: e.target.value })}
+                                        placeholder="Description"
+                                        className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-xs"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Card 4 (Optional): Completion / Custom */}
+                            <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 space-y-2">
+                                <span className="text-xs font-bold text-slate-800 dark:text-slate-200">✨ Metric 4: Custom / Mastery (Optional)</span>
+                                <div className="grid gap-2 sm:grid-cols-3">
+                                    <input
+                                        type="text"
+                                        value={milestonesForm.stat4}
+                                        onChange={(e) => setMilestonesForm({ ...milestonesForm, stat4: e.target.value })}
+                                        placeholder="Stat (e.g. 98% or leave blank)"
+                                        className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-xs font-bold"
+                                    />
+                                    <input
+                                        type="text"
+                                        value={milestonesForm.title4}
+                                        onChange={(e) => setMilestonesForm({ ...milestonesForm, title4: e.target.value })}
+                                        placeholder="Card Title (Mastery Rate)"
+                                        className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-xs"
+                                    />
+                                    <input
+                                        type="text"
+                                        value={milestonesForm.desc4}
+                                        onChange={(e) => setMilestonesForm({ ...milestonesForm, desc4: e.target.value })}
+                                        placeholder="Description"
+                                        className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1.5 text-xs"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+                            <button
+                                type="button"
+                                onClick={handleResetMilestones}
+                                disabled={savingMilestones}
+                                className="rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-2 text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100"
+                            >
+                                Reset to Live Counts
+                            </button>
+                            <button
+                                type="submit"
+                                disabled={savingMilestones}
+                                className="golden-btn rounded-xl px-6 py-2.5 text-xs font-bold text-white shadow-md disabled:opacity-50"
+                            >
+                                {savingMilestones ? "Saving..." : "Save Milestones to Homepage"}
+                            </button>
+                        </div>
+                    </form>
                 </DashboardCard>
             )}
 

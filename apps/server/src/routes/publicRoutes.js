@@ -16,7 +16,7 @@ import { PlatformSettingModel } from "../models/PlatformSetting.js";
 export const publicRouter = Router();
 
 // Keys that are allowed to be exposed publicly (never expose secrets)
-const PUBLIC_SETTING_KEYS = ["promo_video", "platform_name", "platform_tagline"];
+const PUBLIC_SETTING_KEYS = ["promo_video", "platform_name", "platform_tagline", "proven_milestones"];
 
 publicRouter.get("/home", asyncHandler(async (_req, res) => {
     const categories = await LearningCategoryModel.find({ isActive: true }).sort({ sortOrder: 1 }).lean();
@@ -38,6 +38,31 @@ publicRouter.get("/home", asyncHandler(async (_req, res) => {
         ClassroomModel.countDocuments({ status: { $in: ["planned", "active"] } }),
         TeacherApplicationModel.countDocuments({ status: "pending" }),
     ]);
+
+    // Fetch admin-published showcase instructors for the "Learn from Industry Professionals" section.
+    // Only instructors the admin explicitly publishes in the showcase modal appear publicly.
+    const publishedShowcases = await UserModel.find({
+        role: "teacher",
+        "showcaseProfile.isPublished": true,
+        isDeleted: { $ne: true },
+    })
+        .sort({ "showcaseProfile.displayOrder": 1, updatedAt: -1 })
+        .lean();
+
+    const mappedInstructors = publishedShowcases.map((t) => ({
+        _id: t._id.toString(),
+        fullName: t.showcaseProfile?.displayName || t.fullName || t.name,
+        avatar: t.showcaseProfile?.photoUrl || t.avatarUrl || "/learnhub-icon.png",
+        expertise: t.showcaseProfile?.subjectTitle || t.teacherProfile?.expertise?.[0] || "Senior Instructor",
+        experience: t.showcaseProfile?.experience || (t.teacherProfile?.experienceYears ? `${t.teacherProfile.experienceYears}+ years experience` : "Industry Expert"),
+        bio: t.showcaseProfile?.bio || t.bio || t.teacherProfile?.bio || "Certified educator passionate about guided student success.",
+        languages: t.teacherProfile?.teachingLanguages?.length ? t.teacherProfile.teachingLanguages : ["English", "Amharic"],
+        isCustomShowcase: true,
+    }));
+
+    // Proven Learning Milestones setting
+    const milestonesDoc = await PlatformSettingModel.findOne({ key: "proven_milestones" }).lean();
+
     res.json({
         brand: {
             name: "TedbabeLearnHUB (TLH)",
@@ -45,6 +70,8 @@ publicRouter.get("/home", asyncHandler(async (_req, res) => {
         },
         categories,
         featuredCourses,
+        instructors: mappedInstructors,
+        milestones: milestonesDoc?.value || null,
         stats: {
             activeStudents,
             activeTeachers,
@@ -144,25 +171,30 @@ publicRouter.get("/courses/:slugOrId", asyncHandler(async (req, res) => {
 }));
 
 publicRouter.get("/instructors", asyncHandler(async (_req, res) => {
+    // Public instructor list is driven ONLY by admin-published showcase profiles.
     const teachers = await UserModel.find({
         role: "teacher",
-        teacherStatus: "approved",
-        accountStatus: "active",
+        "showcaseProfile.isPublished": true,
         isDeleted: { $ne: true },
     })
-        .select("name fullName email avatarUrl bio teacherProfile createdAt")
-        .sort({ createdAt: -1 })
-        .limit(20)
+        .select("name fullName email avatarUrl bio teacherProfile showcaseProfile createdAt")
+        .sort({ "showcaseProfile.displayOrder": 1, createdAt: -1 })
         .lean();
 
     res.json({
         instructors: teachers.map((t) => ({
             id: t._id.toString(),
-            name: t.fullName || t.name,
-            avatarUrl: t.avatarUrl || "",
-            bio: t.bio || t.teacherProfile?.bio || "Certified TedbabeLearnHUB Instructor passionate about guided student success.",
-            expertise: t.teacherProfile?.expertise || ["Interactive Teaching", "Curriculum Mastery"],
-            qualifications: t.teacherProfile?.qualifications || "Verified Educator",
+            name: t.showcaseProfile?.displayName || t.fullName || t.name,
+            avatarUrl: t.showcaseProfile?.photoUrl || t.avatarUrl || "",
+            bio: t.showcaseProfile?.bio || t.bio || t.teacherProfile?.bio || "Certified TedbabeLearnHUB Instructor passionate about guided student success.",
+            expertise: t.showcaseProfile?.subjectTitle
+                ? [t.showcaseProfile.subjectTitle]
+                : t.teacherProfile?.expertise?.length
+                ? t.teacherProfile.expertise
+                : ["Interactive Teaching", "Curriculum Mastery"],
+            experience: t.showcaseProfile?.experience || (t.teacherProfile?.experienceYears ? `${t.teacherProfile.experienceYears}+ years experience` : "Industry Expert"),
+            qualifications: t.showcaseProfile?.subjectTitle || t.teacherProfile?.qualifications || "Verified Educator",
+            isPublishedShowcase: Boolean(t.showcaseProfile?.isPublished),
         })),
     });
 }));

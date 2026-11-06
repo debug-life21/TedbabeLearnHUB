@@ -245,45 +245,75 @@ INSTRUCTIONAL GUIDELINES:
    - Never claim to directly edit database records, attendance, or official grades.
    - Always format answers with clean Markdown (headers, bullet points, bold highlights, code blocks).`;
 
-                // Format messages for Gemini API
-                const contents = messages.slice(-10).map((m) => ({
-                    role: m.role === "assistant" ? "model" : "user",
-                    parts: [{ text: m.content }],
-                }));
+                // Format messages for Gemini API (ensures starts with 'user' and alternates)
+                const validMessages = messages.filter((m) => m && m.content && String(m.content).trim());
+                const contents = [];
 
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 18000);
-
-                const response = await fetch(
-                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`,
-                    {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        signal: controller.signal,
-                        body: JSON.stringify({
-                            systemInstruction: { parts: [{ text: systemInstruction }] },
-                            contents,
-                            generationConfig: {
-                                temperature: 0.7,
-                                topP: 0.95,
-                                maxOutputTokens: 1200,
-                            },
-                        }),
-                    },
-                );
-
-                clearTimeout(timeoutId);
-
-                if (response.ok) {
-                    const data = await response.json();
-                    const text =
-                        data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-                    if (text) {
-                        return res.json({
-                            reply: text,
-                            provider: "gemini",
-                            role,
+                validMessages.slice(-10).forEach((m) => {
+                    const mappedRole = m.role === "assistant" ? "model" : "user";
+                    if (contents.length === 0 && mappedRole === "model") {
+                        // Skip leading model welcome greeting so Gemini starts with a user turn
+                        return;
+                    }
+                    const last = contents[contents.length - 1];
+                    if (last && last.role === mappedRole) {
+                        last.parts[0].text += `\n\n${m.content}`;
+                    } else {
+                        contents.push({
+                            role: mappedRole,
+                            parts: [{ text: String(m.content).trim() }],
                         });
+                    }
+                });
+
+                if (contents.length === 0) {
+                    contents.push({
+                        role: "user",
+                        parts: [{ text: latestMessage }],
+                    });
+                }
+
+                const geminiModels = ["gemini-3.1-flash-lite", "gemini-3.5-flash", "gemini-3.8-flash"];
+                const requestPayload = JSON.stringify({
+                    systemInstruction: { parts: [{ text: systemInstruction }] },
+                    contents,
+                    generationConfig: {
+                        temperature: 0.7,
+                        topP: 0.95,
+                        maxOutputTokens: 1200,
+                    },
+                });
+
+                for (const model of geminiModels) {
+                    try {
+                        const controller = new AbortController();
+                        const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+                        const response = await fetch(
+                            `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiApiKey}`,
+                            {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                signal: controller.signal,
+                                body: requestPayload,
+                            },
+                        );
+
+                        clearTimeout(timeoutId);
+
+                        if (response.ok) {
+                            const data = await response.json();
+                            const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+                            if (text) {
+                                return res.json({
+                                    reply: text,
+                                    provider: "gemini",
+                                    role,
+                                });
+                            }
+                        }
+                    } catch (modelErr) {
+                        console.warn(`[TLH AI] Gemini ${model} failed, trying next:`, modelErr.message);
                     }
                 }
             } catch (err) {

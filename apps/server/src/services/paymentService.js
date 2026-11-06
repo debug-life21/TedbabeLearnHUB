@@ -87,9 +87,11 @@ function webhookUrl(providerId) {
     return `${base}/api/payments/webhook/${providerId}`;
 }
 
-function resultPageUrl(reference) {
+// The result page verifies by order id (`/api/payments/orders/:orderId/verify`),
+// so the fallback redirect must carry the order id, not the human reference.
+function resultPageUrl(order) {
     const base = env.CLIENT_URL.replace(/\/+$/, "");
-    return `${base}/payment/result?reference=${encodeURIComponent(reference)}`;
+    return `${base}/payment/result?orderId=${encodeURIComponent(String(order._id))}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -298,7 +300,7 @@ export async function startCheckout({ studentId, orderId, providerId, returnUrl,
     }
 
     const notifyUrl = webhookUrl(provider.id);
-    const resolvedReturnUrl = safeRedirectUrl(returnUrl, resultPageUrl(order.reference));
+    const resolvedReturnUrl = safeRedirectUrl(returnUrl, resultPageUrl(order));
     const resolvedCancelUrl = safeRedirectUrl(cancelUrl, resolvedReturnUrl);
 
     let transaction = await TransactionModel.findOne({

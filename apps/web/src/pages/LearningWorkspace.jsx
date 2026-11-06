@@ -1505,8 +1505,13 @@ export function LearningWorkspace() {
                                                     </p>
                                                 </div>
                                                 <div className="flex shrink-0 items-center gap-2">
-                                                    <span className={`rounded-lg px-2 py-0.5 text-[9px] font-black uppercase tracking-wider ${isLiveNow ? "bg-emerald-700 text-white" : isCompleted ? "bg-stone-200 text-stone-600" : "bg-blue-100 text-blue-700"
-                                                        }`}>
+                                                    <span className={`rounded-lg px-2.5 py-0.5 text-[9px] font-black uppercase tracking-wider ${
+                                                        isLiveNow
+                                                            ? "bg-emerald-700 dark:bg-emerald-600 text-white"
+                                                            : isCompleted
+                                                            ? "golden-btn text-white shadow-xs"
+                                                            : "bg-amber-100 text-amber-900 dark:bg-[#C59B27]/25 dark:text-[#E8C766] border border-amber-300 dark:border-[#C59B27]/50"
+                                                    }`}>
                                                         {isLiveNow ? "In Progress" : isCompleted ? "Completed" : "Scheduled"}
                                                     </span>
                                                     {sess.meetingUrl && (
@@ -1514,7 +1519,7 @@ export function LearningWorkspace() {
                                                             href={sess.meetingUrl}
                                                             target="_blank"
                                                             rel="noopener noreferrer"
-                                                            className="rounded-lg bg-emerald-800 px-2.5 py-1 text-[10px] font-bold text-white hover:bg-emerald-700"
+                                                            className="golden-btn rounded-lg px-2.5 py-1 text-[10px] font-bold text-white shadow-xs"
                                                         >
                                                             Inspect Meet →
                                                         </a>

@@ -382,6 +382,52 @@ adminRouter.get(
     res.json({ teachers });
   }),
 );
+adminRouter.put(
+  "/teachers/:id/showcase",
+  asyncHandler(async (req, res) => {
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      throw new ApiError(400, "Invalid teacher ID.");
+    }
+    const teacher = await UserModel.findOne({
+      _id: req.params.id,
+      role: "teacher",
+      isDeleted: { $ne: true },
+    });
+    if (!teacher) {
+      throw new ApiError(404, "Teacher account not found.");
+    }
+
+    const {
+      displayName,
+      photoUrl,
+      subjectTitle,
+      experience,
+      bio,
+      isPublished,
+      displayOrder,
+    } = req.body;
+
+    // Updates ONLY the public showcase profile for public visitors/guests
+    // Preserves the teacher's personal dashboard profile untouched
+    teacher.showcaseProfile = {
+      displayName: typeof displayName === "string" ? displayName.trim() : teacher.showcaseProfile?.displayName || "",
+      photoUrl: typeof photoUrl === "string" ? photoUrl.trim() : teacher.showcaseProfile?.photoUrl || "",
+      subjectTitle: typeof subjectTitle === "string" ? subjectTitle.trim() : teacher.showcaseProfile?.subjectTitle || "",
+      experience: typeof experience === "string" ? experience.trim() : teacher.showcaseProfile?.experience || "",
+      bio: typeof bio === "string" ? bio.trim() : teacher.showcaseProfile?.bio || "",
+      isPublished: Boolean(isPublished),
+      displayOrder: Number(displayOrder) || 0,
+    };
+
+    await teacher.save();
+    res.json({
+      message: teacher.showcaseProfile.isPublished
+        ? "Instructor public showcase profile published successfully."
+        : "Instructor showcase profile saved (unpublished).",
+      teacher,
+    });
+  }),
+);
 adminRouter.get(
   "/administrators",
   asyncHandler(async (_req, res) => {

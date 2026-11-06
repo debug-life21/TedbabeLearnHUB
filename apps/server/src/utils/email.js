@@ -2,12 +2,17 @@ import nodemailer from "nodemailer";
 import { env, isProduction } from "../config.js";
 import { ApiError } from "../lib/http.js";
 
+/** The authenticated sender address, read from configuration only. */
+function senderAddress() {
+    return (env.SMTP_USER || "").replace(/^["']|["']$/g, "").trim();
+}
+
 function getTransporters() {
-    const smtpUser = (env.SMTP_USER || "debuglife1221@gmail.com").replace(/^["']|["']$/g, "").trim();
-    const smtpPass = (env.SMTP_PASS || "iakgmhpfzlvyavcw").replace(/^["']|["']$/g, "").replace(/\s+/g, "");
+    const smtpUser = senderAddress();
+    const smtpPass = (env.SMTP_PASS || "").replace(/^["']|["']$/g, "").replace(/\s+/g, "");
     if (!smtpUser || !smtpPass) {
         if (!isProduction) return [];
-        console.warn("[Mailer] SMTP credentials missing in production. Falling back to log-based verification.");
+        console.warn("[Mailer] SMTP credentials missing in production. Set SMTP_USER/SMTP_PASS, or set an HTTPS provider key (RESEND_API_KEY, BREVO_API_KEY, SENDGRID_API_KEY).");
         return [];
     }
 
@@ -59,7 +64,7 @@ function getTransporters() {
 async function deliverViaSendGrid(mailOptions) {
     const sendgridKey = (process.env.SENDGRID_API_KEY || "").replace(/^["']|["']$/g, "").trim();
     if (!sendgridKey) return null;
-    const sendgridFrom = (process.env.SENDGRID_FROM || env.SMTP_USER || "debuglife1221@gmail.com").replace(/^["']|["']$/g, "").trim();
+    const sendgridFrom = (process.env.SENDGRID_FROM || senderAddress()).replace(/^["']|["']$/g, "").trim();
     try {
         const res = await fetch("https://api.sendgrid.com/v3/mail/send", {
             method: "POST",
@@ -124,7 +129,7 @@ async function deliverViaResend(mailOptions) {
 async function deliverViaBrevo(mailOptions) {
     const brevoKey = (process.env.BREVO_API_KEY || "").replace(/^["']|["']$/g, "").trim();
     if (!brevoKey) return null;
-    const senderEmail = (env.SMTP_USER || "debuglife1221@gmail.com").replace(/^["']|["']$/g, "").trim();
+    const senderEmail = senderAddress();
     try {
         const res = await fetch("https://api.brevo.com/v3/smtp/email", {
             method: "POST",
@@ -171,7 +176,10 @@ async function deliverEmail(mailOptions) {
 
     const candidates = getTransporters();
     if (!candidates.length) {
-        return { delivered: false, reason: "smtp_unconfigured" };
+        // Throw rather than return a falsy result: every caller only treats a
+        // thrown error as "not delivered". Returning here silently reported a
+        // successful send and suppressed the verification-code fallback.
+        throw new Error("No email transport is configured. Set RESEND_API_KEY/BREVO_API_KEY/SENDGRID_API_KEY, or SMTP_USER/SMTP_PASS.");
     }
 
     let lastError = null;
@@ -249,7 +257,7 @@ function formatFromAddress(label, smtpUser) {
 export async function sendVerificationCode({ email, name, code, purpose = "signup" }) {
     const escapedName = escapeHtml(name || "Learner");
     console.log(`[TedbabeLearnHUB Mailer] Verification code (${purpose}) for ${email} (${escapedName}): [ ${code} ]`);
-    const smtpUser = (env.SMTP_USER?.trim() || "debuglife1221@gmail.com").trim();
+    const smtpUser = senderAddress();
     const fromAddress = formatFromAddress("TedbabeLearnHUB", smtpUser);
     const isLogin = purpose === "login";
     const headline = isLogin ? "Confirm a new sign-in" : "Verify your account";
@@ -296,7 +304,7 @@ export async function sendVerificationCode({ email, name, code, purpose = "signu
 
 export async function sendPasswordResetEmail({ email, name, resetUrl, code }) {
     const escapedName = escapeHtml(name);
-    const smtpUser = (env.SMTP_USER?.trim() || "debuglife1221@gmail.com").trim();
+    const smtpUser = senderAddress();
     const fromAddress = formatFromAddress("TedbabeLearnHUB Security", smtpUser);
     try {
         await deliverEmail({
@@ -335,7 +343,7 @@ export async function sendPasswordResetEmail({ email, name, resetUrl, code }) {
 
 export async function sendSecurityAlertEmail({ email, name, action }) {
     const escapedName = escapeHtml(name);
-    const smtpUser = (env.SMTP_USER?.trim() || "debuglife1221@gmail.com").trim();
+    const smtpUser = senderAddress();
     const fromAddress = formatFromAddress("TedbabeLearnHUB Security", smtpUser);
     try {
         await deliverEmail({
@@ -363,7 +371,7 @@ export async function sendAnnouncementEmail({ email, name, title, content, prior
     const escapedName = escapeHtml(name || "Learner");
     const escapedTitle = escapeHtml(title);
     const escapedContent = escapeHtml(content).replace(/\n/g, "<br/>");
-    const smtpUser = (env.SMTP_USER?.trim() || "debuglife1221@gmail.com").trim();
+    const smtpUser = senderAddress();
     const fromAddress = formatFromAddress("TedbabeLearnHUB Announcements", smtpUser);
     const badgeColor = priority === "urgent" ? "#ef4444" : priority === "high" ? "#f59e0b" : "#3b82f6";
     const badgeText = priority.toUpperCase();
@@ -404,7 +412,7 @@ export async function sendClassPlacementEmail({ email, name, role = "student", c
     const escapedName = escapeHtml(name || "Learner");
     const escapedClass = escapeHtml(classroomTitle || "Your Class");
     const escapedOther = escapeHtml(otherPartyName || "");
-    const smtpUser = (env.SMTP_USER?.trim() || "debuglife1221@gmail.com").trim();
+    const smtpUser = senderAddress();
     const fromAddress = formatFromAddress("TedbabeLearnHUB Academics", smtpUser);
     const isTeacher = role === "teacher";
 
@@ -455,7 +463,7 @@ export async function sendSessionScheduledEmail({ email, name, role = "student",
     const escapedName = escapeHtml(name || "Learner");
     const escapedSession = escapeHtml(sessionTitle || "Live Class");
     const escapedClass = escapeHtml(classroomTitle || "Your Class");
-    const smtpUser = (env.SMTP_USER?.trim() || "debuglife1221@gmail.com").trim();
+    const smtpUser = senderAddress();
     const fromAddress = formatFromAddress("TedbabeLearnHUB Sessions", smtpUser);
 
     const formattedStart = new Date(startsAt).toLocaleString("en-US", {

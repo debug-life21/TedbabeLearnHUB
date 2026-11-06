@@ -256,6 +256,20 @@ export function AdminDashboard({ user }) {
     classroomId: "",
     priority: "normal",
   });
+  const [showcaseModal, setShowcaseModal] = useState({
+    open: false,
+    teacherId: "",
+    teacherOriginalName: "",
+    displayName: "",
+    photoUrl: "",
+    subjectTitle: "",
+    experience: "",
+    bio: "",
+    isPublished: false,
+    displayOrder: 1,
+  });
+  const [savingShowcase, setSavingShowcase] = useState(false);
+  const [showcaseFeedback, setShowcaseFeedback] = useState("");
   const availableClasses = useMemo(
     () =>
       classes.filter(
@@ -1428,6 +1442,62 @@ export function AdminDashboard({ user }) {
       setSecurityLoading(false);
     }
   };
+
+  const openTeacherShowcaseModal = (teacher) => {
+    const sc = teacher.showcaseProfile || {};
+    setShowcaseModal({
+      open: true,
+      teacherId: teacher._id,
+      teacherOriginalName: teacher.fullName || teacher.name,
+      displayName: sc.displayName || teacher.fullName || teacher.name,
+      photoUrl: sc.photoUrl || teacher.avatarUrl || "",
+      subjectTitle: sc.subjectTitle || teacher.teacherProfile?.expertise?.[0] || "",
+      experience: sc.experience || (teacher.teacherProfile?.experienceYears ? `${teacher.teacherProfile.experienceYears}+ years experience` : ""),
+      bio: sc.bio || teacher.bio || teacher.teacherProfile?.bio || "",
+      isPublished: Boolean(sc.isPublished),
+      displayOrder: sc.displayOrder || 1,
+    });
+    setShowcaseFeedback("");
+  };
+
+  const handleSaveShowcase = async (e) => {
+    e.preventDefault();
+    if (!showcaseModal.teacherId) return;
+    try {
+      setSavingShowcase(true);
+      setShowcaseFeedback("");
+      const payload = {
+        displayName: showcaseModal.displayName,
+        photoUrl: showcaseModal.photoUrl,
+        subjectTitle: showcaseModal.subjectTitle,
+        experience: showcaseModal.experience,
+        bio: showcaseModal.bio,
+        isPublished: Boolean(showcaseModal.isPublished),
+        displayOrder: Number(showcaseModal.displayOrder) || 1,
+      };
+      const res = await apiRequest(`/api/admin/teachers/${showcaseModal.teacherId}/showcase`, {
+        method: "PUT",
+        body: JSON.stringify(payload),
+      });
+      // Update local teachers array
+      setTeachers((prev) =>
+        prev.map((t) =>
+          t._id === showcaseModal.teacherId
+            ? { ...t, showcaseProfile: payload }
+            : t,
+        ),
+      );
+      setShowcaseFeedback(res?.message || "Showcase profile updated successfully!");
+      setTimeout(() => {
+        setShowcaseModal((prev) => ({ ...prev, open: false }));
+        setShowcaseFeedback("");
+      }, 1000);
+    } catch (err) {
+      setShowcaseFeedback(`Error: ${err?.message || "Failed to update showcase profile."}`);
+    } finally {
+      setSavingShowcase(false);
+    }
+  };
   // Derived analytics view-model — every value comes straight from the API.
   const analyticsOverview = analyticsData?.overview;
   const analyticsRegistrationPoints = (
@@ -1872,17 +1942,40 @@ export function AdminDashboard({ user }) {
                     className="flex flex-wrap items-center justify-between gap-4 py-4"
                   >
                     <div>
-                      <h4 className="font-bold text-slate-900">
-                        {teach.fullName}
-                      </h4>
-                      <p className="text-xs text-slate-500">{teach.email}</p>
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-bold text-slate-900">
+                          {teach.fullName}
+                        </h4>
+                        {teach.showcaseProfile?.isPublished && (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 dark:bg-emerald-950/80 px-2.5 py-0.5 text-[10px] font-bold text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-600/40">
+                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                            Public Showcase
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 mt-0.5">
+                        <span>✉️ {teach.email}</span>
+                        <span className="font-semibold text-slate-800 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded">
+                          📞 {teach.phone || "No phone added"}
+                        </span>
+                      </div>
                       <p className="mt-1 text-xs text-slate-600">
                         Expertise:{" "}
                         {teach.teacherProfile?.expertise?.join(", ") ||
                           "General"}
+                        {teach.showcaseProfile?.subjectTitle ? ` · Showcase: “${teach.showcaseProfile.subjectTitle}”` : ""}
                       </p>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => openTeacherShowcaseModal(teach)}
+                        className="golden-btn rounded-xl px-3 py-1.5 text-xs font-bold text-white shadow-xs inline-flex items-center gap-1.5"
+                        title="Customize and publish public profile (does not change teacher personal dashboard)"
+                      >
+                        <span>✨</span>
+                        <span>{teach.showcaseProfile?.isPublished ? "Edit Showcase" : "Customize & Publish"}</span>
+                      </button>
                       <Badge
                         variant={
                           teach.accountStatus === "active" ? "emerald" : "rose"
@@ -2000,7 +2093,12 @@ export function AdminDashboard({ user }) {
                           {stud.accountStatus}
                         </Badge>
                       </div>
-                      <p className="text-xs text-slate-500">{stud.email}</p>
+                      <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 mt-0.5">
+                        <span>✉️ {stud.email}</span>
+                        <span className="font-semibold text-slate-800 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded">
+                          📞 {stud.phone || "No phone added"}
+                        </span>
+                      </div>
                       <p className="mt-1 text-xs text-slate-600">
                         Goals:{" "}
                         {stud.studentProfile?.learningGoals || "None specified"}{" "}
@@ -2013,7 +2111,7 @@ export function AdminDashboard({ user }) {
                         <button
                           type="button"
                           onClick={() => void handleVerifyUserEmail(stud)}
-                          className="mb-2 rounded-lg bg-[var(--primary-light)] text-[var(--tlh-blue-primary)] hover:bg-blue-100 px-3 py-1.5 text-xs font-bold shadow-sm"
+                          className="mb-2 rounded-lg bg-[var(--primary-light)] dark:bg-slate-800 text-[var(--tlh-blue-primary)] dark:text-cyan-300 border border-transparent dark:border-slate-700 hover:bg-blue-100 dark:hover:bg-slate-700 px-3 py-1.5 text-xs font-bold shadow-sm"
                         >
                           ✓ Verify email
                         </button>
@@ -2021,7 +2119,7 @@ export function AdminDashboard({ user }) {
                       <button
                         type="button"
                         onClick={() => void handleToggleUserStatus(stud)}
-                        className={`mb-2 rounded-lg px-3 py-1.5 text-xs font-bold ${stud.accountStatus === "active" ? "bg-amber-100 text-amber-800 hover:bg-amber-200" : "bg-sky-100 text-blue-800 hover:bg-sky-200"}`}
+                        className={`mb-2 rounded-lg px-3 py-1.5 text-xs font-bold ${stud.accountStatus === "active" ? "bg-amber-100 text-amber-900 dark:bg-amber-950/40 dark:text-amber-300 border border-amber-300 dark:border-amber-500/30 hover:bg-amber-200" : "golden-btn"}`}
                       >
                         {stud.accountStatus === "active"
                           ? "Suspend"
@@ -2547,7 +2645,7 @@ export function AdminDashboard({ user }) {
                         teacherId: cls.teacher?._id || "",
                       })
                     }
-                    className="w-full rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-bold text-[var(--tlh-blue-hover)] transition hover:bg-blue-100"
+                    className="w-full rounded-xl border border-blue-200 dark:border-slate-700 bg-blue-50 dark:bg-slate-800 px-3 py-2 text-sm font-bold text-[var(--tlh-blue-hover)] dark:text-cyan-300 transition hover:bg-blue-100 dark:hover:bg-slate-700"
                   >
                     {cls.teacher ? "Change teacher" : "Assign teacher"}
                   </button>
@@ -2567,7 +2665,7 @@ export function AdminDashboard({ user }) {
                         });
                         setCreateClassModal(true);
                       }}
-                      className="flex-1 rounded-xl border border-slate-200 px-3 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
+                      className="flex-1 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition"
                     >
                       Edit cohort
                     </button>
@@ -2579,7 +2677,7 @@ export function AdminDashboard({ user }) {
                           label: `Cohort “${cls.title}” and its related learning records`,
                         })
                       }
-                      className="rounded-xl border border-rose-200 px-3 py-2 text-sm font-bold text-rose-700 hover:bg-rose-50"
+                      className="rounded-xl border border-rose-200 dark:border-rose-500/40 bg-white dark:bg-rose-950/30 px-3 py-2 text-sm font-bold text-rose-700 dark:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-900/40 transition"
                     >
                       Delete
                     </button>
@@ -2613,7 +2711,7 @@ export function AdminDashboard({ user }) {
                         + Schedule
                       </button>
                     </div>
-                    <div className="space-y-2">
+                    <div className="space-y-2 max-h-[460px] overflow-y-auto pr-1">
                       {sessions
                         .filter(
                           (session) =>
@@ -2634,11 +2732,11 @@ export function AdminDashboard({ user }) {
                           return (
                             <div
                               key={session._id}
-                              className="rounded-lg bg-stone-50 p-3"
+                              className="rounded-lg bg-stone-50 dark:bg-slate-800/80 border border-slate-200/90 dark:border-slate-700 p-3"
                             >
                               <div className="flex flex-wrap items-start justify-between gap-2">
                                 <div className="min-w-0">
-                                  <p className="truncate text-xs font-bold text-slate-800">
+                                  <p className="truncate text-xs font-bold text-slate-800 dark:text-white">
                                     {session.title}
                                   </p>
                                   <p className="text-[11px] text-slate-500">
@@ -2654,7 +2752,15 @@ export function AdminDashboard({ user }) {
                                   </p>
                                   <div className="mt-1 flex flex-wrap items-center gap-1.5">
                                     <span
-                                      className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold ${isLive ? "bg-sky-100 text-blue-800" : "bg-slate-200 text-slate-700"}`}
+                                      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
+                                        isLive
+                                          ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-400/40"
+                                          : session.status === "completed"
+                                          ? "golden-btn text-white shadow-xs"
+                                          : session.status === "scheduled"
+                                          ? "bg-amber-100 text-amber-900 dark:bg-[#C59B27]/25 dark:text-[#E8C766] border border-amber-300 dark:border-[#C59B27]/50"
+                                          : "bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                                      }`}
                                     >
                                       {statusLabel}
                                     </span>
@@ -2675,7 +2781,7 @@ export function AdminDashboard({ user }) {
                                       </span>
                                     ) : null}
                                   </div>
-                                  <p className="mt-1 text-[11px] text-slate-500">
+                                  <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
                                     {cls.teacher?.fullName || "No teacher"} ·{" "}
                                     {cls.students?.length || 0} learners ·{" "}
                                     {cls.timeZone}
@@ -2739,7 +2845,7 @@ export function AdminDashboard({ user }) {
                                           "completed",
                                         )
                                       }
-                                      className="rounded-md border border-emerald-400 dark:border-emerald-500/40 bg-emerald-50/60 dark:bg-emerald-950/40 px-2 py-1 text-[11px] font-bold text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 disabled:opacity-50 transition"
+                                      className="golden-btn rounded-md px-2.5 py-1 text-[11px] font-bold text-white shadow-xs disabled:opacity-50 transition"
                                     >
                                       Mark complete
                                     </button>
@@ -3118,7 +3224,7 @@ export function AdminDashboard({ user }) {
                                         "published",
                                       )
                                     }
-                                    className="rounded-lg bg-[var(--primary-light)] px-3 py-1.5 text-[11px] font-bold text-[var(--tlh-blue-primary)] hover:bg-blue-100 disabled:opacity-60"
+                                    className="golden-btn rounded-lg px-3 py-1.5 text-[11px] font-bold text-white shadow-xs disabled:opacity-60"
                                   >
                                     Publish
                                   </button>
@@ -3675,7 +3781,7 @@ export function AdminDashboard({ user }) {
                               href={link.url}
                               target="_blank"
                               rel="noreferrer"
-                              className="rounded-lg bg-blue-50 px-2 py-1 text-[11px] font-semibold text-[var(--tlh-blue-hover)] hover:bg-blue-100"
+                              className="rounded-lg bg-blue-50 dark:bg-slate-800 border border-transparent dark:border-slate-700 px-2 py-1 text-[11px] font-semibold text-[var(--tlh-blue-hover)] dark:text-cyan-300 hover:bg-blue-100 dark:hover:bg-slate-700"
                             >
                               🔗 {link.label || link.url}
                             </a>
@@ -3769,7 +3875,7 @@ export function AdminDashboard({ user }) {
                               href={link.url}
                               target="_blank"
                               rel="noreferrer"
-                              className="rounded-lg bg-blue-50 px-2 py-1 text-[11px] font-semibold text-[var(--tlh-blue-hover)] hover:bg-blue-100"
+                              className="rounded-lg bg-blue-50 dark:bg-slate-800 border border-transparent dark:border-slate-700 px-2 py-1 text-[11px] font-semibold text-[var(--tlh-blue-hover)] dark:text-cyan-300 hover:bg-blue-100 dark:hover:bg-slate-700"
                             >
                               🔗 {link.label || link.url}
                             </a>
@@ -6432,7 +6538,7 @@ export function AdminDashboard({ user }) {
             <button
               type="submit"
               disabled={schedulableClasses.length === 0}
-              className="w-full rounded-xl bg-slate-900 py-2.5 text-xs font-bold text-white disabled:cursor-not-allowed disabled:bg-slate-300"
+              className="golden-btn w-full rounded-xl py-2.5 text-xs font-bold text-white shadow-md disabled:cursor-not-allowed disabled:opacity-40"
             >
               {editingSessionId ? "Save session" : "Schedule session"}
             </button>
@@ -6568,6 +6674,175 @@ export function AdminDashboard({ user }) {
                 ? "Save announcement"
                 : "Send announcement"}
             </button>
+          </form>
+        </Modal>
+
+        {/* MODAL: Customize & Publish Teacher Public Showcase Profile */}
+        <Modal
+          title="✨ Customize Instructor Public Showcase Profile"
+          isOpen={showcaseModal.open}
+          onClose={() => setShowcaseModal((prev) => ({ ...prev, open: false }))}
+        >
+          <form onSubmit={handleSaveShowcase} className="space-y-4">
+            <div className="rounded-2xl border border-amber-200/80 dark:border-amber-500/30 bg-amber-50/70 dark:bg-amber-950/30 p-3.5 text-xs text-amber-900 dark:text-amber-200">
+              <p className="font-bold flex items-center gap-1.5">
+                <span>ℹ️</span>
+                <span>Public Visitor & Guest Showcase</span>
+              </p>
+              <p className="mt-1 leading-relaxed text-[11px] text-amber-800 dark:text-amber-300">
+                This customizes how this instructor appears to public guests in the <strong>“Learn from Industry Professionals”</strong> section on the homepage and instructors page.
+                <br />
+                <strong className="underline">Note:</strong> These public showcase customizations do <strong>NOT</strong> change the instructor’s personal profile in their private teacher dashboard.
+              </p>
+            </div>
+
+            {showcaseFeedback && (
+              <div
+                className={`rounded-xl p-3 text-xs font-bold ${
+                  showcaseFeedback.startsWith("Error")
+                    ? "bg-rose-100 text-rose-800 border border-rose-200"
+                    : "bg-emerald-100 text-emerald-800 border border-emerald-200"
+                }`}
+              >
+                {showcaseFeedback}
+              </div>
+            )}
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                Public Display Name
+              </label>
+              <input
+                required
+                type="text"
+                value={showcaseModal.displayName}
+                onChange={(e) =>
+                  setShowcaseModal({ ...showcaseModal, displayName: e.target.value })
+                }
+                placeholder="e.g. Dr. Abebe Kebede"
+                className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-2 text-xs outline-none"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                  Subject Title / Headline
+                </label>
+                <input
+                  required
+                  type="text"
+                  value={showcaseModal.subjectTitle}
+                  onChange={(e) =>
+                    setShowcaseModal({ ...showcaseModal, subjectTitle: e.target.value })
+                  }
+                  placeholder="e.g. Senior Full-Stack & Cloud Architecture Instructor"
+                  className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-2 text-xs outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                  Experience & Credentials
+                </label>
+                <input
+                  type="text"
+                  value={showcaseModal.experience}
+                  onChange={(e) =>
+                    setShowcaseModal({ ...showcaseModal, experience: e.target.value })
+                  }
+                  placeholder="e.g. 8+ Years Industry Experience · Ex-Fintech Lead"
+                  className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-2 text-xs outline-none"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                Public Profile Photo URL
+              </label>
+              <div className="mt-1 flex items-center gap-3">
+                <img
+                  src={showcaseModal.photoUrl || "/learnhub-icon.png"}
+                  alt="Preview"
+                  className="h-12 w-12 rounded-full object-cover border-2 border-amber-400 shadow-sm shrink-0"
+                  onError={(e) => { e.currentTarget.src = "/learnhub-icon.png"; }}
+                />
+                <input
+                  type="text"
+                  value={showcaseModal.photoUrl}
+                  onChange={(e) =>
+                    setShowcaseModal({ ...showcaseModal, photoUrl: e.target.value })
+                  }
+                  placeholder="Paste image URL (https://...)"
+                  className="flex-1 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-2 text-xs outline-none font-mono text-[11px]"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                Professional Bio & Impact Summary
+              </label>
+              <textarea
+                rows={3}
+                value={showcaseModal.bio}
+                onChange={(e) =>
+                  setShowcaseModal({ ...showcaseModal, bio: e.target.value })
+                }
+                placeholder="Brief description highlighting real-world expertise and dedication to students..."
+                className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-2 text-xs outline-none"
+              />
+            </div>
+
+            <div className="flex flex-wrap items-center justify-between gap-4 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+              <label className="flex items-center gap-2.5 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={showcaseModal.isPublished}
+                  onChange={(e) =>
+                    setShowcaseModal({ ...showcaseModal, isPublished: e.target.checked })
+                  }
+                  className="h-4 w-4 rounded text-amber-600 focus:ring-amber-500"
+                />
+                <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                  Publish to Public Page & Homepage
+                </span>
+              </label>
+
+              <div className="flex items-center gap-2">
+                <label className="text-xs font-bold text-slate-600 dark:text-slate-400">
+                  Order:
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  max="50"
+                  value={showcaseModal.displayOrder}
+                  onChange={(e) =>
+                    setShowcaseModal({ ...showcaseModal, displayOrder: e.target.value })
+                  }
+                  className="w-16 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 p-1 text-xs text-center font-bold"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowcaseModal((prev) => ({ ...prev, open: false }))}
+                className="rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-2 text-xs font-bold text-slate-600 dark:text-slate-300"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={savingShowcase}
+                className="golden-btn rounded-xl px-5 py-2 text-xs font-bold text-white shadow-md disabled:opacity-50"
+              >
+                {savingShowcase ? "Saving..." : "Save & Publish Showcase"}
+              </button>
+            </div>
           </form>
         </Modal>
       </div>

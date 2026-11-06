@@ -26,9 +26,8 @@ function LanguageToggle({ compact = false }) {
             onClick={toggle}
             title={isAmharic ? "Switch to English" : "ወደ አማርኛ ቀይር"}
             aria-label={isAmharic ? "Switch to English" : "Switch to Amharic"}
-            className={`flex items-center gap-1.5 rounded-[var(--radius-md)] border border-[var(--surface-border)] bg-[var(--surface-card)] font-bold text-[var(--text-main)] shadow-[var(--shadow-sm)] transition-all hover:border-[var(--tlh-blue-primary)]/40 hover:bg-[var(--primary-light)] hover:text-[var(--tlh-blue-primary)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tlh-blue-primary)] ${
-                compact ? "px-2.5 py-1.5 text-xs" : "px-3 py-2 text-[13px]"
-            }`}
+            className={`flex items-center gap-1.5 rounded-[var(--radius-md)] border border-[var(--surface-border)] bg-[var(--surface-card)] font-bold text-[var(--text-main)] shadow-[var(--shadow-sm)] transition-all hover:border-[var(--tlh-blue-primary)]/40 hover:bg-[var(--primary-light)] hover:text-[var(--tlh-blue-primary)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tlh-blue-primary)] ${compact ? "px-2.5 py-1.5 text-xs" : "px-3 py-2 text-[13px]"
+                }`}
         >
             <span className="text-base leading-none" aria-hidden="true">{isAmharic ? "🇺🇸" : "🇪🇹"}</span>
             <span>{isAmharic ? "EN" : "አማ"}</span>
@@ -45,15 +44,15 @@ const navigationItems = [
 ];
 
 function navLinkClass({ isActive }) {
-    return `rounded-[var(--radius-md)] px-4 py-2.5 text-sm sm:text-[15px] font-bold transition-all whitespace-nowrap tracking-wide ${
-        isActive
-            ? "bg-[var(--surface-card)] text-[var(--tlh-blue-primary)] shadow-[var(--shadow-sm)] ring-1 ring-[var(--tlh-blue-primary)]/15 font-extrabold"
-            : "text-[var(--text-secondary)] hover:bg-[var(--surface-card)]/80 hover:text-[var(--text-main)] hover:shadow-[var(--shadow-sm)]"
-    }`;
+    return `rounded-[var(--radius-md)] px-4 py-2.5 text-sm sm:text-[15px] font-bold transition-all whitespace-nowrap tracking-wide ${isActive
+        ? "bg-[var(--surface-card)] text-[var(--tlh-blue-primary)] shadow-[var(--shadow-sm)] ring-1 ring-[var(--tlh-blue-primary)]/15 font-extrabold"
+        : "text-[var(--text-secondary)] hover:bg-[var(--surface-card)]/80 hover:text-[var(--text-main)] hover:shadow-[var(--shadow-sm)]"
+        }`;
 }
 
 function NavigationLinks({ onNavigate, mobile = false }) {
     const { t } = useTranslation();
+    const location = useLocation();
 
     return navigationItems.map(({ to, label, i18nKey, end }) => {
         const translated = i18nKey ? t(i18nKey) : label;
@@ -63,10 +62,18 @@ function NavigationLinks({ onNavigate, mobile = false }) {
                 key={to}
                 to={to}
                 end={end}
-                onClick={onNavigate}
+                onClick={(e) => {
+                    if (to === "/faq" && (location.pathname === "/" || location.pathname === "/home")) {
+                        const faqEl = document.getElementById("faq");
+                        if (faqEl) {
+                            e.preventDefault();
+                            faqEl.scrollIntoView({ behavior: "smooth" });
+                        }
+                    }
+                    onNavigate?.();
+                }}
                 className={({ isActive }) => mobile
-                    ? `flex items-center justify-between rounded-xl px-4 py-3.5 text-base font-bold transition-colors ${
-                        isActive ? "bg-sky-50 text-blue-700 font-extrabold" : "text-slate-700 hover:bg-slate-50"
+                    ? `flex items-center justify-between rounded-xl px-4 py-3.5 text-base font-bold transition-colors ${isActive ? "bg-sky-50 text-blue-700 font-extrabold" : "text-slate-700 hover:bg-slate-50"
                     }`
                     : navLinkClass({ isActive })}
             >
